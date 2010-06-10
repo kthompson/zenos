@@ -1,0 +1,23 @@
+dependencies
+nunitv2.5.5
+autofac
+cecil
+
+moq?
+http://github.com/monoman/Managed-Commons/tree/master/Commons.GetOptions?
+
+
+AssemblyDefinition
+AssemblyNameDefinition
+ModuleDefinition
+
+IMemberDefinition
+  EventDefinition
+  FieldDefinition
+  MethodDefinition
+  PropertyDefinition
+  TypeDefinition
+
+ParameterDefinition
+Cil/VariableDefinition
+
