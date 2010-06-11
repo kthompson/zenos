@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{BD1969C1-4E46-4B99-8154-4B144548FEAC}</ProjectGuid>
+    <ProjectGuid>{3333AF71-D754-4FEF-9BF4-C9413E707C54}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Zenos.Framework</RootNamespace>
-    <AssemblyName>Zenos.Framework</AssemblyName>
+    <RootNamespace>Zenos.Stages</RootNamespace>
+    <AssemblyName>Zenos.Stages</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,27 +40,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeCompiler.cs" />
-    <Compile Include="CodeCompilerStage.cs" />
-    <Compile Include="CodeContext.cs" />
-    <Compile Include="Compiler.cs" />
-    <Compile Include="CompilerContext.cs" />
-    <Compile Include="CompilerStage.cs" />
-    <Compile Include="ICodeCompiler.cs" />
-    <Compile Include="ICodeContext.cs" />
-    <Compile Include="ICompiler.cs" />
-    <Compile Include="ICompilerContext.cs" />
-    <Compile Include="IMemberCompiler.cs" />
-    <Compile Include="IMemberContext.cs" />
-    <Compile Include="MemberCompiler.cs" />
-    <Compile Include="MemberCompilerStage.cs" />
-    <Compile Include="MemberContext.cs" />
+    <Compile Include="CodeQueuingStage.cs" />
+    <Compile Include="CompileCodeForMembers.cs" />
+    <Compile Include="EmitterStage.cs" />
+    <Compile Include="GccBuildStage.cs" />
+    <Compile Include="ModuleQueuingStage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\dependencies\cecil\Mono.Cecil.csproj">
       <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
       <Name>Mono.Cecil</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Zenos.Core\Zenos.Core.csproj">
+      <Project>{9AC425A8-059F-416F-9D09-84481DE0EF60}</Project>
+      <Name>Zenos.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Zenos.Framework\Zenos.Framework.csproj">
+      <Project>{BD1969C1-4E46-4B99-8154-4B144548FEAC}</Project>
+      <Name>Zenos.Framework</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

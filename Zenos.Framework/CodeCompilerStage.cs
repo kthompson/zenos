@@ -5,6 +5,13 @@ namespace Zenos.Framework
 {
     public abstract class CodeCompilerStage : ICodeCompiler
     {
+        public CodeCompiler CodeCompiler { get; private set; }
+
+        protected CodeCompilerStage(CodeCompiler compiler)
+        {
+            this.CodeCompiler = compiler;
+        }
+
         public virtual ICodeContext Compile(ICodeContext context)
         {
             return context;

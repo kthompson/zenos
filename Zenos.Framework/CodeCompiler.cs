@@ -12,6 +12,7 @@ namespace Zenos.Framework
         public List<CodeCompilerStage> Stages { get; private set; }
 
         public CodeCompiler()
+            : base(null)
         {
             this.Stages = new List<CodeCompilerStage>();
         }

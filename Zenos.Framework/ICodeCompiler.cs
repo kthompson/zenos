@@ -10,8 +10,8 @@ namespace Zenos.Framework
     public interface ICodeCompiler
     {
         ICodeContext Compile(ICodeContext context);
-        ICodeContext Compile(ICodeContext context, MethodBody body);
 
+        ICodeContext Compile(ICodeContext context, MethodBody body);
         ICodeContext Compile(ICodeContext context, ParameterDefinition parameter);
         ICodeContext Compile(ICodeContext context, Scope scope);
         ICodeContext Compile(ICodeContext context, VariableDefinition variable);

@@ -1,7 +1,12 @@
-﻿namespace Zenos.Framework
+﻿using System;
+using System.IO;
+
+namespace Zenos.Framework
 {
-    public interface ICodeContext
+    public interface ICodeContext : IDisposable
     {
-        IMemberContext Member { get; }
+        IMemberContext Context { get; }
+        bool IsDisposed { get; }
+        StringWriter Text { get; }
     }
 }

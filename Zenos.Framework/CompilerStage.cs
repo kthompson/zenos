@@ -4,6 +4,13 @@ namespace Zenos.Framework
 {
     public abstract class CompilerStage : ICompiler
     {
+        public Compiler Compiler { get; protected set; }
+
+        protected CompilerStage(Compiler compiler)
+        {
+            this.Compiler = compiler;
+        }
+
         public virtual ICompilerContext Compile(ICompilerContext context)
         {
             return context;

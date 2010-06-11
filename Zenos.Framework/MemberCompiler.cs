@@ -8,10 +8,13 @@ namespace Zenos.Framework
 {
     public class MemberCompiler : MemberCompilerStage
     {
+        public CodeCompiler CodeCompiler { get; private set; }
         public List<MemberCompilerStage> Stages { get; private set; }
 
-        public MemberCompiler()
+        public MemberCompiler(CodeCompiler cc)
+            : base(null)
         {
+            this.CodeCompiler = cc;
             this.Stages = new List<MemberCompilerStage>();
         }
 

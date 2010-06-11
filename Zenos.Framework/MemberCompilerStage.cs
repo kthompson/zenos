@@ -4,6 +4,13 @@ namespace Zenos.Framework
 {
     public abstract class MemberCompilerStage : IMemberCompiler
     {
+        public MemberCompiler MemberCompiler { get; private set; }
+
+        protected MemberCompilerStage(MemberCompiler compiler)
+        {
+            this.MemberCompiler = compiler;
+        }
+
         public virtual IMemberContext Compile(IMemberContext context)
         {
             return context;

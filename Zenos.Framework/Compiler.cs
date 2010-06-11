@@ -1,17 +1,22 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Mono.Cecil;
+using Mono.Collections.Generic;
 
 namespace Zenos.Framework
 {
     public class Compiler : CompilerStage
     {
+        public MemberCompiler MemberCompiler { get; private set; }
         public List<CompilerStage> Stages { get; private set; }
 
-        public Compiler()
+        public Compiler(MemberCompiler mc)
+            : base(null)
         {
+            this.MemberCompiler = mc;
             this.Stages = new List<CompilerStage>();
         }
 
