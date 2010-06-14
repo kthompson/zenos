@@ -11,11 +11,6 @@ namespace Zenos.Framework
             this.Compiler = compiler;
         }
 
-        public virtual ICompilerContext Compile(ICompilerContext context)
-        {
-            return context;
-        }
-
         public virtual ICompilerContext Compile(ICompilerContext context, AssemblyDefinition assembly)
         {
             return context;

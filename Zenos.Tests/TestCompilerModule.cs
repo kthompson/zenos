@@ -25,7 +25,6 @@ namespace Zenos.Tests
                    .OnActivating(context =>
                    {
                        context.Instance.Stages.Add(new CodeQueuingStage(context.Instance));
-                       context.Instance.Stages.Add(new CompileCodeForMembers(context.Instance));
                        context.Instance.Stages.Add(new GenerateRuntimeStage(context.Instance));
                    })
                    .SingleInstance();
@@ -33,7 +32,9 @@ namespace Zenos.Tests
             builder.Register(context => new CodeCompiler())
                    .OnActivating(context =>
                    {
+                       context.Instance.Stages.Add(new CodeSimplifier(context.Instance));
                        context.Instance.Stages.Add(new EmitterStage(context.Instance));
+                       context.Instance.Stages.Add(new WriteCodeToDisk(context.Instance));
                    })
                    .SingleInstance(); 
         }

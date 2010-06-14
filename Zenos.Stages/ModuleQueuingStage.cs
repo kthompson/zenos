@@ -13,6 +13,9 @@ namespace Zenos.Stages
 
         public override ICompilerContext Compile(ICompilerContext context, AssemblyDefinition assembly)
         {
+            if (assembly.Modules.Count == 0)
+                return base.Compile(context, assembly);
+
             return assembly.Modules.Aggregate(context, (current, module) => this.Compiler.Compile(current, module));
         }
 

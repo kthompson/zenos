@@ -11,11 +11,6 @@ namespace Zenos.Framework
             this.MemberCompiler = compiler;
         }
 
-        public virtual IMemberContext Compile(IMemberContext context)
-        {
-            return context;
-        }
-
         public virtual IMemberContext Compile(IMemberContext context, IMemberDefinition member)
         {
             return context;

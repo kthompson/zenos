@@ -39,7 +39,7 @@ namespace Zenos.Core
         /// <param name="expression">Expression that evaluates to a boolean to check</param>
         /// <param name="exceptionCreator"></param>
         [DebuggerHidden]
-        public static void That(bool expression, Func<Exception> exceptionCreator)
+        public static void IsTrue(bool expression, Func<Exception> exceptionCreator)
         {
             if (!expression)
                 Throw(exceptionCreator);
@@ -51,7 +51,7 @@ namespace Zenos.Core
         /// <param name="expression">Expression that evaluates to a boolean to check</param>
         /// <param name="exceptionCreator"></param>
         [DebuggerHidden]
-        public static void IsNot(bool expression, Func<Exception> exceptionCreator)
+        public static void IsFalse(bool expression, Func<Exception> exceptionCreator)
         {
             if (expression)
                 Throw(exceptionCreator);
@@ -320,5 +320,12 @@ namespace Zenos.Core
         }
 
         #endregion
+
+        public static void IsNull<T>(T arg)
+            where T : class
+        {
+            if (arg != null)
+                Throw(() => new ArgumentNullException());
+        }
     }
 }

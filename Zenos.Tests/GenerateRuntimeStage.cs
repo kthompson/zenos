@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using Mono.Cecil;
 using Zenos.Core;
 using Zenos.Framework;
@@ -8,6 +10,8 @@ namespace Zenos.Tests
 {
     public class GenerateRuntimeStage : MemberCompilerStage
     {
+        public bool RanOnce { get; private set; }
+
         public GenerateRuntimeStage(MemberCompiler compiler)
             : base(compiler)
         {
@@ -15,6 +19,9 @@ namespace Zenos.Tests
 
         public override IMemberContext Compile(IMemberContext context, MethodDefinition method)
         {
+            Helper.IsFalse(this.RanOnce, () => new InvalidOperationException("Cannot run more then once"));
+            this.RanOnce = true;
+
             var cc = CreateRuntime(context, method);
             
             context.CodeContexts.Add(cc);
@@ -24,11 +31,12 @@ namespace Zenos.Tests
 
         private static ICodeContext CreateRuntime(IMemberContext context, MethodReference method)
         {
-            ICodeContext cc = new CodeContext(context);
+            ICodeContext cc = new CodeContext(context, CodeType.C);
 
             var arguments = GetMethodArguments(context);
+            cc.OutputFile = "runtime_".Append(method.Name, "_").AppendRandom(32,".c");
 
-            using (var runtime = cc.Text)
+            using (var runtime = new StreamWriter(File.OpenWrite(cc.OutputFile)))
             {
                 //string function = "setup_stack(stack_base)";
                 var function = string.Format("{0}({1})", method.Name, string.Join(", ", arguments));

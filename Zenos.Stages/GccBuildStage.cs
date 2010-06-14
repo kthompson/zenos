@@ -14,14 +14,23 @@ namespace Zenos.Stages
         {
         }
 
-        public override ICompilerContext Compile(ICompilerContext context)
+        public override ICompilerContext Compile(ICompilerContext context, Mono.Cecil.AssemblyDefinition assembly)
+        {
+            return base.Compile(context, assembly);
+        }
+
+        public override ICompilerContext Compile(ICompilerContext context, Mono.Cecil.AssemblyNameDefinition assemblyName)
+        {
+            return base.Compile(context, assemblyName);
+        }
+
+        public override ICompilerContext Compile(ICompilerContext context, Mono.Cecil.ModuleDefinition module)
         {
             var cmd = new StringBuilder("gcc -Wall -o ");
             cmd.Append(context.OutputFile);
-            
 
-            foreach (var member in context.Members)
-                cmd.AppendFormat(" {0}", member.OutputFile);
+            foreach (var code in context.Members.SelectMany(m => m.CodeContexts))
+                cmd.AppendFormat(" {0}", code.OutputFile);
 
             string output;
             string error;

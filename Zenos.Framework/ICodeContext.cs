@@ -8,5 +8,7 @@ namespace Zenos.Framework
         IMemberContext Context { get; }
         bool IsDisposed { get; }
         StringWriter Text { get; }
+        CodeType CodeType { get; }
+        string OutputFile { get; set; }
     }
 }

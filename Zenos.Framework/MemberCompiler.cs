@@ -18,11 +18,6 @@ namespace Zenos.Framework
             this.Stages = new List<MemberCompilerStage>();
         }
 
-        public override IMemberContext Compile(IMemberContext context)
-        {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current));
-        }
-
         public override IMemberContext Compile(IMemberContext context, EventDefinition @event)
         {
             return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, @event));

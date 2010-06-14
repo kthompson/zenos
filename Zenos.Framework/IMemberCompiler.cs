@@ -8,8 +8,6 @@ namespace Zenos.Framework
 {
     public interface IMemberCompiler
     {
-        IMemberContext Compile(IMemberContext context);
-
         IMemberContext Compile(IMemberContext context, IMemberDefinition member);
         IMemberContext Compile(IMemberContext context, EventDefinition @event);
         IMemberContext Compile(IMemberContext context, FieldDefinition field);

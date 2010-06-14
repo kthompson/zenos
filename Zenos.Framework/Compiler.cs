@@ -20,11 +20,6 @@ namespace Zenos.Framework
             this.Stages = new List<CompilerStage>();
         }
 
-        public override ICompilerContext Compile(ICompilerContext context)
-        {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current));
-        }
-
         public override ICompilerContext Compile(ICompilerContext context, AssemblyDefinition assembly)
         {
             return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, assembly));

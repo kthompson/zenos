@@ -7,11 +7,14 @@ namespace Zenos.Framework
     {
         public IMemberContext Context { get; private set; }
         public StringWriter Text { get; private set; }
+        public CodeType CodeType { get; private set; }
+        public string OutputFile { get; set; }
         public bool IsDisposed { get; private set; }
 
-        public CodeContext(IMemberContext context)
+        public CodeContext(IMemberContext context, CodeType type)
         {
             this.Context = context;
+            this.CodeType = type;
             this.Text = new StringWriter();
         }
 

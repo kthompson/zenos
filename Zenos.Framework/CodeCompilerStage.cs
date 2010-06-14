@@ -1,5 +1,7 @@
-﻿using Mono.Cecil;
+﻿using System;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 
 namespace Zenos.Framework
 {
@@ -22,7 +24,17 @@ namespace Zenos.Framework
             return context;
         }
 
+        public virtual ICodeContext Compile(ICodeContext context, Collection<ParameterDefinition> parameters)
+        {
+            return context;
+        }
+
         public virtual ICodeContext Compile(ICodeContext context, ParameterDefinition parameter)
+        {
+            return context;
+        }
+
+        public virtual ICodeContext Compile(ICodeContext context, Collection<VariableDefinition> variables)
         {
             return context;
         }
@@ -37,7 +49,17 @@ namespace Zenos.Framework
             return context;
         }
 
+        public virtual ICodeContext Compile(ICodeContext context, Collection<ExceptionHandler> exceptions)
+        {
+            return context;
+        }
+
         public virtual ICodeContext Compile(ICodeContext context, ExceptionHandler exception)
+        {
+            return context;
+        }
+
+        public virtual ICodeContext Compile(ICodeContext context, Collection<Instruction> instructions)
         {
             return context;
         }

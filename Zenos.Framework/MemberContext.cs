@@ -6,7 +6,6 @@ namespace Zenos.Framework
     public class MemberContext : IMemberContext
     {
         public ICompilerContext Context { get; private set; }
-        public string OutputFile{ get; private set; }
 
         public List<ICodeContext> CodeContexts { get; private set; }
         public bool IsDisposed { get; private set; }

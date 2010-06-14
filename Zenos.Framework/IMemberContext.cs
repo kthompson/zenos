@@ -7,7 +7,6 @@ namespace Zenos.Framework
     {
         ICompilerContext Context { get; }
         bool IsDisposed { get; }
-        string OutputFile { get; }
         List<ICodeContext> CodeContexts { get; }
     }
 }

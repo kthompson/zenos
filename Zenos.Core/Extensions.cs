@@ -6,9 +6,19 @@ namespace Zenos.Core
 {
     public static class Extensions
     {
-        public static string AppendRandom(this string prefix, int length = 32, string suffix = "")
+        public static string ToFileName(this string t)
         {
-            var tempString = prefix;
+            return t.Replace('<', '_').Replace('>', '_');
+        }
+
+         public static string AppendRandom(this string t, int length = 32, string suffix = "")
+         {
+             return t.AppendRandom(string.Empty, length, suffix);
+         }
+
+        public static string AppendRandom(this string t, string prefix, int length = 32, string suffix = "")
+        {
+            var tempString = t + prefix;
 
             while (tempString.Length < length)
                 tempString += Guid.NewGuid().ToString().Replace("-", "").ToLower();
@@ -16,9 +26,9 @@ namespace Zenos.Core
             return tempString.Substring(0, length) + suffix;
         }
 
-        public static string Append(this string prefix, params string[] arguments)
+        public static string Append(this string t, params string[] arguments)
         {
-            var sb = new StringBuilder(prefix);
+            var sb = new StringBuilder(t);
             foreach (var argument in arguments)
                 sb.Append(argument);
 
