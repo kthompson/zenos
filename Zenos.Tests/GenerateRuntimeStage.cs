@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Mono.Cecil;
+using Mono.Collections.Generic;
 using Zenos.Core;
 using Zenos.Framework;
 using System.Linq;
@@ -10,8 +11,6 @@ namespace Zenos.Tests
 {
     public class GenerateRuntimeStage : MemberCompilerStage
     {
-        public bool RanOnce { get; private set; }
-
         public GenerateRuntimeStage(MemberCompiler compiler)
             : base(compiler)
         {
@@ -19,9 +18,6 @@ namespace Zenos.Tests
 
         public override IMemberContext Compile(IMemberContext context, MethodDefinition method)
         {
-            Helper.IsFalse(this.RanOnce, () => new InvalidOperationException("Cannot run more then once"));
-            this.RanOnce = true;
-
             var cc = CreateRuntime(context, method);
             
             context.CodeContexts.Add(cc);
@@ -49,6 +45,8 @@ namespace Zenos.Tests
                 runtime.WriteLine("#include <stdlib.h>");
                 //runtime.WriteLine();
                 //runtime.WriteLine(string.Format("{0} setup_stack(char*);", returnType));
+                WriteMethodSignature(runtime, method);
+                runtime.WriteLine();
                 runtime.WriteLine();
                 runtime.WriteLine("int main(int argc, char** argv)");
                 runtime.WriteLine("{");
@@ -62,6 +60,56 @@ namespace Zenos.Tests
             }
 
             return cc;
+        }
+
+        private static void WriteMethodSignature(StreamWriter runtime, MethodReference method)
+        {
+            WriteType(runtime, method.ReturnType);
+            runtime.Write(" {0}(", method.Name);
+            WriteParameters(runtime, method.Parameters);
+            runtime.WriteLine(");");
+        }
+
+        private static void WriteParameters(StreamWriter runtime, Collection<ParameterDefinition> parameters)
+        {
+            var length = parameters.Count;
+            for (var i = 0; i < length; i++)
+            {
+                WriteParameter(runtime, parameters[i]);
+                if (i < length - 1)
+                    runtime.Write(", ");
+            }
+        }
+
+        private static void WriteParameter(StreamWriter runtime, ParameterDefinition parameterDefinition)
+        {
+            WriteType(runtime, parameterDefinition.ParameterType);
+            runtime.Write(" {0}", parameterDefinition.Name);
+        }
+
+        private static void WriteType(TextWriter runtime, MemberReference returnType)
+        {
+            var type = string.Empty;
+            switch (returnType.FullName)
+            {
+                case "System.Int32":
+                    type = "int";
+                    break;
+                case "System.Boolean":
+                    type = "bool";
+                    break;
+                case "System.Char":
+                    type = "char";
+                    break;
+                case "System.Single":
+                    type = "float";
+                    break;
+                default:
+                    Helper.NotSupported(string.Format("Referenced type is not supported: {0}", returnType.FullName));
+                    break;
+            }
+
+            runtime.Write(type);
         }
 
         private static IEnumerable<string> GetMethodArguments(IMemberContext context)
