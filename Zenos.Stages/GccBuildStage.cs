@@ -14,16 +14,6 @@ namespace Zenos.Stages
         {
         }
 
-        public override ICompilerContext Compile(ICompilerContext context, Mono.Cecil.AssemblyDefinition assembly)
-        {
-            return base.Compile(context, assembly);
-        }
-
-        public override ICompilerContext Compile(ICompilerContext context, Mono.Cecil.AssemblyNameDefinition assemblyName)
-        {
-            return base.Compile(context, assemblyName);
-        }
-
         public override ICompilerContext Compile(ICompilerContext context, Mono.Cecil.ModuleDefinition module)
         {
             var cmd = new StringBuilder("gcc -Wall -o ");
@@ -39,7 +29,7 @@ namespace Zenos.Stages
                 if (!string.IsNullOrEmpty(error))
                     Helper.Break();
 
-                return null;
+                return context;
             }
 
             Helper.Stop(() => new ApplicationException(error + output));

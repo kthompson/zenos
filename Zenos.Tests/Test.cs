@@ -72,9 +72,14 @@ namespace Zenos.Tests
                 //compile 
                 using (var output = Compiler.Compile(context, assembly))
                 {
+                    Assert.IsNotNull(output);
                     //run the compiled exe and return output
                     Assert.AreEqual(expected.ToString(), Helper.Execute(output.OutputFile));    
                 }
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception e)
             {

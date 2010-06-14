@@ -66,11 +66,11 @@ namespace Zenos.Stages
                     context.Text.WriteLine(EmitLoadInstruction(context, instruction));
                     break;
                 case Code.Ret:
-                    //context.Text.WriteLine("ret");
+                    //ret is handled in the method body
                     Helper.IsNull(instruction.Next);
                     break;
                 default:
-                    Helper.Break();
+                    Helper.NotSupported(string.Format("Instruction not supported: {0}", instruction));
                     break;
             }
 
