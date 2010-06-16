@@ -78,12 +78,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryExpressionTests.cs" />
     <Compile Include="GenerateRuntimeStage.cs" />
     <Compile Include="Immediates.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Test.cs" />
     <Compile Include="TestCompilerModule.cs" />
     <Compile Include="TestContext.cs" />
+    <Compile Include="UnaryExpressionTests.cs" />
+    <Compile Include="VariableTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\dependencies\cecil\Mono.Cecil.csproj">

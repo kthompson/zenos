@@ -34,47 +34,50 @@ namespace Zenos.Tests
             }
         }
 
-        public static void AreEqual<T1, T2, T3, T4, TResult>(TResult expected, Func<T1, T2, T3, T4, TResult> method, T1 param1, T2 param2, T3 param3, T4 param4)
+        public static void Runs<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> method, T1 param1, T2 param2, T3 param3, T4 param4)
         {
-            AreEqual(expected, method, new object[] { param1, param2, param3, param4 });
+            Runs(method, new object[] { param1, param2, param3, param4 });
         }
 
-        public static void AreEqual<T1, T2, T3, TResult>(TResult expected, Func<T1, T2, T3, TResult> method, T1 param1, T2 param2, T3 param3)
+        public static void Runs<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> method, T1 param1, T2 param2, T3 param3)
         {
-            AreEqual(expected, method, new object[] { param1, param2, param3 });
+            Runs(method, new object[] { param1, param2, param3 });
         }
 
-        public static void AreEqual<T1, T2, TResult>(TResult expected, Func<T1, T2, TResult> method, T1 param1, T2 param2)
+        public static void Runs<T1, T2, TResult>(Func<T1, T2, TResult> method, T1 param1, T2 param2)
         {
-            AreEqual(expected, method, new object[] { param1, param2 });
+            Runs(method, new object[] { param1, param2 });
         }
 
-        public static void AreEqual<T1, TResult>(TResult expected, Func<T1, TResult> method, T1 param)
+        public static void Runs<T1, TResult>(Func<T1, TResult> method, T1 param)
         {
-            AreEqual(expected, method, new object[] { param });
+            Runs(method, new object[] { param });
         }
 
-        public static void AreEqual<TResult>(TResult expected, Func<TResult> method)
+        public static void Runs<TResult>(Func<TResult> method)
         {
-            AreEqual(expected, method, new string[] { });
+            Runs(method, new string[] { });
         }
 
-        public static void AreEqual<TDelegate>(object expected, TDelegate method, object[] arguments)
+        public static void Runs<TDelegate>(TDelegate method, object[] arguments)
             where TDelegate : class
         {
             //update arguments
             try
             {
+                var del = method as Delegate;
+                Assert.NotNull(del);
+
                 var assembly = AssemblyFromMethod(method);
 
                 var context = new TestContext("test_".AppendRandom(20, ".exe"), arguments);
-                
+
                 //compile 
                 using (var output = Compiler.Compile(context, assembly))
                 {
                     Assert.IsNotNull(output);
                     //run the compiled exe and return output
-                    Assert.AreEqual(expected.ToString(), Helper.Execute(output.OutputFile));    
+                    Assert.AreEqual(del.DynamicInvoke(arguments).ToString(), Helper.Execute(output.OutputFile));
                 }
             }
             catch (AssertionException)
@@ -98,7 +101,11 @@ namespace Zenos.Tests
             var type = new TypeDefinition("SingleTest", "Tests", TypeAttributes.Public | TypeAttributes.Class, null);
             module.Types.Add(type);
 
-            var method = new MethodDefinition("TestMethod".AppendRandom(), MethodAttributes.Static| MethodAttributes.Public, sourceMethod.ReturnType);
+            var method = new MethodDefinition("TestMethod".AppendRandom(), MethodAttributes.Static | MethodAttributes.Public, sourceMethod.ReturnType);
+            foreach (var param in sourceMethod.Parameters)
+            {
+                method.Parameters.Add(param);
+            }
 
             CloneMethodBody(sourceMethod.Body, method);
             //method.Body = new MethodBody(method);
@@ -111,7 +118,7 @@ namespace Zenos.Tests
         private static void CloneMethodBody(MethodBody src, MethodDefinition dest)
         {
             var db = dest.Body = new MethodBody(dest);
-            
+
             foreach (var handler in src.ExceptionHandlers)
                 db.ExceptionHandlers.Add(handler);
 
@@ -170,7 +177,7 @@ namespace Zenos.Tests
         static TDelegate CreateRunDelegate<TDelegate>(Type type)
             where TDelegate : class
         {
-            return (TDelegate) (object) Delegate.CreateDelegate(typeof (TDelegate), type.GetMethod("Run"));
+            return (TDelegate)(object)Delegate.CreateDelegate(typeof(TDelegate), type.GetMethod("Run"));
         }
 
         delegate void Emitter(ModuleDefinition module, MethodBody body);

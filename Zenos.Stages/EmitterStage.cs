@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 using Zenos.Core;
@@ -22,8 +23,12 @@ namespace Zenos.Stages
             context.Text.WriteLine(".def	_{0};	.scl	2;	.type	32;	.endef", body.Method.Name);
             context.Text.WriteLine("_{0}:", body.Method.Name);
 
-            if(body.Instructions.Count ==0)
+            if (body.Instructions.Count == 0)
                 return base.Compile(context, body);
+
+            //save callee stack frame 
+            context.Text.WriteLine("pushl %ebp");
+            context.Text.WriteLine("movl %esp, %ebp");
 
             //add variable space to stack
             if (body.HasVariables)
@@ -31,10 +36,8 @@ namespace Zenos.Stages
 
             context = this.Compile(context, body.Instructions);
 
-            //remove our variables from the stack
-            if (body.HasVariables)
-                context.Text.WriteLine("addl ${0}, %esp", body.Variables.Count * 4);
-
+            //reset to callee stack frame
+            context.Text.WriteLine("leave");
             context.Text.WriteLine("ret");
 
             return context;
@@ -65,6 +68,9 @@ namespace Zenos.Stages
                 case Code.Ldloc:
                     context.Text.WriteLine(EmitLoadInstruction(context, instruction));
                     break;
+                case Code.Ldarg:
+                    context.Text.WriteLine(EmitLoadInstruction(context, instruction));
+                    break;
                 case Code.Ret:
                     //ret is handled in the method body
                     Helper.IsNull(instruction.Next);
@@ -92,8 +98,15 @@ namespace Zenos.Stages
             if (instruction.Operand is VariableReference)
             {
                 var v = instruction.Operand as VariableReference;
-                var index = v.Index * 4;
-                return string.Format("{0}(%esp)", index);
+                var index = v.Index * -4;
+                return string.Format("{0}(%ebp)", index);
+            }
+
+            if (instruction.Operand is ParameterReference)
+            {
+                var v = instruction.Operand as ParameterReference;
+                var index = 8 + (v.Index) * 4;
+                return string.Format("{0}(%ebp)", index);
             }
             Helper.Break();
             return instruction.Operand.ToString();
