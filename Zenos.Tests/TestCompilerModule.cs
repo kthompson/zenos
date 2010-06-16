@@ -36,7 +36,7 @@ namespace Zenos.Tests
                        context.Instance.Stages.Add(new EmitterStage(context.Instance));
                        context.Instance.Stages.Add(new WriteCodeToDisk(context.Instance));
                    })
-                   .SingleInstance(); 
+                   .SingleInstance();
         }
     }
 }

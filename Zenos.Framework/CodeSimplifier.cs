@@ -33,20 +33,20 @@ namespace Zenos.Framework
                         break;
                     case Code.Ldloc_1:
                         Simplify(i, OpCodes.Ldloc, body.Variables[1]);
-                        break;                     
-                    case Code.Ldloc_2:             
+                        break;
+                    case Code.Ldloc_2:
                         Simplify(i, OpCodes.Ldloc, body.Variables[2]);
-                        break;                     
-                    case Code.Ldloc_3:             
+                        break;
+                    case Code.Ldloc_3:
                         Simplify(i, OpCodes.Ldloc, body.Variables[3]);
-                        break;                     
-                    case Code.Stloc_0:             
+                        break;
+                    case Code.Stloc_0:
                         Simplify(i, OpCodes.Stloc, body.Variables[0]);
-                        break;                     
-                    case Code.Stloc_1:             
+                        break;
+                    case Code.Stloc_1:
                         Simplify(i, OpCodes.Stloc, body.Variables[1]);
-                        break;                     
-                    case Code.Stloc_2:             
+                        break;
+                    case Code.Stloc_2:
                         Simplify(i, OpCodes.Stloc, body.Variables[2]);
                         break;
                     case Code.Stloc_3:
@@ -159,7 +159,7 @@ namespace Zenos.Framework
         static void SimplifyFromSByte(Instruction i, OpCode op)
         {
             i.OpCode = op;
-            if(!(i.Operand is Instruction))
+            if (!(i.Operand is Instruction))
                 i.Operand = (int)(sbyte)i.Operand;
         }
 
@@ -172,7 +172,7 @@ namespace Zenos.Framework
         public override ICodeContext Compile(ICodeContext context, Instruction instruction)
         {
             //remove jumping branches that go to the next instruction
-            if(instruction.OpCode.Code == Code.Br && instruction.Operand == instruction.Next)
+            if (instruction.OpCode.Code == Code.Br && instruction.Operand == instruction.Next)
             {
                 instruction.OpCode = OpCodes.Nop;
                 instruction.Operand = null;

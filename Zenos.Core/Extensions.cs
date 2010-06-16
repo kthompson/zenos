@@ -11,10 +11,10 @@ namespace Zenos.Core
             return t.Replace('<', '_').Replace('>', '_');
         }
 
-         public static string AppendRandom(this string t, int length = 32, string suffix = "")
-         {
-             return t.AppendRandom(string.Empty, length, suffix);
-         }
+        public static string AppendRandom(this string t, int length = 32, string suffix = "")
+        {
+            return t.AppendRandom(string.Empty, length, suffix);
+        }
 
         public static string AppendRandom(this string t, string prefix, int length = 32, string suffix = "")
         {

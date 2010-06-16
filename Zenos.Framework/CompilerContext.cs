@@ -18,13 +18,13 @@ namespace Zenos.Framework
 
         protected virtual void Dispose(bool disposing)
         {
-            if (this.IsDisposed) 
+            if (this.IsDisposed)
                 return;
 
-            if(disposing)
+            if (disposing)
             {
                 foreach (var member in this.Members)
-                    member.Dispose();  
+                    member.Dispose();
             }
 
             this.IsDisposed = true;

@@ -26,7 +26,7 @@ namespace Zenos.Stages
                 var mc = this.Compiler.MemberCompiler.Compile(new MemberContext(context), type);
                 context.Members.Add(mc);
             }
-            
+
             return base.Compile(context, module);
         }
     }

@@ -41,7 +41,7 @@ namespace Zenos.Tests
             Test.Runs((aa, bb) => aa == bb, a, b);
             Test.Runs((aa, bb) => aa <= bb, a, b);
             Test.Runs((aa, bb) => aa < bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b); 
+            Test.Runs((aa, bb) => aa != bb, a, b);
         }
 
         [Test]

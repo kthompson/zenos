@@ -8,7 +8,7 @@ namespace Zenos.Tests
     {
         public object[] Arguments { get; private set; }
 
-        public TestContext(string outputFile, object[] arguments) 
+        public TestContext(string outputFile, object[] arguments)
             : base(outputFile)
         {
             this.Arguments = arguments;
@@ -16,7 +16,7 @@ namespace Zenos.Tests
 
         protected override void Dispose(bool disposing)
         {
-            if (this.IsDisposed) 
+            if (this.IsDisposed)
                 return;
 
             if (disposing && File.Exists(this.OutputFile))

@@ -19,7 +19,7 @@ namespace Zenos.Tests
         public override IMemberContext Compile(IMemberContext context, MethodDefinition method)
         {
             var cc = CreateRuntime(context, method);
-            
+
             context.CodeContexts.Add(cc);
 
             return base.Compile(context, method);
@@ -30,7 +30,7 @@ namespace Zenos.Tests
             ICodeContext cc = new CodeContext(context, CodeType.C);
 
             var arguments = GetMethodArguments(context);
-            cc.OutputFile = "runtime_".Append(method.Name, "_").AppendRandom(32,".c");
+            cc.OutputFile = "runtime_".Append(method.Name, "_").AppendRandom(32, ".c");
 
             using (var runtime = new StreamWriter(File.OpenWrite(cc.OutputFile)))
             {

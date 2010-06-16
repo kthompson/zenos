@@ -30,7 +30,7 @@ namespace Zenos.Stages
                 cc = this.MemberCompiler.CodeCompiler.Compile(cc, method.Body);
                 context.CodeContexts.Add(cc);
             }
-            
+
             return base.Compile(context, method);
         }
     }
