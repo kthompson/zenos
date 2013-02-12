@@ -26,18 +26,23 @@ namespace Zenos.Stages
             if (body.Instructions.Count == 0)
                 return base.Compile(context, body);
 
+            context.Text.WriteLine("# prologue ");
             //save callee stack frame 
-            context.Text.WriteLine("pushl %ebp");
-            context.Text.WriteLine("movl %esp, %ebp");
+            context.Text.WriteLine("pushl %ebp          # store the stack frame of the calling function on the stack");
+            context.Text.WriteLine("movl %esp, %ebp     # takes the current stack pointer and uses it as the frame for the called function");
 
             //add variable space to stack
             if (body.HasVariables)
-                context.Text.WriteLine("subl ${0}, %esp", body.Variables.Count * 4);
+                context.Text.WriteLine("subl ${0}, %esp     # make room for local variables ", body.Variables.Count * 4);
+
+            context.Text.WriteLine("# body ");
 
             context = this.Compile(context, body.Instructions);
 
+            context.Text.WriteLine("# epilogue ");
+
             //reset to callee stack frame
-            context.Text.WriteLine("leave");
+            context.Text.WriteLine("leave               # restore calling function stack frame");
             context.Text.WriteLine("ret");
 
             return context;
@@ -58,18 +63,18 @@ namespace Zenos.Stages
             switch (instruction.OpCode.Code)
             {
                 case Code.Ldc_I4:
-                    context.Text.WriteLine("movl ${0}, %eax", instruction.Operand);
+                    context.Text.WriteLine("movl ${0}, %eax    # ldc.i4", instruction.Operand);
                     break;
                 case Code.Stloc:
-                    context.Text.WriteLine(EmitStoreInstruction(context, instruction));
+                    context.Text.WriteLine("movl %eax, {0}    # stloc ", EmitLocation(context, instruction));
                     break;
                 case Code.Nop:
                     break;
                 case Code.Ldloc:
-                    context.Text.WriteLine(EmitLoadInstruction(context, instruction));
+                    context.Text.WriteLine("movl {0}, %eax    # ldloc ", EmitLocation(context, instruction));
                     break;
                 case Code.Ldarg:
-                    context.Text.WriteLine(EmitLoadInstruction(context, instruction));
+                    context.Text.WriteLine("movl {0}, %eax    # ldarg ", EmitLocation(context, instruction));
                     break;
                 case Code.Ret:
                     //ret is handled in the method body
@@ -83,22 +88,12 @@ namespace Zenos.Stages
             return context;
         }
 
-        private string EmitLoadInstruction(ICodeContext context, Instruction instruction)
-        {
-            return string.Format("movl {0}, %eax", EmitLocation(context, instruction));
-        }
-
-        private string EmitStoreInstruction(ICodeContext context, Instruction instruction)
-        {
-            return string.Format("movl %eax, {0}", EmitLocation(context, instruction));
-        }
-
         private string EmitLocation(ICodeContext context, Instruction instruction)
         {
             if (instruction.Operand is VariableReference)
             {
                 var v = instruction.Operand as VariableReference;
-                var index = v.Index * -4;
+                var index = (v.Index + 1) * -4;
                 return string.Format("{0}(%ebp)", index);
             }
 

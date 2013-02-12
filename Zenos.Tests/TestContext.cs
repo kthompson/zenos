@@ -19,8 +19,8 @@ namespace Zenos.Tests
             if (this.IsDisposed)
                 return;
 
-            if (disposing && File.Exists(this.OutputFile))
-                File.Delete(this.OutputFile);
+            //if (disposing && File.Exists(this.OutputFile))
+            //    File.Delete(this.OutputFile);
 
             base.Dispose(disposing);
         }

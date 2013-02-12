@@ -316,7 +316,12 @@ namespace Zenos.Core
                            where File.Exists(file)
                            select file;
 
-            return commands.First();
+            var commandPath = commands.FirstOrDefault();
+
+            if(string.IsNullOrEmpty(commandPath))
+                Helper.Stop(() => new ApplicationException(command + " command not found."));
+
+            return commandPath;
         }
 
         #endregion
