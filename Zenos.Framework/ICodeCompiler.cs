@@ -10,21 +10,19 @@ namespace Zenos.Framework
 {
     public interface ICodeCompiler
     {
-        ICodeContext Compile(ICodeContext context);
+        void Compile(ICompilationContext context, MethodBody body);
+        void Compile(ICompilationContext context, Scope scope);
 
-        ICodeContext Compile(ICodeContext context, MethodBody body);
-        ICodeContext Compile(ICodeContext context, Scope scope);
+        void Compile(ICompilationContext context, Collection<ParameterDefinition> parameters);
+        void Compile(ICompilationContext context, ParameterDefinition parameter);
 
-        ICodeContext Compile(ICodeContext context, Collection<ParameterDefinition> parameters);
-        ICodeContext Compile(ICodeContext context, ParameterDefinition parameter);
+        void Compile(ICompilationContext context, Collection<VariableDefinition> variables);
+        void Compile(ICompilationContext context, VariableDefinition variable);
 
-        ICodeContext Compile(ICodeContext context, Collection<VariableDefinition> variables);
-        ICodeContext Compile(ICodeContext context, VariableDefinition variable);
+        void Compile(ICompilationContext context, Collection<ExceptionHandler> exceptions);
+        void Compile(ICompilationContext context, ExceptionHandler exception);
 
-        ICodeContext Compile(ICodeContext context, Collection<ExceptionHandler> exceptions);
-        ICodeContext Compile(ICodeContext context, ExceptionHandler exception);
-
-        ICodeContext Compile(ICodeContext context, Collection<Instruction> instructions);
-        ICodeContext Compile(ICodeContext context, Instruction instruction);
+        void Compile(ICompilationContext context, Collection<Instruction> instructions);
+        void Compile(ICompilationContext context, Instruction instruction);
     }
 }

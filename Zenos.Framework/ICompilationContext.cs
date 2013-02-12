@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Zenos.Framework
 {
-    public interface ICodeContext : IDisposable
+    public interface ICompilationContext : IDisposable
     {
         IMemberContext Context { get; }
         bool IsDisposed { get; }

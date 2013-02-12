@@ -5,12 +5,7 @@ namespace Zenos.Framework
 {
     public class CodeSimplifier : CodeCompilerStage
     {
-        public CodeSimplifier(CodeCompiler compiler)
-            : base(compiler)
-        {
-        }
-
-        public override ICodeContext Compile(ICodeContext context, MethodBody body)
+        public override void Compile(ICompilationContext context, MethodBody body)
         {
             foreach (var i in body.Instructions.Where(i => i.OpCode.OpCodeType == OpCodeType.Macro))
             {
@@ -145,9 +140,8 @@ namespace Zenos.Framework
                 }
             }
 
-            context = body.Instructions.Aggregate(context, this.Compile);
 
-            return base.Compile(context, body);
+            this.Compile(context, body.Instructions);
         }
 
         static void Simplify(Instruction i, OpCode op, object operand)
@@ -169,7 +163,7 @@ namespace Zenos.Framework
             i.Operand = (int)(byte)i.Operand;
         }
 
-        public override ICodeContext Compile(ICodeContext context, Instruction instruction)
+        public override void Compile(ICompilationContext context, Instruction instruction)
         {
             //remove jumping branches that go to the next instruction
             if (instruction.OpCode.Code == Code.Br && instruction.Operand == instruction.Next)
@@ -177,8 +171,6 @@ namespace Zenos.Framework
                 instruction.OpCode = OpCodes.Nop;
                 instruction.Operand = null;
             }
-
-            return base.Compile(context, instruction);
         }
     }
 }

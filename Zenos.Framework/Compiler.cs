@@ -10,29 +10,26 @@ namespace Zenos.Framework
 {
     public class Compiler : CompilerStage
     {
-        public MemberCompiler MemberCompiler { get; private set; }
         public List<CompilerStage> Stages { get; private set; }
 
-        public Compiler(MemberCompiler mc)
-            : base(null)
+        public Compiler(IEnumerable<CompilerStage> stages)
         {
-            this.MemberCompiler = mc;
-            this.Stages = new List<CompilerStage>();
+            this.Stages = new List<CompilerStage>(stages);
         }
 
-        public override ICompilerContext Compile(ICompilerContext context, AssemblyDefinition assembly)
+        public override void Compile(ICompilerContext context, AssemblyDefinition assembly)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, assembly));
+            this.Stages.ForEach(stage => stage.Compile(context, assembly));
         }
 
-        public override ICompilerContext Compile(ICompilerContext context, AssemblyNameDefinition assemblyName)
+        public override void Compile(ICompilerContext context, AssemblyNameDefinition assemblyName)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, assemblyName));
+            this.Stages.ForEach(stage => stage.Compile(context, assemblyName));
         }
 
-        public override ICompilerContext Compile(ICompilerContext context, ModuleDefinition module)
+        public override void Compile(ICompilerContext context, ModuleDefinition module)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, module));
+            this.Stages.ForEach(stage => stage.Compile(context, module));
         }
     }
 }

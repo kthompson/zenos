@@ -12,12 +12,7 @@ namespace Zenos.Stages
 {
     public class WriteCodeToDisk : CodeCompilerStage
     {
-        public WriteCodeToDisk(CodeCompiler compiler)
-            : base(compiler)
-        {
-        }
-
-        public override ICodeContext Compile(ICodeContext context, MethodBody body)
+        public override void Compile(ICompilationContext context, MethodBody body)
         {
             switch (context.CodeType)
             {
@@ -29,7 +24,7 @@ namespace Zenos.Stages
                     break;
                 default:
                     Helper.Break();
-                    return base.Compile(context, body);
+                    break;
             }
 
             using (var writer = new StreamWriter(File.OpenWrite(context.OutputFile)))
@@ -38,8 +33,6 @@ namespace Zenos.Stages
                 writer.WriteLine();
                 writer.WriteLine();
             }
-
-            return base.Compile(context, body);
         }
     }
 }

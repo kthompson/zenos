@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Zenos.Framework
 {
-    public class CodeContext : ICodeContext
+    public class CompilationContext : ICompilationContext
     {
         public IMemberContext Context { get; private set; }
         public StringWriter Text { get; private set; }
@@ -11,7 +11,7 @@ namespace Zenos.Framework
         public string OutputFile { get; set; }
         public bool IsDisposed { get; private set; }
 
-        public CodeContext(IMemberContext context, CodeType type)
+        public CompilationContext(IMemberContext context, CodeType type)
         {
             this.Context = context;
             this.CodeType = type;

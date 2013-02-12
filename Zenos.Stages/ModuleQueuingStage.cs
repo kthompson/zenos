@@ -6,28 +6,32 @@ namespace Zenos.Stages
 {
     public class ModuleQueuingStage : CompilerStage
     {
-        public ModuleQueuingStage(Compiler compiler)
-            : base(compiler)
+        public MemberCompiler MemberCompiler { get; set; }
+
+        public ModuleQueuingStage(MemberCompiler memberCompiler)
         {
+            this.MemberCompiler = memberCompiler;
         }
 
-        public override ICompilerContext Compile(ICompilerContext context, AssemblyDefinition assembly)
+        public override void Compile(ICompilerContext context, AssemblyDefinition assembly)
         {
             if (assembly.Modules.Count == 0)
-                return base.Compile(context, assembly);
+                return;
 
-            return assembly.Modules.Aggregate(context, (current, module) => this.Compiler.Compile(current, module));
+            foreach (var module in assembly.Modules)
+            {
+                this.Compile(context, module);
+            }
         }
-
-        public override ICompilerContext Compile(ICompilerContext context, ModuleDefinition module)
+        
+        public override void Compile(ICompilerContext context, ModuleDefinition module)
         {
             foreach (var type in module.Types)
             {
-                var mc = this.Compiler.MemberCompiler.Compile(new MemberContext(context), type);
-                context.Members.Add(mc);
+                var member = new MemberContext(context);
+                context.Members.Add(member);
+                this.MemberCompiler.Compile(member, type);
             }
-
-            return base.Compile(context, module);
         }
     }
 }

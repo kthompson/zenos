@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Mono.Cecil;
@@ -12,19 +13,14 @@ namespace Zenos.Stages
 {
     public class EmitterStage : CodeCompilerStage
     {
-        public EmitterStage(CodeCompiler compiler)
-            : base(compiler)
-        {
-        }
-
-        public override ICodeContext Compile(ICodeContext context, MethodBody body)
+        public override void Compile(ICompilationContext context, MethodBody body)
         {
             context.Text.WriteLine(".globl _{0}", body.Method.Name);
             context.Text.WriteLine(".def	_{0};	.scl	2;	.type	32;	.endef", body.Method.Name);
             context.Text.WriteLine("_{0}:", body.Method.Name);
 
             if (body.Instructions.Count == 0)
-                return base.Compile(context, body);
+                return;
 
             context.Text.WriteLine("# prologue ");
             //save callee stack frame 
@@ -37,58 +33,53 @@ namespace Zenos.Stages
 
             context.Text.WriteLine("# body ");
 
-            context = this.Compile(context, body.Instructions);
+            base.Compile(context, body);
 
             context.Text.WriteLine("# epilogue ");
 
             //reset to callee stack frame
             context.Text.WriteLine("leave               # restore calling function stack frame");
             context.Text.WriteLine("ret");
-
-            return context;
         }
 
-        public override ICodeContext Compile(ICodeContext context, Collection<VariableDefinition> variables)
+        public override void Compile(ICompilationContext context, Instruction instruction)
         {
-            return base.Compile(context, variables);
-        }
+            Trace.WriteLine(instruction);
 
-        public override ICodeContext Compile(ICodeContext context, Collection<Instruction> instructions)
-        {
-            return instructions.Aggregate(context, this.Compile);
-        }
-
-        public override ICodeContext Compile(ICodeContext context, Instruction instruction)
-        {
             switch (instruction.OpCode.Code)
             {
                 case Code.Ldc_I4:
-                    context.Text.WriteLine("movl ${0}, %eax    # ldc.i4", instruction.Operand);
+                    context.Text.WriteLine("movl ${0}, %eax     # {1}", instruction.Operand, instruction);
                     break;
                 case Code.Stloc:
-                    context.Text.WriteLine("movl %eax, {0}    # stloc ", EmitLocation(context, instruction));
+                    context.Text.WriteLine("movl %eax, {0}      # {1} ", EmitLocation(context, instruction), instruction);
                     break;
                 case Code.Nop:
                     break;
                 case Code.Ldloc:
-                    context.Text.WriteLine("movl {0}, %eax    # ldloc ", EmitLocation(context, instruction));
+                    var varType = ((VariableReference) (instruction.Operand)).VariableType;
+                    var inst = varType.FullName == "System.Single" ? "flds {0}       # {1} " : "movl {0}, %eax       # {1} ";
+
+                    context.Text.WriteLine(inst, EmitLocation(context, instruction), instruction);
                     break;
                 case Code.Ldarg:
-                    context.Text.WriteLine("movl {0}, %eax    # ldarg ", EmitLocation(context, instruction));
+                    context.Text.WriteLine("movl {0}, %eax      # {1} ", EmitLocation(context, instruction), instruction);
                     break;
                 case Code.Ret:
                     //ret is handled in the method body
                     Helper.IsNull(instruction.Next);
                     break;
+                case Code.Ldc_R4:
+                    var inIEEE754 = BitConverter.ToInt32(BitConverter.GetBytes((float) instruction.Operand), 0);
+                    context.Text.WriteLine("movl $0x{0}, %eax    # {1}", inIEEE754.ToString("x"),  instruction);
+                    break;
                 default:
                     Helper.NotSupported(string.Format("Instruction not supported: {0}", instruction));
                     break;
             }
-
-            return context;
         }
 
-        private string EmitLocation(ICodeContext context, Instruction instruction)
+        private string EmitLocation(ICompilationContext context, Instruction instruction)
         {
             if (instruction.Operand is VariableReference)
             {

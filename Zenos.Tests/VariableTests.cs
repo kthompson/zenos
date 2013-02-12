@@ -1,5 +1,8 @@
 ﻿using NUnit.Framework;
 
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
+// ReSharper disable ConvertToConstant.Local
+
 namespace Zenos.Tests
 {
     [TestFixture]

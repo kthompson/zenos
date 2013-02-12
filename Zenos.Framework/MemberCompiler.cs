@@ -8,44 +8,36 @@ namespace Zenos.Framework
 {
     public class MemberCompiler : MemberCompilerStage
     {
-        public CodeCompiler CodeCompiler { get; private set; }
         public List<MemberCompilerStage> Stages { get; private set; }
 
-        public MemberCompiler(CodeCompiler cc)
-            : base(null)
+        public MemberCompiler(IEnumerable<MemberCompilerStage> stages)
         {
-            this.CodeCompiler = cc;
-            this.Stages = new List<MemberCompilerStage>();
+            this.Stages = new List<MemberCompilerStage>(stages);
         }
 
-        public override IMemberContext Compile(IMemberContext context, EventDefinition @event)
+        public override void Compile(IMemberContext context, EventDefinition @event)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, @event));
+            this.Stages.ForEach(stage => stage.Compile(context, @event));
         }
 
-        public override IMemberContext Compile(IMemberContext context, FieldDefinition field)
+        public override void Compile(IMemberContext context, FieldDefinition field)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, field));
+            this.Stages.ForEach(stage => stage.Compile(context, field));
         }
 
-        public override IMemberContext Compile(IMemberContext context, IMemberDefinition member)
+        public override void Compile(IMemberContext context, MethodDefinition method)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, member));
+            this.Stages.ForEach(stage => stage.Compile(context, method));
         }
 
-        public override IMemberContext Compile(IMemberContext context, MethodDefinition method)
+        public override void Compile(IMemberContext context, PropertyDefinition property)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, method));
+            this.Stages.ForEach(stage => stage.Compile(context, property));
         }
 
-        public override IMemberContext Compile(IMemberContext context, PropertyDefinition property)
+        public override void Compile(IMemberContext context, TypeDefinition type)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, property));
-        }
-
-        public override IMemberContext Compile(IMemberContext context, TypeDefinition type)
-        {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, type));
+            this.Stages.ForEach(stage => stage.Compile(context, type));
         }
     }
 }

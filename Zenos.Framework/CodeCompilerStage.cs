@@ -7,66 +7,57 @@ namespace Zenos.Framework
 {
     public abstract class CodeCompilerStage : ICodeCompiler
     {
-        public CodeCompiler CodeCompiler { get; private set; }
 
-        protected CodeCompilerStage(CodeCompiler compiler)
+        public virtual void Compile(ICompilationContext context, MethodBody body)
         {
-            this.CodeCompiler = compiler;
+            this.Compile(context, body.ExceptionHandlers);
+            this.Compile(context, body.Variables);
+            this.Compile(context, body.Scope);
+            this.Compile(context, body.Instructions);
         }
 
-        public virtual ICodeContext Compile(ICodeContext context)
+        public virtual void Compile(ICompilationContext context, Collection<ParameterDefinition> parameters)
         {
-            return context;
+            foreach (var parameter in parameters)
+                this.Compile(context, parameter);
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, MethodBody body)
+        public virtual void Compile(ICompilationContext context, ParameterDefinition parameter)
         {
-            return context;
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, Collection<ParameterDefinition> parameters)
+        public virtual void Compile(ICompilationContext context, Collection<VariableDefinition> variables)
         {
-            return context;
+            foreach (var variable in variables)
+                this.Compile(context, variable);
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, ParameterDefinition parameter)
+        public virtual void Compile(ICompilationContext context, Scope scope)
         {
-            return context;
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, Collection<VariableDefinition> variables)
+        public virtual void Compile(ICompilationContext context, VariableDefinition variable)
         {
-            return context;
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, Scope scope)
+        public virtual void Compile(ICompilationContext context, Collection<ExceptionHandler> exceptions)
         {
-            return context;
+            foreach (var exception in exceptions)
+                this.Compile(context, exception);
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, VariableDefinition variable)
+        public virtual void Compile(ICompilationContext context, ExceptionHandler exception)
         {
-            return context;
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, Collection<ExceptionHandler> exceptions)
+        public virtual void Compile(ICompilationContext context, Collection<Instruction> instructions)
         {
-            return context;
+            foreach (var instruction in instructions)
+                this.Compile(context, instruction);
         }
 
-        public virtual ICodeContext Compile(ICodeContext context, ExceptionHandler exception)
+        public virtual void Compile(ICompilationContext context, Instruction instruction)
         {
-            return context;
-        }
-
-        public virtual ICodeContext Compile(ICodeContext context, Collection<Instruction> instructions)
-        {
-            return context;
-        }
-
-        public virtual ICodeContext Compile(ICodeContext context, Instruction instruction)
-        {
-            return context;
         }
     }
 }

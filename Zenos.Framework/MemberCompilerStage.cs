@@ -4,41 +4,35 @@ namespace Zenos.Framework
 {
     public abstract class MemberCompilerStage : IMemberCompiler
     {
-        public MemberCompiler MemberCompiler { get; private set; }
-
-        protected MemberCompilerStage(MemberCompiler compiler)
+        public virtual void Compile(IMemberContext context, EventDefinition @event)
         {
-            this.MemberCompiler = compiler;
         }
 
-        public virtual IMemberContext Compile(IMemberContext context, IMemberDefinition member)
+        public virtual void Compile(IMemberContext context, FieldDefinition field)
         {
-            return context;
         }
 
-        public virtual IMemberContext Compile(IMemberContext context, EventDefinition @event)
+        public virtual void Compile(IMemberContext context, MethodDefinition method)
         {
-            return context;
         }
 
-        public virtual IMemberContext Compile(IMemberContext context, FieldDefinition field)
+        public virtual void Compile(IMemberContext context, PropertyDefinition property)
         {
-            return context;
         }
 
-        public virtual IMemberContext Compile(IMemberContext context, MethodDefinition method)
+        public virtual void Compile(IMemberContext context, TypeDefinition type)
         {
-            return context;
-        }
+            foreach (var method in type.Methods)
+                this.Compile(context, method);
 
-        public virtual IMemberContext Compile(IMemberContext context, PropertyDefinition property)
-        {
-            return context;
-        }
+            foreach (var property in type.Properties)
+                this.Compile(context, property);
 
-        public virtual IMemberContext Compile(IMemberContext context, TypeDefinition type)
-        {
-            return context;
+            foreach (var field in type.Fields)
+                this.Compile(context, field);
+
+            foreach (var @event in type.Events)
+                this.Compile(context, @event);
         }
     }
 }

@@ -9,12 +9,7 @@ namespace Zenos.Stages
 {
     public class GccBuildStage : CompilerStage
     {
-        public GccBuildStage(Compiler compiler)
-            : base(compiler)
-        {
-        }
-
-        public override ICompilerContext Compile(ICompilerContext context, Mono.Cecil.ModuleDefinition module)
+        public override void Compile(ICompilerContext context, Mono.Cecil.ModuleDefinition module)
         {
             var cmd = new StringBuilder("gcc -Wall -o ");
             cmd.Append(context.OutputFile);
@@ -29,11 +24,10 @@ namespace Zenos.Stages
                 if (!string.IsNullOrEmpty(error))
                     Helper.Break();
 
-                return context;
+                return;
             }
 
             Helper.Stop(() => new ApplicationException(error + output));
-            return null;
         }
     }
 }

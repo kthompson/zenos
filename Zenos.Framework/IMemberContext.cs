@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Mono.Cecil;
 
 namespace Zenos.Framework
 {
@@ -7,6 +8,6 @@ namespace Zenos.Framework
     {
         ICompilerContext Context { get; }
         bool IsDisposed { get; }
-        List<ICodeContext> CodeContexts { get; }
+        List<ICompilationContext> CodeContexts { get; }
     }
 }

@@ -8,8 +8,8 @@ namespace Zenos.Framework
 {
     public interface ICompiler
     {
-        ICompilerContext Compile(ICompilerContext context, AssemblyDefinition assembly);
-        ICompilerContext Compile(ICompilerContext context, AssemblyNameDefinition assemblyName);
-        ICompilerContext Compile(ICompilerContext context, ModuleDefinition module);
+        void Compile(ICompilerContext context, AssemblyDefinition assembly);
+        void Compile(ICompilerContext context, AssemblyNameDefinition assemblyName);
+        void Compile(ICompilerContext context, ModuleDefinition module);
     }
 }

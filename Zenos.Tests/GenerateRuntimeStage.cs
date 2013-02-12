@@ -11,23 +11,18 @@ namespace Zenos.Tests
 {
     public class GenerateRuntimeStage : MemberCompilerStage
     {
-        public GenerateRuntimeStage(MemberCompiler compiler)
-            : base(compiler)
-        {
-        }
-
-        public override IMemberContext Compile(IMemberContext context, MethodDefinition method)
+        public override void Compile(IMemberContext context, MethodDefinition method)
         {
             var cc = CreateRuntime(context, method);
 
             context.CodeContexts.Add(cc);
 
-            return base.Compile(context, method);
+            base.Compile(context, method);
         }
 
-        private static ICodeContext CreateRuntime(IMemberContext context, MethodReference method)
+        private static ICompilationContext CreateRuntime(IMemberContext context, MethodReference method)
         {
-            ICodeContext cc = new CodeContext(context, CodeType.C);
+            ICompilationContext cc = new CompilationContext(context, CodeType.C);
 
             var arguments = GetMethodArguments(context);
             cc.OutputFile = "runtime_".Append(method.Name, "_").AppendRandom(32, ".c");
@@ -53,7 +48,7 @@ namespace Zenos.Tests
                 //runtime.WriteLine("	int stack_size = (16 * 4096);");
                 //runtime.WriteLine("	char* stack_top = malloc(stack_size);");
                 //runtime.WriteLine("	char* stack_base = stack_top + stack_size;");
-                runtime.WriteLine(string.Format("	printf(\"{0}\\n\", {1});", printf, function));
+                runtime.WriteLine("	printf(\"{0}\\n\", {1});", printf, function);
                 //runtime.WriteLine("	free(stack_top);");
                 runtime.WriteLine("	return 0;");
                 runtime.WriteLine("}");
@@ -126,7 +121,7 @@ namespace Zenos.Tests
             switch (method.ReturnType.Name.ToLower())
             {
                 case "single":
-                    printf = "%.3f";
+                    printf = "%f";
                     returnType = "float";
                     break;
                 case "int32":

@@ -9,29 +9,21 @@ namespace Zenos.Stages
 {
     public class CodeQueuingStage : MemberCompilerStage
     {
-        public CodeQueuingStage(MemberCompiler compiler)
-            : base(compiler)
+        public CodeCompiler CodeCompiler { get; private set; }
+
+        public CodeQueuingStage(CodeCompiler codeCompiler)
         {
+            CodeCompiler = codeCompiler;
         }
 
-        public override IMemberContext Compile(IMemberContext context, TypeDefinition type)
+        public override void Compile(IMemberContext context, MethodDefinition method)
         {
-            if (type.Methods.Count == 0)
-                return context;
+            if (!method.HasBody) 
+                return;
 
-            return type.Methods.Aggregate(context, (current, method) => this.MemberCompiler.Compile(current, method));
-        }
-
-        public override IMemberContext Compile(IMemberContext context, MethodDefinition method)
-        {
-            if (method.HasBody)
-            {
-                ICodeContext cc = new CodeContext(context, CodeType.Assembler);
-                cc = this.MemberCompiler.CodeCompiler.Compile(cc, method.Body);
-                context.CodeContexts.Add(cc);
-            }
-
-            return base.Compile(context, method);
+            var compilationContext = new CompilationContext(context, CodeType.Assembler);
+            this.CodeCompiler.Compile(compilationContext, method.Body);
+            context.CodeContexts.Add(compilationContext);
         }
     }
 }

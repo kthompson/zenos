@@ -8,11 +8,10 @@ namespace Zenos.Framework
 {
     public interface IMemberCompiler
     {
-        IMemberContext Compile(IMemberContext context, IMemberDefinition member);
-        IMemberContext Compile(IMemberContext context, EventDefinition @event);
-        IMemberContext Compile(IMemberContext context, FieldDefinition field);
-        IMemberContext Compile(IMemberContext context, MethodDefinition method);
-        IMemberContext Compile(IMemberContext context, PropertyDefinition property);
-        IMemberContext Compile(IMemberContext context, TypeDefinition type);
+        void Compile(IMemberContext context, EventDefinition @event);
+        void Compile(IMemberContext context, FieldDefinition field);
+        void Compile(IMemberContext context, MethodDefinition method);
+        void Compile(IMemberContext context, PropertyDefinition property);
+        void Compile(IMemberContext context, TypeDefinition type);
     }
 }

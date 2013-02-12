@@ -5,10 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Autofac;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using NUnit.Framework;
+using Ninject;
 using Zenos.Core;
 using Zenos.Framework;
 using SR = System.Reflection;
@@ -20,17 +20,15 @@ namespace Zenos.Tests
     {
         static Test()
         {
-            var builder = new ContainerBuilder();
-            builder.RegisterModule(new TestCompilerModule());
-            Container = builder.Build();
+            Container = new StandardKernel(new TestCompilerModule());
         }
 
-        private static readonly IContainer Container;
+        private static readonly IKernel Container;
         private static Compiler Compiler
         {
             get
             {
-                return Container.Resolve<Compiler>();
+                return Container.Get<Compiler>();
             }
         }
 
@@ -71,13 +69,15 @@ namespace Zenos.Tests
                 var assembly = AssemblyFromMethod(method);
 
                 var context = new TestContext("test_".AppendRandom(20, ".exe"), arguments);
-
+                
                 //compile 
-                using (var output = Compiler.Compile(context, assembly))
+                Compiler.Compile(context, assembly);
+
+                using (context)
                 {
-                    Assert.IsNotNull(output);
+                    Assert.IsNotNull(context);
                     //run the compiled exe and return output
-                    Assert.AreEqual(del.DynamicInvoke(arguments).ToString(), Helper.Execute(output.OutputFile));
+                    Assert.AreEqual(del.DynamicInvoke(arguments).ToString(), Helper.Execute(context.OutputFile));
                 }
             }
             catch (AssertionException)

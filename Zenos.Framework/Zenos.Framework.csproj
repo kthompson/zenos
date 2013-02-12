@@ -75,14 +75,14 @@
   <ItemGroup>
     <Compile Include="CodeCompiler.cs" />
     <Compile Include="CodeCompilerStage.cs" />
-    <Compile Include="CodeContext.cs" />
+    <Compile Include="CompilationContext.cs" />
     <Compile Include="CodeSimplifier.cs" />
     <Compile Include="CodeType.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="CompilerContext.cs" />
     <Compile Include="CompilerStage.cs" />
     <Compile Include="ICodeCompiler.cs" />
-    <Compile Include="ICodeContext.cs" />
+    <Compile Include="ICompilationContext.cs" />
     <Compile Include="ICompiler.cs" />
     <Compile Include="ICompilerContext.cs" />
     <Compile Include="IMemberCompiler.cs" />

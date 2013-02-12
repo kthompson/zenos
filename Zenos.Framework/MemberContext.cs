@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Mono.Cecil;
 
 namespace Zenos.Framework
 {
@@ -7,13 +8,13 @@ namespace Zenos.Framework
     {
         public ICompilerContext Context { get; private set; }
 
-        public List<ICodeContext> CodeContexts { get; private set; }
+        public List<ICompilationContext> CodeContexts { get; private set; }
         public bool IsDisposed { get; private set; }
 
         public MemberContext(ICompilerContext context)
         {
             this.Context = context;
-            this.CodeContexts = new List<ICodeContext>();
+            this.CodeContexts = new List<ICompilationContext>();
         }
 
         protected virtual void Dispose(bool disposing)

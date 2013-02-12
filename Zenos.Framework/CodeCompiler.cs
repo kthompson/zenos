@@ -11,45 +11,39 @@ namespace Zenos.Framework
     {
         public List<CodeCompilerStage> Stages { get; private set; }
 
-        public CodeCompiler()
-            : base(null)
+        public CodeCompiler(IEnumerable<CodeCompilerStage> stages)
         {
-            this.Stages = new List<CodeCompilerStage>();
+            this.Stages = new List<CodeCompilerStage>(stages);
         }
 
-        public override ICodeContext Compile(ICodeContext context)
+        public override void Compile(ICompilationContext context, ExceptionHandler exception)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current));
+            this.Stages.ForEach(stage => stage.Compile(context, exception));
         }
 
-        public override ICodeContext Compile(ICodeContext context, ExceptionHandler exception)
+        public override void Compile(ICompilationContext context, Instruction instruction)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, exception));
+            this.Stages.ForEach(stage => stage.Compile(context, instruction));
         }
 
-        public override ICodeContext Compile(ICodeContext context, Instruction instruction)
+        public override void Compile(ICompilationContext context, MethodBody body)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, instruction));
+            this.Stages.ForEach(stage => stage.Compile(context, body));
         }
 
-        public override ICodeContext Compile(ICodeContext context, MethodBody body)
+        public override void Compile(ICompilationContext context, ParameterDefinition parameter)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, body));
+            this.Stages.ForEach(stage => stage.Compile(context, parameter));
         }
 
-        public override ICodeContext Compile(ICodeContext context, ParameterDefinition parameter)
+        public override void Compile(ICompilationContext context, Scope scope)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, parameter));
+            this.Stages.ForEach(stage => stage.Compile(context, scope));
         }
 
-        public override ICodeContext Compile(ICodeContext context, Scope scope)
+        public override void Compile(ICompilationContext context, VariableDefinition variable)
         {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, scope));
-        }
-
-        public override ICodeContext Compile(ICodeContext context, VariableDefinition variable)
-        {
-            return this.Stages.Aggregate(context, (current, stage) => stage.Compile(current, variable));
+            this.Stages.ForEach(stage => stage.Compile(context, variable));
         }
     }
 }
