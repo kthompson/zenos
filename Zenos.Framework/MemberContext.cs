@@ -1,21 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 
 namespace Zenos.Framework
 {
     public class MemberContext : IMemberContext
     {
-        public ICompilerContext Context { get; private set; }
+        readonly Dictionary<object, ICompilationContext> _compilationContexts = new Dictionary<object, ICompilationContext>();
 
-        public List<ICompilationContext> CodeContexts { get; private set; }
+        public ICompilerContext Context { get; private set; }
         public bool IsDisposed { get; private set; }
+
+        public ICompilationContext[] CodeContexts
+        {
+            get { return _compilationContexts.Values.ToArray(); }
+        }
 
         public MemberContext(ICompilerContext context)
         {
             this.Context = context;
-            this.CodeContexts = new List<ICompilationContext>();
         }
+
+        public ICompilationContext GetCompilationContext(object key)
+        {
+            if (_compilationContexts.ContainsKey(key))
+                return _compilationContexts[key];
+
+            return null;
+        }
+
+        public ICompilationContext GetOrCreateCompilationContext(object key)
+        {
+            return GetCompilationContext(key) ?? CreateCompilationContext(key);
+        }
+
+        public ICompilationContext CreateCompilationContext()
+        {
+            return CreateCompilationContext(Guid.NewGuid().ToString());
+        }
+
+        public ICompilationContext CreateCompilationContext(object key)
+        {
+            return (_compilationContexts[key] = new CompilationContext(this));
+        }
+        
 
         protected virtual void Dispose(bool disposing)
         {

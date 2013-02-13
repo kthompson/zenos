@@ -13,48 +13,32 @@ namespace Zenos.Tests
     {
         public override void Compile(IMemberContext context, MethodDefinition method)
         {
-            var cc = CreateRuntime(context, method);
-
-            context.CodeContexts.Add(cc);
-
-            base.Compile(context, method);
-        }
-
-        private static ICompilationContext CreateRuntime(IMemberContext context, MethodReference method)
-        {
-            ICompilationContext cc = new CompilationContext(context, CodeType.C);
+            var cc = context.CreateCompilationContext();
 
             var arguments = GetMethodArguments(context);
             cc.OutputFile = "runtime_".Append(method.Name, "_").AppendRandom(32, ".c");
 
             using (var runtime = new StreamWriter(File.OpenWrite(cc.OutputFile)))
             {
-                //string function = "setup_stack(stack_base)";
                 var function = string.Format("{0}({1})", method.Name, string.Join(", ", arguments));
-                string returnType;
 
                 var printf = GetPrintFormat(method, ref function);
 
                 runtime.WriteLine("#include <stdio.h>");
                 runtime.WriteLine("#include <stdbool.h>");
                 runtime.WriteLine("#include <stdlib.h>");
-                //runtime.WriteLine();
-                //runtime.WriteLine(string.Format("{0} setup_stack(char*);", returnType));
-                WriteMethodSignature(runtime, method);
                 runtime.WriteLine();
+                WriteMethodSignature(runtime, method);
                 runtime.WriteLine();
                 runtime.WriteLine("int main(int argc, char** argv)");
                 runtime.WriteLine("{");
-                //runtime.WriteLine("	int stack_size = (16 * 4096);");
-                //runtime.WriteLine("	char* stack_top = malloc(stack_size);");
-                //runtime.WriteLine("	char* stack_base = stack_top + stack_size;");
                 runtime.WriteLine("	printf(\"{0}\\n\", {1});", printf, function);
-                //runtime.WriteLine("	free(stack_top);");
                 runtime.WriteLine("	return 0;");
                 runtime.WriteLine("}");
             }
 
-            return cc;
+
+            base.Compile(context, method);
         }
 
         private static void WriteMethodSignature(StreamWriter runtime, MethodReference method)
@@ -76,7 +60,7 @@ namespace Zenos.Tests
             }
         }
 
-        private static void WriteParameter(StreamWriter runtime, ParameterDefinition parameterDefinition)
+        private static void WriteParameter(StreamWriter runtime, ParameterReference parameterDefinition)
         {
             WriteType(runtime, parameterDefinition.ParameterType);
             runtime.Write(" {0}", parameterDefinition.Name);

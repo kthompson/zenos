@@ -15,6 +15,8 @@ namespace Zenos.Stages
     {
         public override void Compile(ICompilationContext context, MethodBody body)
         {
+            context.OutputFile = body.Method.Name.ToFileName().AppendRandom("_", 32, ".s");
+
             context.Text.WriteLine(".globl _{0}", body.Method.Name);
             context.Text.WriteLine(".def	_{0};	.scl	2;	.type	32;	.endef", body.Method.Name);
             context.Text.WriteLine("_{0}:", body.Method.Name);

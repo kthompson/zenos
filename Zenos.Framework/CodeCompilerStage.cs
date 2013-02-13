@@ -5,8 +5,20 @@ using Mono.Collections.Generic;
 
 namespace Zenos.Framework
 {
-    public abstract class CodeCompilerStage : ICodeCompiler
+    public abstract class CodeCompilerStage : MemberCompilerStage, ICodeCompiler
     {
+        public override void Compile(IMemberContext context, MethodDefinition method)
+        {
+            var cc = context.GetCompilationContext(method);
+            if (cc == null)
+                return;
+
+            if(method.HasParameters)
+                this.Compile(cc, method.Parameters);
+
+            if(method.HasBody)
+                this.Compile(cc, method.Body);
+        }
 
         public virtual void Compile(ICompilationContext context, MethodBody body)
         {

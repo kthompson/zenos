@@ -8,6 +8,11 @@ namespace Zenos.Framework
     {
         ICompilerContext Context { get; }
         bool IsDisposed { get; }
-        List<ICompilationContext> CodeContexts { get; }
+        ICompilationContext[] CodeContexts { get; }
+
+        ICompilationContext GetCompilationContext(object key);
+        ICompilationContext GetOrCreateCompilationContext(object key);
+        ICompilationContext CreateCompilationContext(object key);
+        ICompilationContext CreateCompilationContext();
     }
 }

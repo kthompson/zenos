@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Mono.Cecil;
 using Zenos.Core;
 using Zenos.Framework;
 
@@ -9,7 +10,7 @@ namespace Zenos.Stages
 {
     public class GccBuildStage : CompilerStage
     {
-        public override void Compile(ICompilerContext context, Mono.Cecil.ModuleDefinition module)
+        public override void Compile(ICompilerContext context, ModuleDefinition module)
         {
             var cmd = new StringBuilder("gcc -Wall -o ");
             cmd.Append(context.OutputFile);

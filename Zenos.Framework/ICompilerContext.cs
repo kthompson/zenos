@@ -6,8 +6,14 @@ namespace Zenos.Framework
 {
     public interface ICompilerContext : IDisposable
     {
-        List<IMemberContext> Members { get; }
         bool IsDisposed { get; }
         string OutputFile { get; }
+
+        IMemberContext[] Members { get; }
+
+        IMemberContext GetMemberContext(object key);
+        IMemberContext GetOrCreateMemberContext(object key);
+        IMemberContext CreateMemberContext(object key);
+        IMemberContext CreateMemberContext();
     }
 }

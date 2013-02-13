@@ -14,19 +14,6 @@ namespace Zenos.Stages
     {
         public override void Compile(ICompilationContext context, MethodBody body)
         {
-            switch (context.CodeType)
-            {
-                case CodeType.Assembler:
-                    context.OutputFile = body.Method.Name.ToFileName().AppendRandom("_", 32, ".s");
-                    break;
-                case CodeType.C:
-                    context.OutputFile = body.Method.Name.ToFileName().AppendRandom("_", 32, ".c");
-                    break;
-                default:
-                    Helper.Break();
-                    break;
-            }
-
             using (var writer = new StreamWriter(File.OpenWrite(context.OutputFile)))
             {
                 writer.Write(context.Text.ToString());

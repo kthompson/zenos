@@ -73,7 +73,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeCompiler.cs" />
     <Compile Include="CodeCompilerStage.cs" />
     <Compile Include="CompilationContext.cs" />
     <Compile Include="CodeSimplifier.cs" />
@@ -87,7 +86,6 @@
     <Compile Include="ICompilerContext.cs" />
     <Compile Include="IMemberCompiler.cs" />
     <Compile Include="IMemberContext.cs" />
-    <Compile Include="MemberCompiler.cs" />
     <Compile Include="MemberCompilerStage.cs" />
     <Compile Include="MemberContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
