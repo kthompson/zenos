@@ -2,7 +2,7 @@
 
 namespace Zenos.Framework
 {
-    public abstract class CompilerStage : ICompiler
+    public abstract class CompilerStage : ICompilerStage
     {
         public virtual void Compile(ICompilerContext context, AssemblyDefinition assembly)
         {

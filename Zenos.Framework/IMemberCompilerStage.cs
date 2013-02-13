@@ -6,7 +6,7 @@ using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    public interface IMemberCompiler
+    public interface IMemberCompilerStage : ICompilerStage
     {
         void Compile(IMemberContext context, EventDefinition @event);
         void Compile(IMemberContext context, FieldDefinition field);

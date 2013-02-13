@@ -5,7 +5,7 @@ using Mono.Collections.Generic;
 
 namespace Zenos.Framework
 {
-    public abstract class CodeCompilerStage : MemberCompilerStage, ICodeCompiler
+    public abstract class CodeCompilerStage : MemberCompilerStage, ICodeCompilerStage
     {
         public override void Compile(IMemberContext context, MethodDefinition method)
         {

@@ -8,7 +8,7 @@ using Mono.Collections.Generic;
 
 namespace Zenos.Framework
 {
-    public interface ICodeCompiler
+    public interface ICodeCompilerStage : IMemberCompilerStage
     {
         void Compile(ICompilationContext context, MethodBody body);
         void Compile(ICompilationContext context, Scope scope);

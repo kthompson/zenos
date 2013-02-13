@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using Mono.Cecil;
 using Zenos.Framework;
@@ -15,7 +16,7 @@ namespace Zenos.Stages
 
             if (!method.HasBody) 
                 return;
-
+            
             context.CreateCompilationContext(method);
         }
     }

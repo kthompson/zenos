@@ -2,7 +2,7 @@
 
 namespace Zenos.Framework
 {
-    public abstract class MemberCompilerStage : CompilerStage, IMemberCompiler
+    public abstract class MemberCompilerStage : CompilerStage, IMemberCompilerStage
     {
         public override void Compile(ICompilerContext context, ModuleDefinition module)
         {

@@ -6,7 +6,7 @@ using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    public interface ICompiler
+    public interface ICompilerStage
     {
         void Compile(ICompilerContext context, AssemblyDefinition assembly);
         void Compile(ICompilerContext context, AssemblyNameDefinition assemblyName);

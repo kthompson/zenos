@@ -12,7 +12,7 @@ namespace Zenos.Tests
     {
         public override void Load()
         {
-            this.Bind<ICompiler>().To<Compiler>();
+            this.Bind<ICompilerStage>().To<Compiler>();
             this.Bind<CompilerStage>().To<ModuleQueuingStage>();
 
             this.Bind<CompilerStage>().To<CodeQueuingStage>(); 
