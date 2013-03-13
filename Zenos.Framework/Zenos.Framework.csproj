@@ -73,6 +73,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CilToExpressionTranslator.cs" />
     <Compile Include="CodeCompilerStage.cs" />
     <Compile Include="CompilationContext.cs" />
     <Compile Include="CodeSimplifier.cs" />
@@ -90,6 +91,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Cecil.Decompiler\Cecil.Decompiler.csproj">
+      <Project>{ED1BE103-1699-4116-A732-616BEB142EB2}</Project>
+      <Name>Cecil.Decompiler</Name>
+    </ProjectReference>
     <ProjectReference Include="..\dependencies\cecil\Mono.Cecil.csproj">
       <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
       <Name>Mono.Cecil</Name>

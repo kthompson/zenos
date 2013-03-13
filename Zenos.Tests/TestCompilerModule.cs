@@ -12,15 +12,18 @@ namespace Zenos.Tests
     {
         public override void Load()
         {
-            this.Bind<ICompilerStage>().To<Compiler>();
-            this.Bind<CompilerStage>().To<ModuleQueuingStage>();
+            this.Bind<Compiler>().To<Compiler>();
+            
+            this.Bind<ICompilerStage>().To<ModuleQueuingStage>();
 
-            this.Bind<CompilerStage>().To<CodeQueuingStage>(); 
-            this.Bind<CompilerStage>().To<GenerateRuntimeStage>();
-            this.Bind<CompilerStage>().To<CodeSimplifier>();
-            this.Bind<CompilerStage>().To<EmitterStage>();
-            this.Bind<CompilerStage>().To<WriteCodeToDisk>();
-            this.Bind<CompilerStage>().To<GccBuildStage>();
+            this.Bind<ICompilerStage>().To<CodeQueuingStage>();
+            this.Bind<ICompilerStage>().To<GenerateRuntimeStage>();
+            this.Bind<ICompilerStage>().To<CodeSimplifier>();
+            this.Bind<ICompilerStage>().To<CilToExpressionTranslator>();
+
+            this.Bind<ICompilerStage>().To<EmitterStage>();
+            this.Bind<ICompilerStage>().To<WriteCodeToDisk>();
+            this.Bind<ICompilerStage>().To<GccBuildStage>();
         }
     }
 }

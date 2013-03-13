@@ -10,11 +10,11 @@ namespace Zenos.Framework
 {
     public class Compiler : CompilerStage
     {
-        public List<CompilerStage> Stages { get; private set; }
+        public List<ICompilerStage> Stages { get; private set; }
 
-        public Compiler(IEnumerable<CompilerStage> stages)
+        public Compiler(IEnumerable<ICompilerStage> stages)
         {
-            this.Stages = new List<CompilerStage>(stages);
+            this.Stages = new List<ICompilerStage>(stages);
         }
 
         public override void Compile(ICompilerContext context, AssemblyDefinition assembly)
