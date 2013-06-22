@@ -7,19 +7,27 @@ namespace Zenos.Framework
     public class CompilationContext : ICompilationContext
     {
         public IMemberContext Context { get; private set; }
-        public StringWriter Text { get; private set; }
-        public StringWriter Data { get; private set; }
+        public Sections Sections { get; private set; }
         public string OutputFile { get; set; }
         public bool IsDisposed { get; private set; }
 
         public CompilationContext(IMemberContext context)
         {
             this.Context = context;
-            this.Text = new StringWriter();
-            this.Data = new StringWriter();
+            this.Sections = new Sections();
         }
 
         private int _lastLabel = 1;
+        public Section Text
+        {
+            get { return this.Sections["text"]; }
+        }
+
+        public Section Data
+        {
+            get { return this.Sections["rdata"]; }
+        }
+
         public string CreateLabel(string prefix = null)
         {
             return (prefix ?? "L") + (_lastLabel++).ToString("D4");
@@ -33,16 +41,9 @@ namespace Zenos.Framework
             if (!disposing)
                 return;
 
-            if (this.Text != null)
+            foreach (var section in this.Sections)
             {
-                this.Text.Dispose();
-                this.Text = null;
-            }
-
-            if (this.Data != null)
-            {
-                this.Data.Dispose();
-                this.Data = null;
+                section.Dispose();
             }
 
             this.Context = null;

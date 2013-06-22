@@ -12,7 +12,7 @@ namespace Zenos.Stages
     {
         public override void Compile(ICompilerContext context, ModuleDefinition module)
         {
-            var cmd = new StringBuilder("gcc -Wall -o ");
+            var cmd = new StringBuilder("gcc -Wall -shared -o ");
             cmd.Append(context.OutputFile);
 
             foreach (var code in context.Members.SelectMany(m => m.CodeContexts))

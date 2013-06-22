@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using Cecil.Decompiler;
-using Cecil.Decompiler.Ast;
+using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Zenos.Core;
@@ -17,6 +16,7 @@ namespace Zenos.Framework
 
             //setup data section
             context.Data.WriteLine(".section .rdata,\"dr\"");
+            context.Sections["drectve"].WriteLine(".section .drectve");
 
             context.Text.WriteLine(".globl _{0}", body.Method.Name);
             context.Text.WriteLine(".def	_{0};	.scl	2;	.type	32;	.endef", body.Method.Name);
@@ -36,7 +36,7 @@ namespace Zenos.Framework
 
             context.Text.WriteLine("# body ");
 
-            this.Compile(context, body.Decompile());
+            this.Compile(context, body.Method.Decompile());
 
             //base.Compile(context, body);
 
@@ -56,17 +56,18 @@ namespace Zenos.Framework
 
         public virtual void Compile(ICompilationContext context, Statement statement)
         {
-            switch (statement.CodeNodeType)
+            if (statement is ExpressionStatement)
             {
-                case CodeNodeType.ExpressionStatement:
-                    Compile(context, (ExpressionStatement)statement);
-                    break;
-                case CodeNodeType.ReturnStatement:
-                    Compile(context, (ReturnStatement)statement);
-                    break;
-                default:
-                    Helper.Break();
-                    break;
+                Compile(context, (ExpressionStatement) statement);
+            }
+            else if (statement is ReturnStatement)
+            {
+
+                Compile(context, (ReturnStatement) statement);
+            }
+            else
+            {
+                Helper.Break();
             }
         }
 
@@ -77,85 +78,100 @@ namespace Zenos.Framework
 
         public virtual void Compile(ICompilationContext context, ReturnStatement statement)
         {
+            Compile(context, statement.Expression);
         }
 
 
         public virtual void Compile(ICompilationContext context, Expression expression)
         {
-            switch (expression.CodeNodeType)
+            if (expression is AssignmentExpression)
             {
-                case CodeNodeType.AssignExpression:
-                    Compile(context, (AssignExpression)expression);
-                    break;
-
-                case CodeNodeType.LiteralExpression:
-                    Compile(context, (LiteralExpression)expression);
-                    break;
-
-                default:
-                    Helper.Break();
-                    break;
+                Compile(context, (AssignmentExpression)expression);
             }
-        }
-
-        public virtual void Compile(ICompilationContext context, AssignExpression expression)
-        {
-            Load(context, expression.Expression);
-            
-            Store(context, expression.Target);
-        }
-
-        private void Load(ICompilationContext context, Expression expression)
-        {
-            switch (expression.CodeNodeType)
+            else if(expression is PrimitiveExpression)
             {
-                case CodeNodeType.LiteralExpression:
-                    EmitLiteral(context, ((LiteralExpression) expression).Value);
-                    break;
-
-                case CodeNodeType.VariableReferenceExpression:
-                    var v = ((VariableReferenceExpression) expression).Variable;
-                    var location = GetVariableLocation(v);
-
-                    context.Text.WriteLine("    movl {0}, %eax       # [{1}] {2} ", location, v.Index, v.VariableType);
-                    break;
-
-                default:
-                    Helper.Break();
-                    break;
-            }
-        }
-
-        private void Store(ICompilationContext context, Expression target)
-        {
-            if (target is VariableReferenceExpression)
-            {
-                var v = ((VariableReferenceExpression)target).Variable;
-                var location = GetVariableLocation(v);
-
-                context.Text.WriteLine("    movl %eax, {0}      # [{1}] {2} ", location, v.Index, v.VariableType);
+                Compile(context, (PrimitiveExpression)expression);
             }
             else
             {
                 Helper.Stop();
             }
-
         }
 
-        public virtual void Compile(ICompilationContext context, LiteralExpression expression)
+        public virtual void Compile(ICompilationContext context, PrimitiveExpression expression)
         {
-            //TODO: STORE IN 
             EmitLiteral(context, expression.Value);
         }
 
-        public virtual void Compile(ICompilationContext context, VariableReferenceExpression expression)
+        public virtual void Compile(ICompilationContext context, AssignmentExpression expression)
         {
-            var v = expression.Variable;
-
-            var location = GetVariableLocation(v);
-
-            context.Text.WriteLine("    movl {0}, %eax       # [{1}] {2} ", location, v.Index, v.VariableType);
+            Load(context, expression.Right);
+            
+            Store(context, expression.Left);
         }
+
+        public virtual void Push(ICompilationContext context)
+        {
+            context.Text.WriteLine("    movl %eax, 0(%esp)       # pushing eax to the stack");
+            context.Text.WriteLine("    addl $4, %esp            # pushing eax to the stack");
+        }
+
+        private void Load(ICompilationContext context, Expression expression)
+        {
+            throw new NotImplementedException();
+            //switch (expression.CodeNodeType)
+            //{
+            //    case CodeNodeType.LiteralExpression:
+            //        EmitLiteral(context, ((LiteralExpression) expression).Value);
+            //        break;
+
+            //    case CodeNodeType.VariableReferenceExpression:
+            //        var v = ((VariableReferenceExpression) expression).Variable;
+            //        var location = GetVariableLocation(v);
+
+            //        context.Text.WriteLine("    movl {0}, %eax       # [{1}] {2} ", location, v.Index, v.VariableType);
+            //        break;
+
+            //    default:
+            //        Helper.Break();
+            //        break;
+            //}
+        }
+
+        private void Store(ICompilationContext context, Expression target)
+        {
+            throw new NotImplementedException();
+            //if (target is VariableReferenceExpression)
+            //{
+            //    var v = ((VariableReferenceExpression)target).Variable;
+            //    var location = GetVariableLocation(v);
+
+            //    context.Text.WriteLine("    movl %eax, {0}      # [{1}] {2} ", location, v.Index, v.VariableType);
+            //}
+            //else
+            //{
+            //    Helper.Stop();
+            //}
+
+        }
+
+        //public virtual void Compile(ICompilationContext context, LiteralExpression expression)
+        //{
+        //    throw new NotImplementedException();
+        //    ////TODO: STORE IN 
+        //    //EmitLiteral(context, expression.Value);
+        //}
+
+        //public virtual void Compile(ICompilationContext context, VariableReferenceExpression expression)
+        //{
+
+        //    throw new NotImplementedException();
+        //    var v = expression.Variable;
+
+        //    var location = GetVariableLocation(v);
+
+        //    context.Text.WriteLine("    movl {0}, %eax       # [{1}] {2} ", location, v.Index, v.VariableType);
+        //}
 
         private static string GetVariableLocation(VariableReference v)
         {
@@ -166,9 +182,16 @@ namespace Zenos.Framework
 
         private void EmitLiteral(ICompilationContext context, object value)
         {
-            if (value is int)
+            if (value is int || value is short || value is byte)
             {
                 context.Text.WriteLine("    movl ${0}, %eax     # {1}", (int)value, value.GetType());
+            }
+            else if (value is char)
+            {
+                //char.GetNumericValue((char)value)
+                //context.Text.WriteLine("    movl ${0}, %eax     # {1}", (int)value, value.GetType());
+                //TODO: since in .net chars are 64bit we will need to do some shenanigans on the assembly side
+                Helper.Stop();
             }
             else if (value is long)
             {
@@ -181,7 +204,7 @@ namespace Zenos.Framework
             }
             else if (value is bool)
             {
-                context.Text.WriteLine("    movl ${0}, %eax     # {1}", (bool)value ?  0 : 1, value);
+                context.Text.WriteLine("    movl ${0}, %eax     # {1}", (bool)value ?  1 : 0, value);
             }
             else if (value is float)
             {

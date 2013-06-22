@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -18,6 +19,73 @@ namespace Zenos.Tests
 {
     sealed class Test
     {
+
+        class Library : IDisposable
+        {
+            [DllImport("kernel32.dll")]
+            private static extern IntPtr LoadLibrary(string dllToLoad);
+
+            [DllImport("kernel32.dll")]
+            private static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+
+
+            [DllImport("kernel32.dll")]
+            private static extern bool FreeLibrary(IntPtr hModule);
+
+
+            private IntPtr _module;
+            private bool _disposed;
+
+            public Library(string libraryPath)
+            {
+                this._module = LoadLibrary(libraryPath);
+                if (_module == IntPtr.Zero)
+                {
+                    var error = Marshal.GetLastWin32Error();
+                    throw new ArgumentException(string.Format("Could not load library at '{0}' due to error code {1}", libraryPath, error), "libraryPath");
+                }
+            }
+
+            ~Library()
+            {
+                Dispose(false);
+            }
+
+            private Delegate GetFunction<TDelegate>(string name)
+                where TDelegate : class
+            {
+                var address = GetProcAddress(_module, name);
+                if (address == IntPtr.Zero)
+                    return null;
+
+                return Marshal.GetDelegateForFunctionPointer(address, typeof(TDelegate));
+            }
+
+            public object Call<TDelegate>(string name, params object[] arguments)
+                where TDelegate : class
+            {
+                var nativeDelegate = GetFunction<TDelegate>(name);
+                return nativeDelegate.DynamicInvoke(arguments);
+            }
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!_disposed && _module != IntPtr.Zero)
+                {
+                    FreeLibrary(this._module);
+                    _module = IntPtr.Zero;
+                }
+                _disposed = true;
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+        }
+
+
         #region Properties and Initialization
 
         static Test()
@@ -38,32 +106,7 @@ namespace Zenos.Tests
 
         #region Test Runners
 
-        public static void Runs<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> method, T1 param1, T2 param2, T3 param3, T4 param4)
-        {
-            Runs(method, new object[] { param1, param2, param3, param4 });
-        }
-
-        public static void Runs<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> method, T1 param1, T2 param2, T3 param3)
-        {
-            Runs(method, new object[] { param1, param2, param3 });
-        }
-
-        public static void Runs<T1, T2, TResult>(Func<T1, T2, TResult> method, T1 param1, T2 param2)
-        {
-            Runs(method, new object[] { param1, param2 });
-        }
-
-        public static void Runs<T1, TResult>(Func<T1, TResult> method, T1 param)
-        {
-            Runs(method, new object[] { param });
-        }
-
-        public static void Runs<TResult>(Func<TResult> method)
-        {
-            Runs(method, new string[] { });
-        }
-
-        public static void Runs<TDelegate>(TDelegate method, object[] arguments)
+        public static void Runs<TDelegate>(TDelegate method, params object[] arguments)
             where TDelegate : class
         {
             //update arguments
@@ -72,23 +115,31 @@ namespace Zenos.Tests
             {
                 var del = method as Delegate;
                 Assert.NotNull(del);
+                string name;
+                var resolver = CreateAssemblyResolver();
+                var sourceMethod = GetMethodDefinitionFromLambda(method, resolver);
+                var assembly = CreateAssemblyFromMethod(sourceMethod, resolver, out name);
+                assembly.Write(name + ".dll");
 
-                var assembly = AssemblyFromMethod(method);
-
-                context = new TestContext("test_".AppendRandom(20, ".exe"), arguments);
+                var nativeDllName = name + "N.dll";
+                context = new TestContext(nativeDllName, arguments);
 
                 //compile 
                 Compiler.Compile(context, assembly);
 
                 Assert.IsNotNull(context);
-                
+
                 //run the compiled exe and return output
                 var result = del.DynamicInvoke(arguments);
-                if (result is float)
+
+                using (var library = new Library(nativeDllName))
                 {
-                    //result = ((float)result).ToString("F6");
+                    var nativeResult = library.Call<TDelegate>(name);
+
+                    Assert.AreEqual(result, nativeResult);    
                 }
-                Assert.AreEqual(result.ToString(), Helper.Execute(context.OutputFile));
+
+                
             }
             catch (Exception e)
             {
@@ -97,38 +148,58 @@ namespace Zenos.Tests
             }
             finally
             {
-                context.Dispose();
+                if(context != null)
+                    context.Dispose();
             }
         }
 
         #endregion
 
         #region Private Static Helper Methods
-
-        delegate void Emitter(ModuleDefinition module, MethodBody body);
-
-        private static ModuleDefinition AssemblyFromMethod<TDelegate>(TDelegate action)
-            where TDelegate : class
+        
+        private static ModuleDefinition CreateAssemblyFromMethod(MethodDefinition sourceMethod, IAssemblyResolver resolver, out string name)
         {
             //create an assembly we can use
-            var module = CreateAssembly();
-            var sourceMethod = GetMethodDefinitionFromLambda(action);
+            var module = ModuleDefinition.CreateModule("TempAssembly".AppendRandom(), new ModuleParameters
+            {
+                Kind = ModuleKind.Dll, 
+                Runtime = TargetRuntime.Net_4_0,
+                AssemblyResolver = resolver
+            });
+            
+            var name1 = typeof (object).Assembly.FullName;
+            var assemblyNameReference = AssemblyNameReference.Parse(name1);
+            
+            module.AssemblyReferences.Add(assemblyNameReference);
 
             var type = new TypeDefinition("SingleTest", "Tests", TypeAttributes.Public | TypeAttributes.Class, null);
             module.Types.Add(type);
 
             var method = new MethodDefinition("TestMethod".AppendRandom(), MethodAttributes.Static | MethodAttributes.Public, sourceMethod.ReturnType);
+            type.Methods.Add(method);
+
             foreach (var param in sourceMethod.Parameters)
             {
-                method.Parameters.Add(param);
+                var parameterType = param.ParameterType.Module.Assembly.FullName;
+                var p = new ParameterDefinition(param.ParameterType);
+                method.Parameters.Add(p);
             }
+            
 
             CloneMethodBody(sourceMethod.Body, method);
             //method.Body = new MethodBody(method);
             //method.Body.Method = method;
-            type.Methods.Add(method);
 
+            name = method.Name;
             return module;
+        }
+
+        private static DefaultAssemblyResolver CreateAssemblyResolver()
+        {
+            var resolver = new DefaultAssemblyResolver();
+            var corlibPath = Path.GetDirectoryName(typeof (object).Assembly.Location);
+            resolver.AddSearchDirectory(corlibPath);
+            return resolver;
         }
 
         private static void CloneMethodBody(MethodBody src, MethodDefinition dest)
@@ -151,7 +222,7 @@ namespace Zenos.Tests
                 db.Variables.Add(variable);
         }
 
-        private static MethodDefinition GetMethodDefinitionFromLambda<TDelegate>(TDelegate action)
+        private static MethodDefinition GetMethodDefinitionFromLambda<TDelegate>(TDelegate action, DefaultAssemblyResolver resolver)
         {
             var delegateAction = action as Delegate;
             if (delegateAction == null)
@@ -159,94 +230,9 @@ namespace Zenos.Tests
             var lambda = delegateAction.Method;
             var lambdaParent = lambda.DeclaringType;
 
-            var sourceModule = ModuleDefinition.ReadModule(lambdaParent.Assembly.Location);
+            var sourceModule = ModuleDefinition.ReadModule(lambdaParent.Assembly.Location, new ReaderParameters{AssemblyResolver = resolver});
             var sourceType = sourceModule.Types.First(t => t.FullName == lambdaParent.FullName);
             return sourceType.Methods.First(m => m.Name == lambda.Name);
-        }
-
-        private static TDelegate Compile<TDelegate>(Emitter emitter)
-            where TDelegate : class
-        {
-            var name = GetTestCaseName();
-
-            var module = CreateTestModule<TDelegate>(name, emitter);
-            var assembly = LoadTestModule(module);
-
-            return CreateRunDelegate<TDelegate>(GetTestCase(name, assembly));
-        }
-
-        static SR.Assembly LoadTestModule(ModuleDefinition module)
-        {
-            using (var stream = new MemoryStream())
-            {
-                module.Write(stream);
-                File.WriteAllBytes(Path.Combine(Path.Combine(Path.GetTempPath(), "zenos"), module.Name + ".dll"), stream.ToArray());
-                return SR.Assembly.Load(stream.ToArray());
-            }
-        }
-
-        static Type GetTestCase(string name, SR.Assembly assembly)
-        {
-            return assembly.GetType(name);
-        }
-
-        static TDelegate CreateRunDelegate<TDelegate>(Type type)
-            where TDelegate : class
-        {
-            return (TDelegate)(object)Delegate.CreateDelegate(typeof(TDelegate), type.GetMethod("Run"));
-        }
-
-        static ModuleDefinition CreateTestModule<TDelegate>(string name, Emitter emitter)
-        {
-            var module = CreateModule(name);
-
-            var type = new TypeDefinition(
-                "",
-                name,
-                TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract,
-                module.Import(typeof(object)));
-
-            module.Types.Add(type);
-
-            var method = CreateMethod(type, typeof(TDelegate).GetMethod("Invoke"));
-
-            emitter(module, method.Body);
-
-            return module;
-        }
-
-        static MethodDefinition CreateMethod(TypeDefinition type, SR.MethodInfo pattern)
-        {
-            var module = type.Module;
-            var method = new MethodDefinition("Run", MethodAttributes.Public | MethodAttributes.Static,
-                                              module.Import(pattern.ReturnType));
-
-            type.Methods.Add(method);
-
-            foreach (var parameterPattern in pattern.GetParameters())
-                method.Parameters.Add(new ParameterDefinition(module.Import(parameterPattern.ParameterType)));
-
-            return method;
-        }
-
-
-        static ModuleDefinition CreateModule(string name)
-        {
-            return ModuleDefinition.CreateModule(name, ModuleKind.Dll);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static string GetTestCaseName()
-        {
-            var stackTrace = new StackTrace();
-            var stackFrame = stackTrace.GetFrame(2);
-
-            return "ImportCecil_" + stackFrame.GetMethod().Name;
-        }
-
-        private static ModuleDefinition CreateAssembly()
-        {
-            return ModuleDefinition.CreateModule("TempAssembly".AppendRandom(), ModuleKind.Dll);
         }
 
         #endregion

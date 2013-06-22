@@ -7,9 +7,11 @@ namespace Zenos.Framework
     {
         IMemberContext Context { get; }
         bool IsDisposed { get; }
-        StringWriter Text { get; }
-        StringWriter Data { get; }
+
+        Sections Sections { get; }
         string OutputFile { get; set; }
+        Section Text { get; }
+        Section Data { get; }
 
         string CreateLabel(string prefix = null);
     }

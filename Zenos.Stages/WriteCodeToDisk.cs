@@ -23,6 +23,10 @@ namespace Zenos.Stages
                 writer.Write(context.Data.ToString());
                 writer.WriteLine();
                 writer.WriteLine();
+
+                writer.Write(context.Sections["drectve"].ToString());
+                writer.WriteLine();
+                writer.WriteLine();
             }
         }
     }

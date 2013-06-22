@@ -6,116 +6,124 @@ namespace Zenos.Tests
     [TestFixture]
     public class BinaryExpressionTests
     {
+        private delegate int BinaryExpressionDelegate(int a, int b);
+        private delegate bool BinaryIntBoolExpressionDelegate(int a, int b);
+        private delegate bool BinaryBoolExpressionDelegate(bool a, bool b);
+        private delegate bool BinaryFloatExpressionDelegate(float a, float b);
+        private delegate bool BinaryDoubleExpressionDelegate(float a, float b);
+        private delegate bool BinaryByteExpressionDelegate(byte a, byte b);
+        private delegate bool BinaryInt16ExpressionDelegate(short a, short b);
+        private delegate bool BinaryCharExpressionDelegate(float a, float b);
 
-        [Test]
+        [Test, Combinatorial]
         public void Arithmetic(
-            [Random(int.MinValue, int.MaxValue, 5)] int a,
-            [Random(int.MinValue, int.MaxValue, 5)] int b)
+            [ValueSource(typeof(Data), "GetInt32s")] int a,
+            [ValueSource(typeof(Data), "GetInt32s")] int b)
         {
-            Test.Runs((aa, bb) => aa + bb, a, b);
-            Test.Runs((aa, bb) => aa - bb, a, b);
-            Test.Runs((aa, bb) => aa / bb, a, b);
-            Test.Runs((aa, bb) => aa * bb, a, b);
+            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa + bb, a, b);
+            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa - bb, a, b);
+            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa / bb, a, b);
+            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa * bb, a, b);
         }
 
-        [Test]
+        [Test, Combinatorial]
         public void Bitwise(
-            [Random(int.MinValue, int.MaxValue, 5)] int a,
-            [Random(int.MinValue, int.MaxValue, 5)] int b)
+            [ValueSource(typeof(Data), "GetInt32s")] int a,
+            [ValueSource(typeof(Data), "GetInt32s")] int b)
         {
 
-            Test.Runs((aa, bb) => aa & bb, a, b);
-            Test.Runs((aa, bb) => aa | bb, a, b);
-            Test.Runs((aa, bb) => aa ^ bb, a, b);
+            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa & bb, a, b);
+            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa | bb, a, b);
+            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa ^ bb, a, b);
         }
 
         #region Equality tests
 
-        [Test]
+        [Test, Combinatorial]
         public void Equality(
-            [Random(int.MinValue, int.MaxValue, 5)] int a,
-            [Random(int.MinValue, int.MaxValue, 5)] int b)
+            [ValueSource(typeof(Data), "GetInt32s")] int a,
+            [ValueSource(typeof(Data), "GetInt32s")] int b)
         {
-            Test.Runs((aa, bb) => aa > bb, a, b);
-            Test.Runs((aa, bb) => aa >= bb, a, b);
-            Test.Runs((aa, bb) => aa == bb, a, b);
-            Test.Runs((aa, bb) => aa <= bb, a, b);
-            Test.Runs((aa, bb) => aa < bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b);
+            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa > bb, a, b);
+            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa >= bb, a, b);
+            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa == bb, a, b);
+            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa <= bb, a, b);
+            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa < bb, a, b);
+            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa != bb, a, b);
         }
 
-        [Test]
+        [Test, Combinatorial]
         public void Equality(
-            [Values(true, true, false, false)] bool a,
-            [Values(true, false, true, false)] bool b)
+            [Values(true, false)] bool a,
+            [Values(true, false)] bool b)
         {
-            Test.Runs((aa, bb) => aa == bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b);
+            Test.Runs<BinaryBoolExpressionDelegate>((aa, bb) => aa == bb, a, b);
+            Test.Runs<BinaryBoolExpressionDelegate>((aa, bb) => aa != bb, a, b);
         }
 
-        [Test]
+        [Test, Combinatorial]
         public void Equality(
-            [Random(float.MinValue, float.MaxValue, 5)] float a,
-            [Random(float.MinValue, float.MaxValue, 5)] float b)
+            [ValueSource(typeof(Data), "GetSingles")] float a,
+            [ValueSource(typeof(Data), "GetSingles")] float b)
         {
-            Test.Runs((aa, bb) => aa > bb, a, b);
-            Test.Runs((aa, bb) => aa >= bb, a, b);
-            Test.Runs((aa, bb) => aa == bb, a, b);
-            Test.Runs((aa, bb) => aa <= bb, a, b);
-            Test.Runs((aa, bb) => aa < bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b);
+            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa > bb, a, b);
+            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa >= bb, a, b);
+            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa == bb, a, b);
+            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa <= bb, a, b);
+            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa < bb, a, b);
+            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa != bb, a, b);
         }
 
-        [Test]
+        [Test, Combinatorial]
         public void Equality(
-            [Random(double.MinValue, double.MaxValue, 5)] double a,
-            [Random(double.MinValue, double.MaxValue, 5)] double b)
+            [ValueSource(typeof(Data), "GetDoubles")] double a,
+            [ValueSource(typeof(Data), "GetDoubles")] double b)
         {
-            Test.Runs((aa, bb) => aa > bb, a, b);
-            Test.Runs((aa, bb) => aa >= bb, a, b);
-            Test.Runs((aa, bb) => aa == bb, a, b);
-            Test.Runs((aa, bb) => aa <= bb, a, b);
-            Test.Runs((aa, bb) => aa < bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b);
+            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa > bb, a, b);
+            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa >= bb, a, b);
+            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa == bb, a, b);
+            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa <= bb, a, b);
+            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa < bb, a, b);
+            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa != bb, a, b);
         }
 
-        [Test]
+        [Test, Combinatorial]
         public void Equality(
-            [Random(char.MinValue, char.MaxValue, 5)] char a,
-            [Random(char.MinValue, char.MaxValue, 5)] char b)
+            [ValueSource(typeof(Data), "GetChars")] char a,
+            [ValueSource(typeof(Data), "GetChars")] char b)
         {
-            Test.Runs((aa, bb) => aa > bb, a, b);
-            Test.Runs((aa, bb) => aa >= bb, a, b);
-            Test.Runs((aa, bb) => aa == bb, a, b);
-            Test.Runs((aa, bb) => aa <= bb, a, b);
-            Test.Runs((aa, bb) => aa < bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b);
+            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa > bb, a, b);
+            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa >= bb, a, b);
+            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa == bb, a, b);
+            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa <= bb, a, b);
+            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa < bb, a, b);
+            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa != bb, a, b);
         }
 
-        [Test]
+        [Test, Combinatorial]
         public void Equality(
-            [Random(short.MinValue, short.MaxValue, 5)] short a,
-            [Random(short.MinValue, short.MaxValue, 5)] short b)
+            [ValueSource(typeof(Data), "GetInt16s")] short a,
+            [ValueSource(typeof(Data), "GetInt16s")] short b)
         {
-            Test.Runs((aa, bb) => aa > bb, a, b);
-            Test.Runs((aa, bb) => aa >= bb, a, b);
-            Test.Runs((aa, bb) => aa == bb, a, b);
-            Test.Runs((aa, bb) => aa <= bb, a, b);
-            Test.Runs((aa, bb) => aa < bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b);
+            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa > bb, a, b);
+            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa >= bb, a, b);
+            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa == bb, a, b);
+            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa <= bb, a, b);
+            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa < bb, a, b);
+            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa != bb, a, b);
         }
 
-        [Test]
+        [Test, Combinatorial]
         public void Equality(
-            [Random(byte.MinValue, byte.MaxValue, 5)] byte a,
-            [Random(byte.MinValue, byte.MaxValue, 5)] byte b)
+            [ValueSource(typeof(Data), "GetBytes")] byte a,
+            [ValueSource(typeof(Data), "GetBytes")] byte b)
         {
-            Test.Runs((aa, bb) => aa > bb, a, b);
-            Test.Runs((aa, bb) => aa >= bb, a, b);
-            Test.Runs((aa, bb) => aa == bb, a, b);
-            Test.Runs((aa, bb) => aa <= bb, a, b);
-            Test.Runs((aa, bb) => aa < bb, a, b);
-            Test.Runs((aa, bb) => aa != bb, a, b);
+            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa > bb, a, b);
+            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa >= bb, a, b);
+            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa == bb, a, b);
+            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa <= bb, a, b);
+            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa < bb, a, b);
+            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa != bb, a, b);
         }
 
         #endregion

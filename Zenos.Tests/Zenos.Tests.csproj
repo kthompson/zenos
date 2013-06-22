@@ -80,6 +80,7 @@
   <ItemGroup>
     <Compile Include="AstBuilder.cs" />
     <Compile Include="BinaryExpressionTests.cs" />
+    <Compile Include="Data.cs" />
     <Compile Include="GenerateRuntimeStage.cs" />
     <Compile Include="Immediates.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -90,8 +91,8 @@
     <Compile Include="VariableTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\dependencies\cecil\Mono.Cecil.csproj">
-      <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
+    <ProjectReference Include="..\dependencies\ilspy\Mono.Cecil\Mono.Cecil.csproj">
+      <Project>{d68133bd-1e63-496e-9ede-4fbdbf77b486}</Project>
       <Name>Mono.Cecil</Name>
     </ProjectReference>
     <ProjectReference Include="..\Zenos.Core\Zenos.Core.csproj">
