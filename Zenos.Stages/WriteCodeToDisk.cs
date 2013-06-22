@@ -19,6 +19,10 @@ namespace Zenos.Stages
                 writer.Write(context.Text.ToString());
                 writer.WriteLine();
                 writer.WriteLine();
+
+                writer.Write(context.Data.ToString());
+                writer.WriteLine();
+                writer.WriteLine();
             }
         }
     }

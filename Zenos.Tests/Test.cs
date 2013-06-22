@@ -18,6 +18,8 @@ namespace Zenos.Tests
 {
     sealed class Test
     {
+        #region Properties and Initialization
+
         static Test()
         {
             Container = new StandardKernel(new TestCompilerModule());
@@ -31,6 +33,10 @@ namespace Zenos.Tests
                 return Container.Get<Compiler>();
             }
         }
+
+        #endregion
+
+        #region Test Runners
 
         public static void Runs<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> method, T1 param1, T2 param2, T3 param3, T4 param4)
         {
@@ -61,6 +67,7 @@ namespace Zenos.Tests
             where TDelegate : class
         {
             //update arguments
+            TestContext context = null;
             try
             {
                 var del = method as Delegate;
@@ -68,28 +75,37 @@ namespace Zenos.Tests
 
                 var assembly = AssemblyFromMethod(method);
 
-                var context = new TestContext("test_".AppendRandom(20, ".exe"), arguments);
-                
+                context = new TestContext("test_".AppendRandom(20, ".exe"), arguments);
+
                 //compile 
                 Compiler.Compile(context, assembly);
 
-                using (context)
+                Assert.IsNotNull(context);
+                
+                //run the compiled exe and return output
+                var result = del.DynamicInvoke(arguments);
+                if (result is float)
                 {
-                    Assert.IsNotNull(context);
-                    //run the compiled exe and return output
-                    Assert.AreEqual(del.DynamicInvoke(arguments).ToString(), Helper.Execute(context.OutputFile));
+                    //result = ((float)result).ToString("F6");
                 }
-            }
-            catch (AssertionException)
-            {
-                throw;
+                Assert.AreEqual(result.ToString(), Helper.Execute(context.OutputFile));
             }
             catch (Exception e)
             {
                 Helper.Suppress(e);
                 throw;
             }
+            finally
+            {
+                context.Dispose();
+            }
         }
+
+        #endregion
+
+        #region Private Static Helper Methods
+
+        delegate void Emitter(ModuleDefinition module, MethodBody body);
 
         private static ModuleDefinition AssemblyFromMethod<TDelegate>(TDelegate action)
             where TDelegate : class
@@ -144,8 +160,8 @@ namespace Zenos.Tests
             var lambdaParent = lambda.DeclaringType;
 
             var sourceModule = ModuleDefinition.ReadModule(lambdaParent.Assembly.Location);
-            var sourceType = sourceModule.Types.Where(t => t.FullName == lambdaParent.FullName).First();
-            return sourceType.Methods.Where(m => m.Name == lambda.Name).First();
+            var sourceType = sourceModule.Types.First(t => t.FullName == lambdaParent.FullName);
+            return sourceType.Methods.First(m => m.Name == lambda.Name);
         }
 
         private static TDelegate Compile<TDelegate>(Emitter emitter)
@@ -180,7 +196,6 @@ namespace Zenos.Tests
             return (TDelegate)(object)Delegate.CreateDelegate(typeof(TDelegate), type.GetMethod("Run"));
         }
 
-        delegate void Emitter(ModuleDefinition module, MethodBody body);
         static ModuleDefinition CreateTestModule<TDelegate>(string name, Emitter emitter)
         {
             var module = CreateModule(name);
@@ -233,5 +248,7 @@ namespace Zenos.Tests
         {
             return ModuleDefinition.CreateModule("TempAssembly".AppendRandom(), ModuleKind.Dll);
         }
+
+        #endregion
     }
 }

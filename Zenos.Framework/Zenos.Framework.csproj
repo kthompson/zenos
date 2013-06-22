@@ -99,6 +99,10 @@
       <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
       <Name>Mono.Cecil</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Zenos.Core\Zenos.Core.csproj">
+      <Project>{9AC425A8-059F-416F-9D09-84481DE0EF60}</Project>
+      <Name>Zenos.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

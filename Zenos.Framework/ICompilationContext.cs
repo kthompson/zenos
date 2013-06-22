@@ -8,6 +8,9 @@ namespace Zenos.Framework
         IMemberContext Context { get; }
         bool IsDisposed { get; }
         StringWriter Text { get; }
+        StringWriter Data { get; }
         string OutputFile { get; set; }
+
+        string CreateLabel(string prefix = null);
     }
 }

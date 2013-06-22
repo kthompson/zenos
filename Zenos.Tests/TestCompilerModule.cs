@@ -17,11 +17,11 @@ namespace Zenos.Tests
             this.Bind<ICompilerStage>().To<ModuleQueuingStage>();
 
             this.Bind<ICompilerStage>().To<CodeQueuingStage>();
-            this.Bind<ICompilerStage>().To<GenerateRuntimeStage>();
             this.Bind<ICompilerStage>().To<CodeSimplifier>();
             this.Bind<ICompilerStage>().To<CilToExpressionTranslator>();
+            this.Bind<ICompilerStage>().To<GenerateRuntimeStage>();
 
-            this.Bind<ICompilerStage>().To<EmitterStage>();
+            //this.Bind<ICompilerStage>().To<EmitterStage>();
             this.Bind<ICompilerStage>().To<WriteCodeToDisk>();
             this.Bind<ICompilerStage>().To<GccBuildStage>();
         }

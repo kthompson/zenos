@@ -18,7 +18,7 @@ namespace Zenos.Tests
             var arguments = GetMethodArguments(context);
             cc.OutputFile = "runtime_".Append(method.Name, "_").AppendRandom(32, ".c");
 
-            using (var runtime = new StreamWriter(File.OpenWrite(cc.OutputFile)))
+            using (var runtime = new StreamWriter(cc.OutputFile))
             {
                 var function = string.Format("{0}({1})", method.Name, string.Join(", ", arguments));
 
@@ -43,7 +43,7 @@ namespace Zenos.Tests
 
         private static void WriteMethodSignature(StreamWriter runtime, MethodReference method)
         {
-            WriteType(runtime, method.ReturnType);
+            runtime.Write(GetTypeName(method.ReturnType));
             runtime.Write(" {0}(", method.Name);
             WriteParameters(runtime, method.Parameters);
             runtime.WriteLine(");");
@@ -62,33 +62,36 @@ namespace Zenos.Tests
 
         private static void WriteParameter(StreamWriter runtime, ParameterReference parameterDefinition)
         {
-            WriteType(runtime, parameterDefinition.ParameterType);
+            runtime.Write(GetTypeName(parameterDefinition.ParameterType));
             runtime.Write(" {0}", parameterDefinition.Name);
         }
 
-        private static void WriteType(TextWriter runtime, MemberReference returnType)
+        private static string GetTypeName(MemberReference returnType)
         {
-            var type = string.Empty;
             switch (returnType.FullName)
             {
                 case "System.Int32":
-                    type = "int";
-                    break;
+                    return "int";
+
+                case "System.Int64":
+                    return "long long int";
+
                 case "System.Boolean":
-                    type = "bool";
-                    break;
+                    return "bool";
+
                 case "System.Char":
-                    type = "char";
-                    break;
+                    return "char";
+
                 case "System.Single":
-                    type = "float";
-                    break;
+                    return "float";
+
+                case "System.Double":
+                    return "double";
+
                 default:
                     Helper.NotSupported(string.Format("Referenced type is not supported: {0}", returnType.FullName));
-                    break;
+                    return null;
             }
-
-            runtime.Write(type);
         }
 
         private static IEnumerable<string> GetMethodArguments(IMemberContext context)
@@ -100,34 +103,31 @@ namespace Zenos.Tests
 
         private static string GetPrintFormat(MethodReference method, ref string function)
         {
-            string printf;
-            string returnType;
             switch (method.ReturnType.Name.ToLower())
             {
                 case "single":
-                    printf = "%f";
-                    returnType = "float";
-                    break;
+                    return "%g";
+
+                case "double":
+                    return "%g";
+
                 case "int32":
-                    printf = "%d";
-                    returnType = "long";
-                    break;
+                    return "%d";
+
+                case "int64":
+                    return "%lld";
+
                 case "boolean":
-                    printf = "%s";
-                    returnType = "bool";
                     function += " ? \"True\" : \"False\"";
-                    break;
+                    return "%s";
+
                 case "char":
-                    printf = "%c";
-                    returnType = "char";
-                    break;
+                    return "%c";
+
                 default:
-                    printf = "%d";
-                    returnType = "long";
                     Helper.Break();
-                    break;
+                    return "%d";
             }
-            return printf;
         }
     }
 }

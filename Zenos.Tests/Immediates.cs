@@ -26,6 +26,7 @@ namespace Zenos.Tests
         [Test]
         public void Longs()
         {
+            Test.Runs(() => 0x1234567891011120L);
             Test.Runs(() => -5368709121234L);
             Test.Runs(() => 429496121113456735L);
         }
@@ -64,7 +65,7 @@ namespace Zenos.Tests
             Test.Runs(() => -9.75f);
             Test.Runs(() => 9.75f);
             Test.Runs(() => 0.141234f);
-            Test.Runs(() => 1233.114f);
+            Test.Runs(() => 1233.11f);
         }
 
         [Test]
@@ -75,7 +76,7 @@ namespace Zenos.Tests
             Test.Runs(() => -9.75d);
             Test.Runs(() => 9.75d);
             Test.Runs(() => 0.141234d);
-            Test.Runs(() => 1233.114d);
+            Test.Runs(() => 1233.11d);
         }
     }
 }
