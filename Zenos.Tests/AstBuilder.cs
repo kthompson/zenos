@@ -40,7 +40,6 @@ namespace Zenos.Tests
 
             this.Bind<ICompilerStage>().To<CodeSimplifier>();
             this.Bind<ICompilerStage>().To<CilToExpressionTranslator>();
-            this.Bind<ICompilerStage>().To<GenerateRuntimeStage>();
             
             this.Bind<ICompilerStage>().To<EmitterStage>();
             this.Bind<ICompilerStage>().To<WriteCodeToDisk>();

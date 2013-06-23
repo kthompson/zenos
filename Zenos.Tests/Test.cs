@@ -138,8 +138,6 @@ namespace Zenos.Tests
 
                     Assert.AreEqual(result, nativeResult);    
                 }
-
-                
             }
             catch (Exception e)
             {
