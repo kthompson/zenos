@@ -33,8 +33,11 @@ namespace Zenos.Tests
 
         public static IEnumerable<byte> GetBytes()
         {
-            for (var i = byte.MinValue; i < byte.MaxValue; i++)
-                yield return i;
+            yield return byte.MinValue;
+            yield return 50;
+            yield return 59;
+            yield return 90;
+            yield return byte.MaxValue;
         }
 
 
@@ -42,8 +45,10 @@ namespace Zenos.Tests
         {
             yield return char.MaxValue;
             yield return char.MinValue;
-            for (var i = 'a'; i < 'z'; i++)
-                yield return i;
+            yield return 'a';
+            yield return '0';
+            yield return 'z';
+            yield return 'A';
         }
 
         public static IEnumerable<Single> GetSingles()
