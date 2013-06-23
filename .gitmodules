@@ -1,6 +1,3 @@
-[submodule "dependencies/cecil"]
-	path = dependencies/cecil
-	url = http://github.com/jbevain/cecil.git
-[submodule "dependencies/ilspy"]
-	path = dependencies/ilspy
+[submodule "vendor/ilspy"]
+	path = vendor/ilspy
 	url = https://github.com/icsharpcode/ILSpy.git

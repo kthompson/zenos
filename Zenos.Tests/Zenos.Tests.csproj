@@ -90,7 +90,7 @@
     <Compile Include="VariableTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\dependencies\ilspy\Mono.Cecil\Mono.Cecil.csproj">
+    <ProjectReference Include="..\vendor\ilspy\Mono.Cecil\Mono.Cecil.csproj">
       <Project>{d68133bd-1e63-496e-9ede-4fbdbf77b486}</Project>
       <Name>Mono.Cecil</Name>
     </ProjectReference>
