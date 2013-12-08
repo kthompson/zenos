@@ -90,25 +90,17 @@
     <Compile Include="VariableTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\vendor\ilspy\Mono.Cecil\Mono.Cecil.csproj">
-      <Project>{d68133bd-1e63-496e-9ede-4fbdbf77b486}</Project>
-      <Name>Mono.Cecil</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Zenos.Core\Zenos.Core.csproj">
-      <Project>{9AC425A8-059F-416F-9D09-84481DE0EF60}</Project>
-      <Name>Zenos.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Zenos.Framework\Zenos.Framework.csproj">
-      <Project>{BD1969C1-4E46-4B99-8154-4B144548FEAC}</Project>
-      <Name>Zenos.Framework</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Zenos.Stages\Zenos.Stages.csproj">
-      <Project>{3333AF71-D754-4FEF-9BF4-C9413E707C54}</Project>
-      <Name>Zenos.Stages</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\vendor\ilspy\Mono.Cecil\Mono.Cecil.csproj">
+      <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
+      <Name>Mono.Cecil</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Zenos\Zenos.csproj">
+      <Project>{DC2B8F8E-0A01-4437-A345-413DEBF1E4EF}</Project>
+      <Name>Zenos</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

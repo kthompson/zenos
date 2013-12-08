@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Zenos.Core")]
+[assembly: AssemblyTitle("Zenos")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Pelco")]
-[assembly: AssemblyProduct("Zenos.Core")]
-[assembly: AssemblyCopyright("Copyright © Pelco 2010")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("Zenos")]
+[assembly: AssemblyCopyright("Copyright ©  2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("0f5ec4a2-5f11-4823-8e5f-66c7f17a0ced")]
+[assembly: Guid("ca086ce2-3104-498a-8fa1-b895c590f345")]
 
 // Version information for an assembly consists of the following four values:
 //
