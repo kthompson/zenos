@@ -231,15 +231,19 @@ namespace Zenos.Core
         [DebuggerHidden]
         public static void Stop()
         {
-            Stop(null);
+            Stop((Func<Exception>) null);
         }
 
         [DebuggerHidden]
         public static void Stop(Func<Exception> ex)
         {
-            if (ex == null)
-                Throw(() => new Exception());
-            Throw(ex);
+            Throw(ex ?? (() => new Exception()));
+        }
+
+        [DebuggerHidden]
+        public static void Stop(string errorMessage)
+        {
+            Throw(() => new Exception(errorMessage));
         }
 
         /// <summary>

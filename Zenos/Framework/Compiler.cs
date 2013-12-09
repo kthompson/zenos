@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Mono.Cecil;
-using Mono.Collections.Generic;
 
 namespace Zenos.Framework
 {
@@ -17,19 +15,9 @@ namespace Zenos.Framework
             this.Stages = new List<ICompilerStage>(stages);
         }
 
-        public override void Compile(ICompilerContext context, AssemblyDefinition assembly)
+        public override void Compile(IAssemblyContext context)
         {
-            this.Stages.ForEach(stage => stage.Compile(context, assembly));
-        }
-
-        public override void Compile(ICompilerContext context, AssemblyNameDefinition assemblyName)
-        {
-            this.Stages.ForEach(stage => stage.Compile(context, assemblyName));
-        }
-
-        public override void Compile(ICompilerContext context, ModuleDefinition module)
-        {
-            this.Stages.ForEach(stage => stage.Compile(context, module));
+            this.Stages.ForEach(stage => stage.Compile(context));
         }
     }
 }

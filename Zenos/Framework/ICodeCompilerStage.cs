@@ -11,19 +11,6 @@ namespace Zenos.Framework
 {
     public interface ICodeCompilerStage : IMemberCompilerStage
     {
-        void Compile(ICompilationContext context, MethodBody body);
-        void Compile(ICompilationContext context, Scope scope);
-
-        void Compile(ICompilationContext context, Collection<ParameterDefinition> parameters);
-        void Compile(ICompilationContext context, ParameterDefinition parameter);
-
-        void Compile(ICompilationContext context, Collection<VariableDefinition> variables);
-        void Compile(ICompilationContext context, VariableDefinition variable);
-
-        void Compile(ICompilationContext context, Collection<ExceptionHandler> exceptions);
-        void Compile(ICompilationContext context, ExceptionHandler exception);
-
-        void Compile(ICompilationContext context, Collection<Instruction> instructions);
-        void Compile(ICompilationContext context, Instruction instruction);
+        void Compile(IMethodContext context);
     }
 }
