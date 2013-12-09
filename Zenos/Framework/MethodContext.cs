@@ -18,6 +18,9 @@ namespace Zenos.Framework
             this.Context = context;
             this.Method = method;
             this.Sections = new Sections();
+            this.Variables = new List<IInstruction>();
+            this.VariableDefinitions = new List<IVariableDefinition>();
+            this.VRegisterToInstruction = new Dictionary<IRegister, IInstruction>();
         }
 
         private int _lastLabel = 1;
@@ -34,12 +37,13 @@ namespace Zenos.Framework
 
         public int StackSize { get; private set; }
 
-        public IInstruction[] Variables { get; set; }
-        public VariableDefinition[] VariableDefinitions { get; set; }
+        public IList<IInstruction> Variables { get; set; }
+        public IList<IVariableDefinition> VariableDefinitions { get; set; }
 
         public IInstruction ReturnType { get; set; }
-        public IInstruction[] Parameters { get; set; }
-        public ParameterDefinition[] ParameterDefinitions { get; set; }
+        public IList<IInstruction> Parameters { get; set; }
+        public IInstruction[] Arguments { get; set; }
+        public IList<IInstruction> Locals { get; set; }
 
         public string CreateLabel(string prefix = null)
         {
@@ -56,6 +60,7 @@ namespace Zenos.Framework
         public MethodDefinition Method { get; private set; }
         public BasicBlock CurrentBasicBlock { get; set; }
         public int next_vreg { get; set; }
+        public IDictionary<IRegister, IInstruction> VRegisterToInstruction { get; private set; }
 
         protected virtual void Dispose(bool disposing)
         {

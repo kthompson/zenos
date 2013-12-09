@@ -122,10 +122,10 @@ namespace Zenos.Tests
                 assembly.Write(name + ".dll");
 
                 var nativeDllName = name + "N.dll";
-                context = new TestContext(nativeDllName, arguments);
+                context = new TestContext(assembly, nativeDllName, arguments);
 
                 //compile 
-                Compiler.Compile(context, assembly);
+                Compiler.Compile(context);
 
                 Assert.IsNotNull(context);
 
@@ -139,11 +139,11 @@ namespace Zenos.Tests
                     Assert.AreEqual(result, nativeResult);    
                 }
             }
-            catch (Exception e)
-            {
-                Helper.Suppress(e);
-                throw;
-            }
+            //catch (Exception e)
+            //{
+            //    Helper.Suppress(e);
+            //    throw;
+            //}
             finally
             {
                 if(context != null)
@@ -170,7 +170,7 @@ namespace Zenos.Tests
             
             module.AssemblyReferences.Add(assemblyNameReference);
 
-            var type = new TypeDefinition("SingleTest", "Tests", TypeAttributes.Public | TypeAttributes.Class, null);
+            var type = new TypeDefinition("SingleTest", "Tests", TypeAttributes.Public | TypeAttributes.Class, module.Import(typeof(object)));
             module.Types.Add(type);
 
             var method = new MethodDefinition("TestMethod".AppendRandom(), MethodAttributes.Static | MethodAttributes.Public, sourceMethod.ReturnType);

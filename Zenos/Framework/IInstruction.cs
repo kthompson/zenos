@@ -19,7 +19,10 @@ namespace Zenos.Framework
         IInstruction Previous { get; set; }
         IInstruction Next { get; set; }
 
-        object Operand { get; set; }
+        object Operand0 { get; set; }
+        object Operand1 { get; set; }
+        object Operand2 { get; set; }
+
         Instruction SourceInstruction { get; set; }
         TypeDefinition klass { get; set; }
     }

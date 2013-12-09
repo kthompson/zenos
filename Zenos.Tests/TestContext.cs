@@ -4,12 +4,12 @@ using Zenos.Framework;
 
 namespace Zenos.Tests
 {
-    internal class TestContext : CompilerContext
+    internal class TestContext : AssemblyContext
     {
         public object[] Arguments { get; private set; }
 
-        public TestContext(string outputFile, object[] arguments)
-            : base(outputFile)
+        public TestContext(ModuleDefinition module, string outputFile, object[] arguments)
+            : base(module, outputFile)
         {
             this.Arguments = arguments;
         }

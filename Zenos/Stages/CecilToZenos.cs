@@ -46,11 +46,11 @@ namespace Zenos.Stages
 
             while (instruction != null)
             {
-                var cil = instruction.Operand as Instruction;
+                var cil = instruction.Operand0 as Instruction;
                 if (cil != null)
                 {
                     //switch the cecil instruction out for our IInstruction
-                    instruction.Operand = instrOffsetMap[cil.Offset];
+                    instruction.Operand0 = instrOffsetMap[cil.Offset];
                 }
 
                 instruction = instruction.Next;
@@ -65,7 +65,7 @@ namespace Zenos.Stages
                 Code = (InstructionCode) cecilInstr.OpCode.Code,
                 Offset = cecilInstr.Offset,
                 SourceInstruction = cecilInstr,
-                Operand = cecilInstr.Operand
+                Operand0 = cecilInstr.Operand
             };
         }
     }

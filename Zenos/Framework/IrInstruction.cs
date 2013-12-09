@@ -19,7 +19,9 @@ namespace Zenos.Framework
         public Instruction SourceInstruction { get; set; }
         public TypeDefinition klass { get; set; }
 
-        public object Operand { get; set; }
+        public object Operand0 { get; set; }
+        public object Operand1 { get; set; }
+        public object Operand2 { get; set; }
 
         public override string ToString()
         {
@@ -35,12 +37,12 @@ namespace Zenos.Framework
                 if(this.Source3 != null)
                     sb.AppendFormat(", {0}", Source3);
             } 
-            else if (this.Operand != null)
+            else if (this.Operand0 != null)
             {
-                sb.Append(this.Operand);
+                sb.Append(this.Operand0);
             }
             
-            sb.Append(" )");
+            sb.Append(")");
             if (this.Destination != null)
                 sb.AppendFormat(" => {0}", this.Destination);
             

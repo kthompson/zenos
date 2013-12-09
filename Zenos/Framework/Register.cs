@@ -6,11 +6,6 @@ using System.Text;
 
 namespace Zenos.Framework
 {
-    public interface IRegister
-    {
-        int Id { get; }
-    }
-
     class Register : IRegister
     {
         public int Id { get; private set; }
@@ -22,7 +17,7 @@ namespace Zenos.Framework
 
         public override string ToString()
         {
-            return string.Format("Register[{0}]", this.Id);
+            return string.Format("reg{0}", this.Id);
         }
     }
 }

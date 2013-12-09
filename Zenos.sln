@@ -53,7 +53,8 @@ Global
 		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.net_4_5_Debug|x86.Build.0 = Debug|x86
 		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.net_4_5_Release|x86.ActiveCfg = Release|x86
 		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.net_4_5_Release|x86.Build.0 = Release|x86
-		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.Release|x86.ActiveCfg = Release|Any CPU
+		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.Release|x86.ActiveCfg = Release|x86
+		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.Release|x86.Build.0 = Release|x86
 		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.silverlight_Debug|x86.ActiveCfg = Debug|x86
 		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.silverlight_Debug|x86.Build.0 = Debug|x86
 		{6A09EDEC-E1D2-4B02-996C-325C2A3437EB}.silverlight_Release|x86.ActiveCfg = Release|x86

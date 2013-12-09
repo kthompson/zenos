@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using Zenos.Core;
+using Zenos.Framework;
 
-namespace Zenos.Framework
+namespace Zenos.Stages
 {
     public class MethodToIr : InstructionCompilerStage
     {
@@ -11,24 +13,31 @@ namespace Zenos.Framework
         {
             CreateVars(context);
 
+            //BuildBasicBlocks(context);
+
             base.Compile(context);
         }
 
+        //private void BuildBasicBlocks(IMethodContext context)
+        //{
+        //    context.CurrentBasicBlock
+        //}
+
         private void CHECK_STACK_OVF(IMethodContext context, int n)
         {
-            //if (((sp - stack_start) + n) > header->max_stack) UNVERIFIED
+            //if (((sp - stack_start) + n) > header->max_stack) UNVERIFIED();
         }
 
         private void CHECK_LOCAL(IMethodContext context, int num)
         {
-            if (num >= context.Variables.Length)
+            if (num >= context.Variables.Count)
                 UNVERIFIED();
         }
 
 
         private void CHECK_ARG(IMethodContext context, int num)
         {
-            if (num >= context.Parameters.Length)
+            if (num >= context.Parameters.Count)
                 UNVERIFIED();
         }
 
@@ -46,7 +55,7 @@ namespace Zenos.Framework
 
         private IInstruction NEW_ARGLOAD(IMethodContext context, int num)
         {
-            return NEW_VARLOAD(context, context.Parameters[num], context.ParameterDefinitions[num].ParameterType);
+            return NEW_VARLOAD(context, context.Parameters[num], context.Parameters[num].GetVariableType());
         }
 
         private void MONO_ADD_INS(BasicBlock b, IInstruction inst)
@@ -251,15 +260,77 @@ namespace Zenos.Framework
             return null;
         }
 
-        private InstructionCode mono_type_to_regmove(IMethodContext context, TypeReference vartype)
+        private InstructionCode mono_type_to_regmove(IMethodContext cfg, TypeReference type)
         {
-            throw new NotImplementedException();
+            if (type.IsByReference)
+                return InstructionCode.OP_MOVE;
+
+            handle_enum:
+            switch (type.MetadataType)
+            {
+                case MetadataType.SByte:
+                case MetadataType.Byte:
+                case MetadataType.Boolean:
+                    return InstructionCode.OP_MOVE;
+                case MetadataType.Int16:
+                case MetadataType.UInt16:
+                case MetadataType.Char:
+                    return InstructionCode.OP_MOVE;
+                case MetadataType.Int32:
+                case MetadataType.UInt32:
+                    return InstructionCode.OP_MOVE;
+                case MetadataType.IntPtr:
+                case MetadataType.UIntPtr:
+                case MetadataType.Pointer:
+                case MetadataType.FunctionPointer:
+                    return InstructionCode.OP_MOVE;
+                case MetadataType.Class:
+                case MetadataType.String:
+                case MetadataType.Object:
+                case MetadataType.Array:
+                case (MetadataType) 0x1d: /* ElementType.SzArray */
+                    return InstructionCode.OP_MOVE;
+                case MetadataType.Int64:
+                case MetadataType.UInt64:
+                    return InstructionCode.OP_LMOVE;
+                case MetadataType.Single:
+                    return InstructionCode.OP_FMOVE;
+                case MetadataType.Double:
+                    return InstructionCode.OP_FMOVE;
+                case MetadataType.ValueType:
+                    throw new NotImplementedException();
+                    //TODO:
+                    // if (type->data.klass->enumtype)
+                    //{
+                    //    type = mono_class_enum_basetype(type->data.klass);
+                    //    goto handle_enum;
+                    //}
+                    //if (MONO_CLASS_IS_SIMD(cfg, mono_class_from_mono_type(type)))
+                    //    return InstructionCode.OP_XMOVE;
+                    //return InstructionCode.OP_VMOVE;
+                case MetadataType.TypedByReference:
+                    return InstructionCode.OP_VMOVE;
+                case MetadataType.GenericInstance:
+                    //TODO: type = type->data.generic_class->container_class->byval_arg;
+                    throw new NotImplementedException();
+                    goto handle_enum;
+                case MetadataType.Var:
+                case MetadataType.MVar:
+                    throw new NotImplementedException();
+                    ////g_assert (cfg->generic_sharing_context);
+                    //if (mini_type_var_is_vt(cfg, type))
+                    //    return InstructionCode.OP_VMOVE;
+                    //else
+                    //    return InstructionCode.OP_MOVE;
+                default:
+                    Helper.Stop(string.Format("unknown type 0x{0} in type_to_regstore", type.MetadataType));
+                    break;
+            }
+            return InstructionCode.Unknown;
         }
 
         private void type_to_eval_stack_type(IMethodContext context, TypeReference type, IInstruction inst)
         {
-            
-
             inst.klass = mono_class_from_mono_type(type);
             if (type.IsByReference)
             {
@@ -365,7 +436,7 @@ namespace Zenos.Framework
         private IInstruction NEW_ICONST(IMethodContext context, int val)
         {
             var dest = MONO_INST_NEW(context, InstructionCode.OP_ICONST);
-            dest.Operand = val;
+            dest.Operand0 = val;
             dest.StackType = StackType.STACK_I4;
             dest.Destination = context.alloc_dreg(StackType.STACK_I4);
             return dest;
@@ -435,6 +506,28 @@ namespace Zenos.Framework
                         //*sp++ = ins;
                         break;
                     }
+
+                case InstructionCode.CilStloc_0:
+                case InstructionCode.CilStloc_1:
+                case InstructionCode.CilStloc_2:
+                case InstructionCode.CilStloc_3:
+                    {
+                        CHECK_STACK(context, 1);
+                        var n = (instruction.Code) - InstructionCode.CilStloc_0;
+                        CHECK_LOCAL(context, n);
+
+                        /* basically we need to look at the previous instr to see if we can do a small optimiation
+                         * once we do it we need to skip the current instr(CilStloc) and continue with the one after
+                         */
+                        instruction = instruction.Previous;
+                        //if (!dont_verify_stloc && target_type_is_incompatible(cfg, header->locals[n], *sp))
+                        //    UNVERIFIED;
+                        emit_stloc_ir(context, instruction, n);
+                        instruction.Next.Remove();
+                        //++ip;
+                        //inline_costs += 1;
+                        break;
+                    }
                 default:
                     Helper.Break();
                     break;
@@ -443,6 +536,58 @@ namespace Zenos.Framework
             return instruction;
         }
 
+        private void emit_stloc_ir(IMethodContext cfg, IInstruction sp, int n)
+        {
+            var opcode = mono_type_to_regmove(cfg, cfg.Locals[n].GetVariableType());
+            if (opcode == InstructionCode.OP_MOVE && 
+                cfg.CurrentBasicBlock.last_ins == sp &&
+                (sp.Code == InstructionCode.OP_ICONST || sp.Code == InstructionCode.OP_I8CONST))
+            {
+                /* Optimize reg-reg moves away */
+                /* 
+                 * Can't optimize other opcodes, since sp[0] might point to
+                 * the last ins of a decomposed opcode.
+                 */
+                sp.Destination = cfg.Locals[n].Destination;
+            }
+            else
+            {
+                var ins = EMIT_NEW_LOCSTORE(cfg, n, sp);
+                //TODO: should this have sp.ReplaceWith(ins)?
+                Helper.Break();
+            }
+        }
+
+        private IInstruction EMIT_NEW_LOCSTORE(IMethodContext cfg, int num, IInstruction inst)
+        {
+            var dest = NEW_LOCSTORE(cfg, num, inst); 
+            MONO_ADD_INS(cfg.CurrentBasicBlock, dest);
+            return dest;
+        }
+
+        private IInstruction NEW_LOCSTORE(IMethodContext cfg, int num, IInstruction inst)
+        {
+            return NEW_VARSTORE(cfg, cfg.Variables[num], cfg.Variables[num].GetVariableType(), inst);
+        }
+
+        private IInstruction NEW_VARSTORE(IMethodContext cfg, IInstruction var, TypeReference vartype, IInstruction inst)
+        {
+            var dest = MONO_INST_NEW(cfg, InstructionCode.OP_MOVE);
+            dest.Code = mono_type_to_regmove(cfg, vartype);
+            dest.klass = var.klass;
+            dest.Source1 = inst.Destination;
+            dest.Destination = var.Destination;
+            if (dest.Code == InstructionCode.OP_VMOVE)
+                dest.klass = mono_class_from_mono_type((vartype));
+
+            return dest;
+        }
+
+
+        private void CHECK_STACK(IMethodContext context, int num)
+        {
+            //if ((sp - stack_start) < (num)) UNVERIFIED();
+        }
 
 
         private void CreateVars(IMethodContext context)
@@ -453,19 +598,21 @@ namespace Zenos.Framework
             if (method.ReturnType.FullName != "System.Void")
                 context.ReturnType = mono_compile_create_var(context, method.ReturnType, InstructionCode.OP_ARG);
 
-            var count = method.Parameters.Count;
-            var hasThis = method.HasThis ? 1 : 0;
-            context.Parameters = new IInstruction[count + hasThis];
-
+            context.Parameters = new List<IInstruction>();
             if (method.HasThis)
-                context.Parameters[0] = mono_compile_create_var(context, method.Body.ThisParameter.ParameterType, InstructionCode.OP_ARG);
+                context.Parameters.Add(mono_compile_create_var(context, method.Body.ThisParameter.ParameterType, InstructionCode.OP_ARG));
 
-            for (var i = 0; i < count; ++i)
-            {
-                context.Parameters[i + hasThis] = mono_compile_create_var(context, method.Parameters[i].ParameterType, InstructionCode.OP_ARG);
-            }
+            foreach (var parameter in method.Parameters)
+                context.Parameters.Add(mono_compile_create_var(context, parameter.ParameterType, InstructionCode.OP_ARG));
 
+            context.Locals = new List<IInstruction>();
+            foreach (var variable in method.Body.Variables)
+                context.Locals.Add(mono_compile_create_var(context, variable.VariableType, InstructionCode.OP_LOCAL));
+        }
 
+        private bool mono_type_is_long(TypeReference type)
+        {
+            return mono_type_is_long(type.Resolve());
         }
 
         private bool mono_type_is_long(TypeDefinition type)
@@ -523,30 +670,20 @@ namespace Zenos.Framework
 
         private IInstruction mono_compile_create_var_for_vreg(IMethodContext cfg, TypeReference type, InstructionCode opcode, IRegister vreg)
         {
-            //    int num = cfg.num_varinfo;
-            //    bool regpair;
-            //// NOTE: this code appears to reallocate our variables into new arrays and then copy the existing ones over.
-            //    if ((num + 1) >= cfg->varinfo_count) {
-            //        int orig_count = cfg->varinfo_count;
-            //        cfg->varinfo_count = cfg->varinfo_count ? (cfg->varinfo_count * 2) : 64;
-            //        cfg->varinfo = (MonoInst **)g_realloc (cfg->varinfo, sizeof (MonoInst*) * cfg->varinfo_count);
-            //        cfg->vars = (MonoMethodVar *)g_realloc (cfg->vars, sizeof (MonoMethodVar) * cfg->varinfo_count);
-            //        memset (&cfg->vars [orig_count], 0, (cfg->varinfo_count - orig_count) * sizeof (MonoMethodVar));
-            //    }
-
-            //    cfg->stat_allocate_var++;
+            var vi = MONO_INIT_VARINFO(cfg);
+            vi.VirtualRegister = vreg;
 
             var inst = MONO_INST_NEW(cfg, opcode);
-            //    inst->inst_c0 = num;
-            //    inst->inst_vtype = type;
-            inst.klass = mono_class_from_mono_type (type);
-            type_to_eval_stack_type (cfg, type, inst);
+            inst.Operand0 = vi;
+            inst.Operand1 = type;
+            inst.klass = mono_class_from_mono_type(type);
+            type_to_eval_stack_type(cfg, type, inst);
             //    /* if set to 1 the variable is native */
             //    inst->backend.is_pinvoke = 0;
-            //    inst->dreg = vreg;
+            inst.Destination = vreg;
 
-            //    if (inst->klass->exception_type)
-            //        mono_cfg_set_exception (cfg, MONO_EXCEPTION_TYPE_LOAD);
+            //if (inst.klass.IsExceptionType())
+            //    mono_cfg_set_exception(cfg, MONO_EXCEPTION_TYPE_LOAD);
 
             //    if (cfg->compute_gc_maps) {
             //        if (type->byref) {
@@ -560,77 +697,87 @@ namespace Zenos.Framework
             //        }
             //    }
 
-            //    cfg->varinfo [num] = inst;
+            cfg.Variables.Add(inst);
 
-            //    MONO_INIT_VARINFO (&cfg->vars [num], num);
-            //    MONO_VARINFO (cfg, num)->vreg = vreg;
 
-            //    if (vreg != -1)
-            //        set_vreg_to_inst (cfg, vreg, inst);
+            if (vreg != null)
+                set_vreg_to_inst(cfg, vreg, inst);
 
-            //#if SIZEOF_REGISTER == 4
             //#ifdef MONO_ARCH_SOFT_FLOAT
-            //    regpair = mono_type_is_long (type) || mono_type_is_float (type);
+            bool regpair = mono_type_is_long(type) || mono_type_is_float(type);
             //#else
             //    regpair = mono_type_is_long (type);
             //#endif
-            //#else
-            //    regpair = FALSE;
-            //#endif
 
-            //    if (regpair) {
-            //        MonoInst *tree;
 
-            //        /* 
-            //         * These two cannot be allocated using create_var_for_vreg since that would
-            //         * put it into the cfg->varinfo array, confusing many parts of the JIT.
-            //         */
+            if (regpair)
+            {
+                IInstruction tree;
 
-            //        /* 
-            //         * Set flags to VOLATILE so SSA skips it.
-            //         */
+                /* 
+                     * These two cannot be allocated using create_var_for_vreg since that would
+                     * put it into the cfg->varinfo array, confusing many parts of the JIT.
+                     */
 
-            //        if (cfg->verbose_level >= 4) {
-            //            printf ("  Create LVAR R%d (R%d, R%d)\n", inst->dreg, inst->dreg + 1, inst->dreg + 2);
-            //        }
+                /* 
+                     * Set flags to VOLATILE so SSA skips it.
+                     */
 
-            //#ifdef MONO_ARCH_SOFT_FLOAT
-            //        if (cfg->opt & MONO_OPT_SSA) {
-            //            if (mono_type_is_float (type))
-            //                inst->flags = MONO_INST_VOLATILE;
-            //        }
-            //#endif
+                //if (cfg.verbose_level >= 4) {
+                //    printf ("  Create LVAR R%d (R%d, R%d)\n", inst->dreg, inst->dreg + 1, inst->dreg + 2);
+                //}
 
-            //        /* Allocate a dummy MonoInst for the first vreg */
-            //        MONO_INST_NEW (cfg, tree, OP_LOCAL);
-            //        tree->dreg = inst->dreg + 1;
-            //        if (cfg->opt & MONO_OPT_SSA)
-            //            tree->flags = MONO_INST_VOLATILE;
-            //        tree->inst_c0 = num;
-            //        tree->type = STACK_I4;
-            //        tree->inst_vtype = &mono_defaults.int32_class->byval_arg;
-            //        tree->klass = mono_class_from_mono_type (tree->inst_vtype);
 
-            //        set_vreg_to_inst (cfg, inst->dreg + 1, tree);
+                //if (cfg.opt & MONO_OPT_SSA) {
+                //    if (mono_type_is_float (type))
+                //        inst.flags = MONO_INST_VOLATILE;
+                //}
 
-            //        /* Allocate a dummy MonoInst for the second vreg */
-            //        MONO_INST_NEW (cfg, tree, OP_LOCAL);
-            //        tree->dreg = inst->dreg + 2;
-            //        if (cfg->opt & MONO_OPT_SSA)
-            //            tree->flags = MONO_INST_VOLATILE;
-            //        tree->inst_c0 = num;
-            //        tree->type = STACK_I4;
-            //        tree->inst_vtype = &mono_defaults.int32_class->byval_arg;
-            //        tree->klass = mono_class_from_mono_type (tree->inst_vtype);
 
-            //        set_vreg_to_inst (cfg, inst->dreg + 2, tree);
-            //    }
+                /* Allocate a dummy MonoInst for the first vreg */
+                tree = MONO_INST_NEW(cfg, InstructionCode.OP_LOCAL);
+                tree.Destination = new Register(inst.Destination.Id + 1);
+                //if (cfg.opt & MONO_OPT_SSA)
+                //    tree.flags = MONO_INST_VOLATILE;
+                tree.Operand0 = vi;
+                tree.StackType = StackType.STACK_I4;
+                tree.Operand1 = mono_defaults.int32_class;
+                tree.klass = mono_class_from_mono_type(mono_defaults.int32_class);
 
-            //    cfg->num_varinfo++;
-            //    if (cfg->verbose_level > 2)
-            //        g_print ("created temp %d (R%d) of type %s\n", num, vreg, mono_type_get_name (type));
-            //    return inst;
-            throw new NotImplementedException();
+                set_vreg_to_inst(cfg, tree.Destination, tree);
+
+                /* Allocate a dummy MonoInst for the second vreg */
+                tree = MONO_INST_NEW(cfg, InstructionCode.OP_LOCAL);
+                tree.Destination = new Register(inst.Destination.Id + 2);
+                //if (cfg.opt & MONO_OPT_SSA)
+                //    tree.flags = MONO_INST_VOLATILE;
+                tree.Operand0 = vi;
+                tree.StackType = StackType.STACK_I4;
+                tree.Operand1 = mono_defaults.int32_class;
+                tree.klass = mono_class_from_mono_type(mono_defaults.int32_class);
+
+                set_vreg_to_inst(cfg, tree.Destination, tree);
+            }
+
+            return inst;
+        }
+
+        private void set_vreg_to_inst(IMethodContext cfg, IRegister vreg, IInstruction inst)
+        {
+            cfg.VRegisterToInstruction[vreg] = inst;
+        }
+
+        private IVariableDefinition MONO_VARINFO(IMethodContext cfg, int varnum)
+        {
+            return cfg.VariableDefinitions[varnum];
+        }
+
+        private IVariableDefinition MONO_INIT_VARINFO(IMethodContext cfg)
+        {
+            var vi = new VariableDefinition {Index = cfg.VariableDefinitions.Count};
+            cfg.VariableDefinitions.Add(vi);
+            //vi.range.first_use.pos.bid = 0xffff; 
+            return vi;
         }
     }
 
@@ -702,6 +849,16 @@ namespace Zenos.Framework
         public static IRegister alloc_preg(this IMethodContext context)
         {
             return alloc_ireg(context);
+        }
+
+        public static TypeReference GetVariableType(this IInstruction inst)
+        {
+            return (TypeReference)inst.Operand1;
+        }
+
+        public static bool IsExceptionType(this TypeDefinition type)
+        {
+            throw new NotImplementedException();
         }
     }
 }
