@@ -61,6 +61,7 @@ namespace Zenos.Framework
         public BasicBlock CurrentBasicBlock { get; set; }
         public int next_vreg { get; set; }
         public IDictionary<IRegister, IInstruction> VRegisterToInstruction { get; private set; }
+        public IInstruction vret_addr { get; set; }
 
         protected virtual void Dispose(bool disposing)
         {

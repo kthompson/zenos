@@ -19,7 +19,7 @@ namespace Zenos.Framework
 
         IList<IInstruction> Variables { get; set; }
         IList<IVariableDefinition> VariableDefinitions { get; set; }
-        
+
         IInstruction ReturnType { get; set; }
 
         IList<IInstruction> Parameters { get; set; }
@@ -35,6 +35,13 @@ namespace Zenos.Framework
         int next_vreg { get; set; }
 
         IDictionary<IRegister, IInstruction> VRegisterToInstruction { get; }
+
+        /* 
+         * This variable represents the hidden argument holding the vtype
+         * return address. If the method returns something other than a vtype, or
+         * the vtype is returned in registers this is NULL.
+         */
+        IInstruction vret_addr { get; set; }
     }
 
     public interface IVariableDefinition

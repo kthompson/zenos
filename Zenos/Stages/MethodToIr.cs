@@ -53,6 +53,25 @@ namespace Zenos.Stages
             return dest;
         }
 
+        private IInstruction EMIT_NEW_RETLOADA(IMethodContext context)
+        {
+
+            var dest = NEW_RETLOADA (context); 
+            MONO_ADD_INS(context.CurrentBasicBlock, dest);
+            return dest;
+        }
+
+        private IInstruction NEW_RETLOADA(IMethodContext context)
+        {
+            var dest = MONO_INST_NEW(context, InstructionCode.OP_MOVE);
+            dest.StackType = StackType.STACK_MP;
+            dest.klass = context.ReturnType.klass;
+
+            dest.Source1 = context.vret_addr.Destination;
+            dest.Destination = context.alloc_dreg(dest.StackType);
+            return dest;
+        }
+
         private IInstruction NEW_ARGLOAD(IMethodContext context, int num)
         {
             return NEW_VARLOAD(context, context.Parameters[num], context.Parameters[num].GetVariableType());
@@ -194,8 +213,6 @@ namespace Zenos.Stages
 
         private TypeDefinition mono_class_from_mono_type(TypeReference type)
         {
- 
-            
             switch (type.MetadataType)
             {
                 case MetadataType.Object:
@@ -454,6 +471,7 @@ namespace Zenos.Stages
             return NEW_VARLOAD(context, context.Variables[num], context.VariableDefinitions[num].VariableType);
         }
 
+        //mono_method_to_ir
         public override IInstruction Compile(IMethodContext context, IInstruction instruction)
         {
             switch (instruction.Code)
@@ -528,12 +546,152 @@ namespace Zenos.Stages
                         //inline_costs += 1;
                         break;
                     }
+
+                case InstructionCode.CilRet:
+                {
+
+                if (context.ReturnType != null)
+                {
+					var ret_type = context.Method.ReturnType;
+
+                    //if (seq_points && !sym_seq_points) {
+                    //    /* 
+                    //     * Place a seq point here too even through the IL stack is not
+                    //     * empty, so a step over on
+                    //     * call <FOO>
+                    //     * ret
+                    //     * will work correctly.
+                    //     */
+                    //    NEW_SEQ_POINT (cfg, ins, ip - header->code, TRUE);
+                    //    MONO_ADD_INS (cfg->cbb, ins);
+                    //}
+
+                    //g_assert (!return_var);
+					CHECK_STACK (context, 1);
+					//--sp;
+
+                    //if ((method->wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method->wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
+                    //    UNVERIFIED;
+
+					if (mini_type_to_stind (context, ret_type) == InstructionCode.CilStobj) {
+						
+
+                        if (context.vret_addr == null)
+                        {
+                            var ins = EMIT_NEW_VARSTORE(context, context.ReturnType, ret_type, instruction);
+                            return instruction.ReplaceWith(ins);
+                        } else {
+                            var ret_addr = EMIT_NEW_RETLOADA(context);
+
+                            var ins = EMIT_NEW_STORE_MEMBASE(context, InstructionCode.OP_STOREV_MEMBASE, ret_addr.Destination, 0, instruction.Destination);
+
+							ins.klass = mono_class_from_mono_type (ret_type);
+
+                            return instruction.ReplaceWith(ins);
+                        }
+					} else {
+                        mono_arch_emit_setret(context, method, *sp);
+					}
+				}
+                    
+                    break;
+                }
                 default:
-                    Helper.Break();
+                    Helper.Stop("Unsupported instruction: " + instruction.Code);
                     break;
             }
 
+
+
             return instruction;
+        }
+
+        private IInstruction EMIT_NEW_STORE_MEMBASE(IMethodContext cfg, InstructionCode op, IRegister @base, int offset, IRegister sr)
+        {
+            var dest = NEW_STORE_MEMBASE(cfg, op, @base, offset, sr);
+
+            MONO_ADD_INS(cfg.CurrentBasicBlock, dest);
+
+            return dest;
+        }
+
+        private IInstruction NEW_STORE_MEMBASE(IMethodContext cfg, InstructionCode op, IRegister @base, int offset, IRegister sr)
+        {
+            var inst = MONO_INST_NEW (cfg, op); 
+            inst.Source1 = sr; 
+            inst.Destination = @base; 
+            inst.Operand0 = offset;
+            MONO_ADD_INS(cfg.CurrentBasicBlock, inst);
+            return inst;
+        }
+
+        private InstructionCode mini_type_to_stind(IMethodContext cfg, TypeReference type)
+        {
+            //if (cfg->generic_sharing_context && !type.IsByReference)
+            //{
+            //    if (type.type == MONO_TYPE_VAR || type->type == MONO_TYPE_MVAR)
+            //    {
+            //        if (mini_type_var_is_vt(cfg, type))
+            //            return CEE_STOBJ;
+            //        else
+            //            return CEE_STIND_REF;
+            //    }
+            //}
+            return mono_type_to_stind(type);
+        }
+
+        private InstructionCode mono_type_to_stind(TypeReference type)
+        {
+            if(type.IsByReference)
+                return InstructionCode.CilStind_I;
+            
+        handle_enum:
+            switch (type.MetadataType)
+            {
+                case MetadataType.SByte:
+                case MetadataType.Byte:
+                case MetadataType.Boolean:
+                    return InstructionCode.CilStind_I1;
+                case MetadataType.Int16:
+                case MetadataType.UInt16:
+                case MetadataType.Char:
+                    return InstructionCode.CilStind_I2;
+                case MetadataType.Int32:
+                case MetadataType.UInt32:
+                    return InstructionCode.CilStind_I4;
+                case MetadataType.IntPtr:
+                case MetadataType.UIntPtr:
+                case MetadataType.Pointer:
+                case MetadataType.FunctionPointer:
+                    return InstructionCode.CilStind_I;
+                case MetadataType.Class:
+                case MetadataType.String:
+                case MetadataType.Object:
+                case (MetadataType)0x1d: //MONO_TYPE_SZARRAY:
+                case MetadataType.Array:
+                    return InstructionCode.CilStind_Ref;
+                case MetadataType.Int64:
+                case MetadataType.UInt64:
+                    return InstructionCode.CilStind_I8;
+                case MetadataType.Single:
+                    return InstructionCode.CilStind_R4;
+                case MetadataType.Double:
+                    return InstructionCode.CilStind_R8;
+                case MetadataType.ValueType:
+                    if (type.data.klass->enumtype)
+                    {
+                        type = mono_class_enum_basetype(type->data.klass);
+                        goto handle_enum;
+                    }
+                    return InstructionCode.CilStobj;
+                case MetadataType.TypedByReference:
+                    return InstructionCode.CilStobj;
+                case MetadataType.GenericInstance:
+                    type = type->data.generic_class->container_class->byval_arg;
+                    goto handle_enum;
+                default:
+                    Helper.Stop("unknown type 0x%02x in type_to_stind", type.MetadataType);
+            }
         }
 
         private void emit_stloc_ir(IMethodContext cfg, IInstruction sp, int n)
@@ -564,6 +722,13 @@ namespace Zenos.Stages
             MONO_ADD_INS(cfg.CurrentBasicBlock, dest);
             return dest;
         }
+
+        private IInstruction EMIT_NEW_VARSTORE(IMethodContext cfg, IInstruction var, TypeReference vartype, IInstruction inst)
+        {
+            var dest = NEW_VARSTORE (cfg, var, vartype, inst);
+            MONO_ADD_INS(cfg.CurrentBasicBlock, dest);
+            return dest;
+        } 
 
         private IInstruction NEW_LOCSTORE(IMethodContext cfg, int num, IInstruction inst)
         {
@@ -608,6 +773,21 @@ namespace Zenos.Stages
             context.Locals = new List<IInstruction>();
             foreach (var variable in method.Body.Variables)
                 context.Locals.Add(mono_compile_create_var(context, variable.VariableType, InstructionCode.OP_LOCAL));
+
+            mono_arch_create_vars(context);
+
+            //if (context.Method.->save_lmf && context->create_lmf_var)
+            //{
+            //    var lmf_var = mono_compile_create_var(context, !mono_defaults.int_class.IsByReference, InstructionCode.OP_LOCAL);
+            //    lmf_var.Flags |= InstructionFlags.Volatile;
+            //    lmf_var.Flags |= InstructionFlags.Lmf;
+            //    context.lmf_var = lmf_var;
+            //}
+        }
+
+        private void mono_arch_create_vars(IMethodContext context)
+        {
+            throw new NotImplementedException();
         }
 
         private bool mono_type_is_long(TypeReference type)
