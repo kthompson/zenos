@@ -39,10 +39,10 @@ namespace Zenos.Core
         /// <param name="expression">Expression that evaluates to a boolean to check</param>
         /// <param name="exceptionCreator"></param>
         [DebuggerHidden]
-        public static void IsTrue(bool expression, Func<Exception> exceptionCreator)
+        public static void True(bool expression)
         {
-            if (!expression)
-                Throw(exceptionCreator);
+            if (expression != true)
+                Throw(new Exception());
         }
 
         /// <summary>
@@ -51,10 +51,10 @@ namespace Zenos.Core
         /// <param name="expression">Expression that evaluates to a boolean to check</param>
         /// <param name="exceptionCreator"></param>
         [DebuggerHidden]
-        public static void IsFalse(bool expression, Func<Exception> exceptionCreator)
+        public static void False(bool expression)
         {
-            if (expression)
-                Throw(exceptionCreator);
+            if (expression != false)
+                Throw(new Exception());
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace Zenos.Core
             where T : class
         {
             if (arg == null)
-                Throw(() => new ArgumentNullException(argName));
+                Throw(new ArgumentNullException(argName));
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace Zenos.Core
         public static void IsNotNullOrEmpty(string arg)
         {
             if (string.IsNullOrEmpty(arg))
-                Throw(() => new ArgumentNullException());
+                Throw(new ArgumentNullException());
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Zenos.Core
             where T : class
         {
             if (arg == null)
-                Throw(() => new ArgumentNullException());
+                Throw(new ArgumentNullException());
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace Zenos.Core
         public static void AreEqual<T>(T arg, T value, string message)
         {
             if (!Equals(arg, value))
-                Throw(() => new ArgumentException(message, string.Empty));
+                Throw(new ArgumentException(message, string.Empty));
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace Zenos.Core
                 if (Equals(arg, value))
                     return;
 
-            Throw(() => new ArgumentOutOfRangeException(argName));
+            Throw(new ArgumentOutOfRangeException(argName));
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace Zenos.Core
             where T : struct, IComparable
         {
             if (arg.CompareTo(minValue) < 0 || arg.CompareTo(maxValue) > 0)
-                Throw(() => new ArgumentOutOfRangeException(argName));
+                Throw(new ArgumentOutOfRangeException(argName));
         }
 
         /// <summary>
@@ -165,7 +165,7 @@ namespace Zenos.Core
             where T : struct, IComparable
         {
             if (arg.CompareTo(value) <= 0)
-                Throw(() => new ArgumentOutOfRangeException(argName));
+                Throw(new ArgumentOutOfRangeException(argName));
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace Zenos.Core
             where T : struct, IComparable
         {
             if (arg.CompareTo(value) < 0)
-                Throw(() => new ArgumentOutOfRangeException(argName));
+                Throw(new ArgumentOutOfRangeException(argName));
         }
 
         /// <summary>
@@ -197,7 +197,7 @@ namespace Zenos.Core
             where T : struct, IComparable
         {
             if (arg.CompareTo(value) >= 0)
-                Throw(() => new ArgumentOutOfRangeException(argName));
+                Throw(new ArgumentOutOfRangeException(argName));
         }
 
         /// <summary>
@@ -213,7 +213,7 @@ namespace Zenos.Core
             where T : struct, IComparable
         {
             if (arg.CompareTo(value) > 0)
-                Throw(() => new ArgumentOutOfRangeException(argName));
+                Throw(new ArgumentOutOfRangeException(argName));
         }
 
         [DebuggerHidden]
@@ -223,27 +223,21 @@ namespace Zenos.Core
         }
 
         [DebuggerHidden]
-        public static void NotSupported(string message)
+        public static void NotSupported(string fmt = "", params object[] args)
         {
-            Throw(() => new NotSupportedException(message));
+            Throw(new NotSupportedException(string.Format(fmt, args)));
         }
 
         [DebuggerHidden]
-        public static void Stop()
+        public static void Stop(Exception ex = null)
         {
-            Stop((Func<Exception>) null);
+            Throw(ex ?? new Exception());
         }
 
         [DebuggerHidden]
-        public static void Stop(Func<Exception> ex)
+        public static void Stop(string fmt = "", params object[] args)
         {
-            Throw(ex ?? (() => new Exception()));
-        }
-
-        [DebuggerHidden]
-        public static void Stop(string errorMessage)
-        {
-            Throw(() => new Exception(errorMessage));
+            Throw(new Exception(string.Format(fmt, args)));
         }
 
         /// <summary>
@@ -251,10 +245,10 @@ namespace Zenos.Core
         /// </summary>
         /// <param name="ex"></param>
         [DebuggerHidden]
-        private static void Throw(Func<Exception> ex)
+        public static void Throw(Exception ex)
         {
             Break();
-            throw ex();
+            throw ex;
         }
         #endregion
 
@@ -323,7 +317,7 @@ namespace Zenos.Core
             var commandPath = commands.FirstOrDefault();
 
             if(string.IsNullOrEmpty(commandPath))
-                Helper.Stop(() => new ApplicationException(command + " command not found."));
+                Throw(new ApplicationException(command + " command not found."));
 
             return commandPath;
         }
@@ -334,7 +328,7 @@ namespace Zenos.Core
             where T : class
         {
             if (arg != null)
-                Throw(() => new ArgumentNullException());
+                Throw(new ArgumentNullException());
         }
     }
 }

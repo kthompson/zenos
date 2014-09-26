@@ -6,6 +6,8 @@ using Mono.Cecil.Cil;
 
 namespace Zenos.Framework
 {
+
+    //MonoCompile
     public interface IMethodContext : IDisposable
     {
         ITypeContext Context { get; }
@@ -42,6 +44,8 @@ namespace Zenos.Framework
          * the vtype is returned in registers this is NULL.
          */
         IInstruction vret_addr { get; set; }
+        bool ret_var_is_local { get; set; }
+        int arch_eh_jit_info { get; set; }
     }
 
     public interface IVariableDefinition

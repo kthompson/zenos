@@ -62,6 +62,8 @@ namespace Zenos.Framework
         public int next_vreg { get; set; }
         public IDictionary<IRegister, IInstruction> VRegisterToInstruction { get; private set; }
         public IInstruction vret_addr { get; set; }
+        public bool ret_var_is_local { get; set; }
+        public int arch_eh_jit_info { get; set; }
 
         protected virtual void Dispose(bool disposing)
         {

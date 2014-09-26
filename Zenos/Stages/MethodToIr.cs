@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using Zenos.Core;
@@ -25,7 +26,7 @@ namespace Zenos.Stages
 
         private void CHECK_STACK_OVF(IMethodContext context, int n)
         {
-            //if (((sp - stack_start) + n) > header->max_stack) UNVERIFIED();
+            //if (((sp - stack_start) + n) > header.max_stack) UNVERIFIED();
         }
 
         private void CHECK_LOCAL(IMethodContext context, int num)
@@ -253,24 +254,24 @@ namespace Zenos.Stages
                     return mono_defaults.typed_reference_class;
 
                 //TODO: case MetadataType.Array:
-                //    return mono_bounded_array_class_get(type->data.array->eklass, type->data.array->rank, TRUE);
+                //    return mono_bounded_array_class_get(type.data.array.eklass, type.data.array.rank, TRUE);
                 //TODO: case MetadataType.Pointer:
-                //    return mono_ptr_class_get(type->data.type);
+                //    return mono_ptr_class_get(type.data.type);
                 //TODO: case MetadataType.FunctionPointer:
-                //    return mono_fnptr_class_get(type->data.method);
-                //case MONO_TYPE_SZARRAY:
-                //    return mono_array_class_get(type->data.klass, 1);
+                //    return mono_fnptr_class_get(type.data.method);
+                //TODO: case (MetadataType)0x1d: //MONO_TYPE_SZARRAY:
+                //    return mono_array_class_get(type.data.klass, 1);
                 case MetadataType.Class:
                 case MetadataType.ValueType:
                     return type.Resolve();
                 //case MetadataType.GenericInstance:
-                //    return mono_generic_class_get_class(type->data.generic_class);
+                //    return mono_generic_class_get_class(type.data.generic_class);
                 //case MetadataType.Var:
-                //    return mono_class_from_generic_parameter(type->data.generic_param, NULL, FALSE);
+                //    return mono_class_from_generic_parameter(type.data.generic_param, NULL, FALSE);
                 //case MetadataType.MVar:
-                //    return mono_class_from_generic_parameter(type->data.generic_param, NULL, TRUE);
+                //    return mono_class_from_generic_parameter(type.data.generic_param, NULL, TRUE);
                 default:
-                    Helper.Stop(() => new Exception(string.Format("mono_class_from_mono_type: implement me {0}\n", type.MetadataType)));
+                    Helper.Throw(new Exception(string.Format("mono_class_from_mono_type: implement me {0}\n", type.MetadataType)));
                     break;
             }
 
@@ -281,6 +282,8 @@ namespace Zenos.Stages
         {
             if (type.IsByReference)
                 return InstructionCode.OP_MOVE;
+
+            type = mini_replace_type(type);
 
             handle_enum:
             switch (type.MetadataType)
@@ -317,9 +320,9 @@ namespace Zenos.Stages
                 case MetadataType.ValueType:
                     throw new NotImplementedException();
                     //TODO:
-                    // if (type->data.klass->enumtype)
+                    // if (type.data.klass.enumtype)
                     //{
-                    //    type = mono_class_enum_basetype(type->data.klass);
+                    //    type = mono_class_enum_basetype(type.data.klass);
                     //    goto handle_enum;
                     //}
                     //if (MONO_CLASS_IS_SIMD(cfg, mono_class_from_mono_type(type)))
@@ -328,13 +331,13 @@ namespace Zenos.Stages
                 case MetadataType.TypedByReference:
                     return InstructionCode.OP_VMOVE;
                 case MetadataType.GenericInstance:
-                    //TODO: type = type->data.generic_class->container_class->byval_arg;
+                    //TODO: type = type.data.generic_class.container_class.byval_arg;
                     throw new NotImplementedException();
                     goto handle_enum;
                 case MetadataType.Var:
                 case MetadataType.MVar:
                     throw new NotImplementedException();
-                    ////g_assert (cfg->generic_sharing_context);
+                    ////g_assert (cfg.generic_sharing_context);
                     //if (mini_type_var_is_vt(cfg, type))
                     //    return InstructionCode.OP_VMOVE;
                     //else
@@ -384,7 +387,8 @@ namespace Zenos.Stages
                 case MetadataType.Object:
                 case MetadataType.Array:
 
-                    //case MONO_TYPE_SZARRAY:
+
+                    //case (MetadataType)0x1d: // MONO_TYPE_SZARRAY
                     inst.StackType = StackType.STACK_OBJ;
                     return;
                 case MetadataType.Int64:
@@ -398,15 +402,15 @@ namespace Zenos.Stages
                 case MetadataType.ValueType:
 
                     throw new NotImplementedException();
-                    //if (type->data.klass->enumtype)
+                    //if (type.data.klass.enumtype)
                     //{
-                    //    type = mono_class_enum_basetype(type->data.klass);
+                    //    type = mono_class_enum_basetype(type.data.klass);
                     //    goto handle_enum;
                     //}
                     //else
                     //{
-                    //    inst->klass = klass;
-                    //    inst->type = STACK_VTYPE;
+                    //    inst.klass = klass;
+                    //    inst.type = STACK_VTYPE;
                     //    return;
                     //}
                 case MetadataType.TypedByReference:
@@ -414,22 +418,22 @@ namespace Zenos.Stages
                     inst.StackType = StackType.STACK_VTYPE;
                     return;
                 case MetadataType.GenericInstance:
-                    //type = &type->data.generic_class->container_class->byval_arg;
+                    //type = &type.data.generic_class.container_class.byval_arg;
                     //goto handle_enum;
                     throw new NotImplementedException();
 
                 case MetadataType.MVar:
                 case MetadataType.Var:
                     throw new NotImplementedException();
-                    //g_assert(cfg->generic_sharing_context);
+                    //g_assert(cfg.generic_sharing_context);
                     //if (mini_is_gsharedvt_type(cfg, type))
                     //{
-                    //    g_assert(cfg->gsharedvt);
-                    //    inst->type = STACK_VTYPE;
+                    //    g_assert(cfg.gsharedvt);
+                    //    inst.type = STACK_VTYPE;
                     //}
                     //else
                     //{
-                    //    inst->type = STACK_OBJ;
+                    //    inst.type = STACK_OBJ;
                     //}
                     //return;
                 default:
@@ -538,7 +542,7 @@ namespace Zenos.Stages
                          * once we do it we need to skip the current instr(CilStloc) and continue with the one after
                          */
                         instruction = instruction.Previous;
-                        //if (!dont_verify_stloc && target_type_is_incompatible(cfg, header->locals[n], *sp))
+                        //if (!dont_verify_stloc && target_type_is_incompatible(cfg, header.locals[n], *sp))
                         //    UNVERIFIED;
                         emit_stloc_ir(context, instruction, n);
                         instruction.Next.Remove();
@@ -550,50 +554,54 @@ namespace Zenos.Stages
                 case InstructionCode.CilRet:
                 {
 
-                if (context.ReturnType != null)
-                {
-					var ret_type = context.Method.ReturnType;
+                    if (context.ReturnType != null)
+                    {
+                        var ret_type = context.Method.ReturnType;
 
-                    //if (seq_points && !sym_seq_points) {
-                    //    /* 
-                    //     * Place a seq point here too even through the IL stack is not
-                    //     * empty, so a step over on
-                    //     * call <FOO>
-                    //     * ret
-                    //     * will work correctly.
-                    //     */
-                    //    NEW_SEQ_POINT (cfg, ins, ip - header->code, TRUE);
-                    //    MONO_ADD_INS (cfg->cbb, ins);
-                    //}
+                        //if (seq_points && !sym_seq_points) {
+                        //    /* 
+                        //     * Place a seq point here too even through the IL stack is not
+                        //     * empty, so a step over on
+                        //     * call <FOO>
+                        //     * ret
+                        //     * will work correctly.
+                        //     */
+                        //    NEW_SEQ_POINT (cfg, ins, ip - header.code, TRUE);
+                        //    MONO_ADD_INS (cfg.cbb, ins);
+                        //}
 
-                    //g_assert (!return_var);
-					CHECK_STACK (context, 1);
-					//--sp;
+                        //g_assert (!return_var);
+                        CHECK_STACK(context, 1);
+                        //--sp;
 
-                    //if ((method->wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method->wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
-                    //    UNVERIFIED;
+                        //if ((method.wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method.wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
+                        //    UNVERIFIED;
 
-					if (mini_type_to_stind (context, ret_type) == InstructionCode.CilStobj) {
-						
-
-                        if (context.vret_addr == null)
+                        if (mini_type_to_stind(context, ret_type) == InstructionCode.CilStobj)
                         {
-                            var ins = EMIT_NEW_VARSTORE(context, context.ReturnType, ret_type, instruction);
-                            return instruction.ReplaceWith(ins);
-                        } else {
-                            var ret_addr = EMIT_NEW_RETLOADA(context);
+                            if (context.vret_addr == null)
+                            {
+                                var ins = EMIT_NEW_VARSTORE(context, context.ReturnType, ret_type, instruction);
+                                return instruction.ReplaceWith(ins);
+                            }
+                            else
+                            {
+                                var ret_addr = EMIT_NEW_RETLOADA(context);
 
-                            var ins = EMIT_NEW_STORE_MEMBASE(context, InstructionCode.OP_STOREV_MEMBASE, ret_addr.Destination, 0, instruction.Destination);
+                                var ins = EMIT_NEW_STORE_MEMBASE(context, InstructionCode.OP_STOREV_MEMBASE,
+                                    ret_addr.Destination, 0, instruction.Destination);
 
-							ins.klass = mono_class_from_mono_type (ret_type);
+                                ins.klass = mono_class_from_mono_type(ret_type);
 
-                            return instruction.ReplaceWith(ins);
+                                return instruction.ReplaceWith(ins);
+                            }
                         }
-					} else {
-                        mono_arch_emit_setret(context, method, *sp);
-					}
-				}
-                    
+                        else
+                        {
+                            mono_arch_emit_setret(context, context.Method, instruction);
+                        }
+                    }
+
                     break;
                 }
                 default:
@@ -604,6 +612,11 @@ namespace Zenos.Stages
 
 
             return instruction;
+        }
+
+        private void mono_arch_emit_setret(IMethodContext context, MethodDefinition method, IInstruction instruction)
+        {
+            throw new NotImplementedException();
         }
 
         private IInstruction EMIT_NEW_STORE_MEMBASE(IMethodContext cfg, InstructionCode op, IRegister @base, int offset, IRegister sr)
@@ -627,9 +640,9 @@ namespace Zenos.Stages
 
         private InstructionCode mini_type_to_stind(IMethodContext cfg, TypeReference type)
         {
-            //if (cfg->generic_sharing_context && !type.IsByReference)
+            //if (cfg.generic_sharing_context && !type.IsByReference)
             //{
-            //    if (type.type == MONO_TYPE_VAR || type->type == MONO_TYPE_MVAR)
+            //    if (type.type == MONO_TYPE_VAR || type.type == MONO_TYPE_MVAR)
             //    {
             //        if (mini_type_var_is_vt(cfg, type))
             //            return CEE_STOBJ;
@@ -678,19 +691,27 @@ namespace Zenos.Stages
                 case MetadataType.Double:
                     return InstructionCode.CilStind_R8;
                 case MetadataType.ValueType:
-                    if (type.data.klass->enumtype)
+                {
+                    var definition = type.Resolve();
+                    if (definition.IsEnum)
                     {
-                        type = mono_class_enum_basetype(type->data.klass);
+                        type = definition.GetEnumUnderlyingType();
                         goto handle_enum;
                     }
                     return InstructionCode.CilStobj;
+                }
                 case MetadataType.TypedByReference:
                     return InstructionCode.CilStobj;
                 case MetadataType.GenericInstance:
-                    type = type->data.generic_class->container_class->byval_arg;
+                {
+                    var definition = type.Resolve();
+                    //TODO: type = type.data.generic_class.container_class.byval_arg;
+                    goto default;
                     goto handle_enum;
+                }
                 default:
-                    Helper.Stop("unknown type 0x%02x in type_to_stind", type.MetadataType);
+                    throw new InvalidOperationException(string.Format("unknown type {0} in type_to_stind", type.MetadataType));
+
             }
         }
 
@@ -776,7 +797,7 @@ namespace Zenos.Stages
 
             mono_arch_create_vars(context);
 
-            //if (context.Method.->save_lmf && context->create_lmf_var)
+            //if (context.Method..save_lmf && context.create_lmf_var)
             //{
             //    var lmf_var = mono_compile_create_var(context, !mono_defaults.int_class.IsByReference, InstructionCode.OP_LOCAL);
             //    lmf_var.Flags |= InstructionFlags.Volatile;
@@ -785,9 +806,443 @@ namespace Zenos.Stages
             //}
         }
 
-        private void mono_arch_create_vars(IMethodContext context)
+        private void mono_arch_create_vars(IMethodContext cfg)
+        {
+            //MonoType* sig_ret;
+            //MonoMethodSignature* sig;
+            //CallInfo* cinfo;
+
+            //var sig = mono_method_signature(cfg.Method);
+
+            var cinfo = get_call_info(cfg, cfg.Method);
+            var sig_ret = mini_replace_type(cfg.Method.ReturnType);
+            
+            if (cinfo.ret.storage == ArgStorage.ArgValuetypeInReg)
+                cfg.ret_var_is_local = true;
+            if ((cinfo.ret.storage != ArgStorage.ArgValuetypeInReg) && (mono_type_is_struct(sig_ret.Resolve()) || mini_is_gsharedvt_variable_type(cfg, sig_ret)))
+            {
+                cfg.vret_addr = mono_compile_create_var(cfg, mono_defaults.int_class,  InstructionCode.OP_ARG);
+            }
+
+
+//    if (cfg.method.save_lmf) {
+//        cfg.create_lmf_var = TRUE;
+//        cfg.lmf_ir = TRUE;
+//#ifndef HOST_WIN32
+//        cfg.lmf_ir_mono_lmf = TRUE;
+//#endif
+//    }
+
+            cfg.arch_eh_jit_info = 1;
+        }
+
+        private bool mini_is_gsharedvt_variable_type(IMethodContext cfg, TypeReference type)
+        {
+            return false;
+        }
+
+        private bool mono_type_is_struct(TypeDefinition type)
+        {
+            return (!type.IsByReference && 
+                    (
+                        (type.MetadataType == MetadataType.ValueType && !type.IsEnum) || 
+                        (type.MetadataType == MetadataType.TypedByReference) ||
+                        (
+                            (type.MetadataType == MetadataType.GenericInstance) &&
+                            mono_metadata_generic_class_is_valuetype(type) &&
+                            !type.IsEnum)));
+        }
+
+        private bool mono_metadata_generic_class_is_valuetype(object genericClass)
         {
             throw new NotImplementedException();
+        }
+
+        private TypeReference mini_replace_type(TypeReference returnType)
+        {
+            throw new NotImplementedException();
+        }
+
+        private TypeReference mini_type_get_underlying_type(object gsctx, TypeReference type)
+        {
+            type = mini_native_type_replace_type(type);
+
+            if (type.IsByReference)
+                return mono_defaults.int_class;
+
+            if (!type.IsByReference && (type.MetadataType == MetadataType.Var|| type.MetadataType == MetadataType.MVar) &&
+                mini_is_gsharedvt_type_gsctx(gsctx, type))
+                return type;
+            
+            return mini_get_basic_type_from_generic(gsctx, mono_type_get_underlying_type(type.Resolve()));
+        }
+
+        private TypeReference mini_get_basic_type_from_generic(object gsctx, TypeReference type)
+        {
+            if (!type.IsByReference && (type.MetadataType == MetadataType.Var || type.MetadataType == MetadataType.MVar) && mini_is_gsharedvt_type_gsctx(gsctx, type))
+                return type;
+            
+            return mini_native_type_replace_type(mono_type_get_basic_type_from_generic(type));
+        }
+
+        private TypeReference mono_type_get_basic_type_from_generic(TypeReference type)
+        {
+            /* When we do generic sharing we let type variables stand for reference types. */
+            if (!type.IsByReference && (type.MetadataType == MetadataType.Var || type.MetadataType == MetadataType.MVar))
+                return mono_defaults.object_class;
+
+            return type;
+        }
+
+        private TypeReference mini_native_type_replace_type(TypeReference type)
+        {
+            return type;
+        }
+
+
+        private CallInfo get_call_info(object gsctx, MethodDefinition method)
+        {
+
+            int n = (method.HasThis ? 1 : 0) + method.Parameters.Count;
+            uint stack_size = 0;
+            var isPinvoke = method.IsPInvokeImpl;
+
+            var sig = method;
+
+            var gr = 0U;
+            var fr = 0U;
+
+            var cinfo = new CallInfo
+            {
+                nargs = n, 
+                args = new ArgInfo[n], 
+                ret = new ArgInfo()
+            };
+
+            var param_regs = callconv_param_regs(sig);
+
+            {
+                var ret_type = mini_type_get_underlying_type(gsctx, sig.ReturnType);
+                switch (ret_type.MetadataType)
+                {
+                    case MetadataType.Boolean:
+                    case MetadataType.SByte:
+                    case MetadataType.Byte:
+                    case MetadataType.Int16:
+                    case MetadataType.UInt16:
+                    case MetadataType.Char:
+                    case MetadataType.Int32:
+                    case MetadataType.UInt32:
+                    case MetadataType.IntPtr:
+                    case MetadataType.UIntPtr:
+                    case MetadataType.Pointer:
+                    case MetadataType.FunctionPointer:
+                    case MetadataType.Class:
+                    case MetadataType.Object:
+
+                    case (MetadataType)0x1d: //MONO_TYPE_SZARRAY:
+                    case MetadataType.Array:
+                    case MetadataType.String:
+                        cinfo.ret.storage = ArgStorage.ArgInIReg;
+                        cinfo.ret.reg = X86_Reg_No.X86_EAX;
+                        break;
+                    case MetadataType.UInt64:
+                    case MetadataType.Int64:
+                        cinfo.ret.storage = ArgStorage.ArgInIReg;
+                        cinfo.ret.reg = X86_Reg_No.X86_EAX;
+                        cinfo.ret.is_pair = true;
+                        break;
+                    case MetadataType.Single:
+                        cinfo.ret.storage = ArgStorage.ArgOnFloatFpStack;
+                        break;
+                    case MetadataType.Double:
+                        cinfo.ret.storage = ArgStorage.ArgOnDoubleFpStack;
+                        break;
+                    case MetadataType.GenericInstance:
+                        if (!mono_type_generic_inst_is_valuetype(ret_type))
+                        {
+                            cinfo.ret.storage = ArgStorage.ArgInIReg;
+                            cinfo.ret.reg = X86_Reg_No.X86_EAX;
+                            break;
+                        }
+                        if (mini_is_gsharedvt_type_gsctx(gsctx, ret_type))
+                        {
+                            cinfo.ret.storage = ArgStorage.ArgOnStack;
+                            cinfo.vtype_retaddr = true;
+                            break;
+                        }
+
+                        goto case MetadataType.ValueType;
+                    /* Fall through */
+                    case MetadataType.ValueType:
+                    case MetadataType.TypedByReference:
+                        {
+                            uint tmpGr = 0;
+                            uint tmpFr = 0, tmpStacksize = 0;
+                            var tmpParamRegs = new X86_Reg_No[0];
+
+                            add_valuetype(gsctx, sig, cinfo.ret, ret_type, true, ref tmpGr, tmpParamRegs, ref tmpFr, ref tmpStacksize);
+                            if (cinfo.ret.storage == ArgStorage.ArgOnStack)
+                            {
+                                cinfo.vtype_retaddr = true;
+                                /* The caller passes the address where the value is stored */
+                            }
+                            break;
+                        }
+                    case MetadataType.Var:
+                    case MetadataType.MVar:
+                        Helper.True(mini_is_gsharedvt_type_gsctx(gsctx, ret_type));
+                        cinfo.ret.storage = ArgStorage.ArgOnStack;
+                        cinfo.vtype_retaddr = true;
+                        break;
+                    case MetadataType.Void:
+                        cinfo.ret.storage = ArgStorage.ArgNone;
+                        break;
+                    default:
+                        Helper.Stop("Can't handle as return value {0}", ret_type.MetadataType);
+                        break;
+                }
+            }
+
+            var pstart = 0;
+            /*
+             * To simplify get_this_arg_reg () and LLVM integration, emit the vret arg after
+             * the first argument, allowing 'this' to be always passed in the first arg reg.
+             * Also do this if the first argument is a reference type, since virtual calls
+             * are sometimes made using calli without sig.hasthis set, like in the delegate
+             * invoke wrappers.
+             */
+            if (cinfo.vtype_retaddr && !isPinvoke &&
+                (sig.HasThis ||
+                 (sig.Parameters.Count > 0 && MONO_TYPE_IS_REFERENCE(mini_type_get_underlying_type(gsctx, sig.Parameters[0].ParameterType))))
+            )
+            {
+                if (sig.HasThis)
+                {
+                    add_general(ref gr, ref param_regs, ref stack_size, cinfo.args[0]);
+                }
+                else
+                {
+                    add_general(ref gr, ref param_regs, ref stack_size, cinfo.args[0]);
+                    pstart = 1;
+                }
+                cinfo.vret_arg_offset = stack_size;
+                X86_Reg_No[] temp = null;
+                add_general(ref gr, ref temp, ref stack_size, cinfo.ret);
+                cinfo.vret_arg_index = 1;
+            }
+        else
+            {
+                /* this */
+                if (sig.HasThis)
+                    add_general(ref gr, ref param_regs, ref stack_size, cinfo.args[0]);
+
+                if (cinfo.vtype_retaddr)
+                {   
+                    X86_Reg_No[] temp = null;
+                    add_general(ref gr, ref temp, ref stack_size, cinfo.ret);
+                }
+            }
+
+            if (!sig.IsPInvokeImpl && (sig.CallingConvention == MethodCallingConvention.VarArg) && (n == 0))
+            {
+                fr = 0; //FLOAT_PARAM_REGS;
+
+                /* Emit the signature cookie just before the implicit arguments */
+                add_general(ref gr, ref param_regs, ref stack_size, cinfo.sig_cookie);
+            }
+
+            var hasthis = sig.HasThis ? 1 : 0;
+
+            for (var i = pstart; i < sig.Parameters.Count; ++i)
+            {
+                var ainfo = cinfo.args[hasthis + i];
+
+                if (!sig.IsPInvokeImpl && (sig.CallingConvention == MethodCallingConvention.VarArg) && (false /* i == sig.sentinelpos */))
+                {
+                    /* We allways pass the sig cookie on the stack for simplicity */
+                    /* 
+                     * Prevent implicit arguments + the sig cookie from being passed 
+                     * in registers.
+                     */
+                    fr = 0; //FLOAT_PARAM_REGS;
+
+                    /* Emit the signature cookie just before the implicit arguments */
+                    add_general(ref gr, ref param_regs, ref stack_size, cinfo.sig_cookie);
+                }
+
+                //TODO: not sure exactly what this means: if (sig.Parameters [i].byref)
+                if (sig.Parameters[i].ParameterType.IsByReference)
+                {
+                    add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                    continue;
+                }
+                var ptype = mini_type_get_underlying_type(gsctx, sig.Parameters[i].ParameterType)
+                ;
+                switch (ptype.MetadataType)
+                {
+                    case MetadataType.Boolean:
+                    case MetadataType.SByte:
+                    case MetadataType.Byte:
+                        add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                        break;
+                    case MetadataType.Int16:
+                    case MetadataType.UInt16:
+                    case MetadataType.Char:
+                        add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                        break;
+                    case MetadataType.Int32:
+                    case MetadataType.UInt32:
+                        add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                        break;
+                    case MetadataType.IntPtr:
+                    case MetadataType.UIntPtr:
+                    case MetadataType.Pointer:
+                    case MetadataType.FunctionPointer:
+                    case MetadataType.Class:
+                    case MetadataType.Object:
+                    case MetadataType.String:
+                    case (MetadataType)0x1d: //MONO_TYPE_SZARRAY:
+                    case MetadataType.Array:
+                        add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                        break;
+                    case MetadataType.GenericInstance:
+                        if (!mono_type_generic_inst_is_valuetype(ptype))
+                        {
+                            add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                            break;
+                        }
+                        if (mini_is_gsharedvt_type_gsctx(gsctx, ptype))
+                        {
+                            /* gsharedvt arguments are passed by ref */
+                            add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                            Helper.True(ainfo.storage == ArgStorage.ArgOnStack);
+                            ainfo.storage = ArgStorage.ArgGSharedVt;
+                            break;
+                        }
+                        /* Fall through */
+                        goto case MetadataType.ValueType;
+                    case MetadataType.ValueType:
+                    case MetadataType.TypedByReference:
+                        add_valuetype(gsctx, sig, ainfo, ptype, false, ref gr, param_regs, ref fr, ref stack_size);
+                        break;
+                    case MetadataType.UInt64:
+                    case MetadataType.Int64:
+                        add_general_pair(ref gr, ref param_regs, ref stack_size, ainfo);
+                        break;
+                    case MetadataType.Single:
+                        add_float(ref fr, ref stack_size, ainfo, false);
+                        break;
+                    case MetadataType.Double:
+                        add_float(ref fr, ref stack_size, ainfo, true);
+                        break;
+                    case MetadataType.Var:
+                    case MetadataType.MVar:
+                        /* gsharedvt arguments are passed by ref */
+                        Helper.True(mini_is_gsharedvt_type_gsctx(gsctx, ptype));
+                        add_general(ref gr, ref param_regs, ref stack_size, ainfo);
+                        Helper.True(ainfo.storage == ArgStorage.ArgOnStack);
+                        ainfo.storage = ArgStorage.ArgGSharedVt;
+                        break;
+                    default:
+                        Helper.Stop("unexpected type {0}", ptype.MetadataType);
+                        break;
+                }
+            }
+
+        //    if (!sig.pinvoke && (sig.call_convention == MONO_CALL_VARARG) && (n > 0) &&
+        //        (sig.sentinelpos == sig.param_count))
+        //    {
+        //        fr = FLOAT_PARAM_REGS;
+
+        //        /* Emit the signature cookie just before the implicit arguments */
+        //        add_general(&gr, param_regs, &stack_size, &cinfo.sig_cookie);
+        //    }
+
+        //    if (mono_do_x86_stack_align && (stack_size%MONO_ARCH_FRAME_ALIGNMENT) != 0)
+        //    {
+        //        cinfo.need_stack_align = TRUE;
+        //        cinfo.stack_align_amount = MONO_ARCH_FRAME_ALIGNMENT - (stack_size%MONO_ARCH_FRAME_ALIGNMENT);
+        //        stack_size += cinfo.stack_align_amount;
+        //    }
+
+        //    if (cinfo.vtype_retaddr)
+        //    {
+        //        /* if the function returns a struct on stack, the called method already does a ret $0x4 */
+        //        cinfo.callee_stack_pop = 4;
+        //    }
+
+        //    cinfo.stack_usage = stack_size;
+        //    cinfo.reg_usage = gr;
+        //    cinfo.freg_usage = fr;
+        //    return cinfo;
+
+            //
+            throw new NotImplementedException();
+        }
+
+        private void add_float(ref uint fr, ref uint stackSize, ArgInfo ainfo, bool p3)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void add_general_pair(ref uint gr, ref X86_Reg_No[] paramRegs, ref uint stackSize, ArgInfo ainfo)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void add_general(ref uint gr, ref X86_Reg_No[] paramRegs, ref uint stackSize, ArgInfo ainfo)
+        {
+            ainfo.offset = stackSize;
+
+            if (paramRegs == null || paramRegs[gr] == X86_Reg_No.X86_NREG)
+            {
+                ainfo.storage = ArgStorage.ArgOnStack;
+                ainfo.nslots = 1;
+                stackSize += (uint)IntPtr.Size;
+            }
+            else
+            {
+                ainfo.storage = ArgStorage.ArgInIReg;
+                ainfo.reg = paramRegs[gr];
+                gr++;
+            }
+        }
+
+        private bool MONO_TYPE_IS_REFERENCE(object o)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void add_valuetype(object gsctx, MethodDefinition sig, ArgInfo ainfo, TypeReference type, bool is_return, ref uint gr, X86_Reg_No[] param_regs, ref uint fr, ref uint stack_size)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool mini_is_gsharedvt_type_gsctx(object gsctx, TypeReference retType)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool mono_type_generic_inst_is_valuetype(TypeReference retType)
+        {
+            throw new NotImplementedException();
+        }
+
+        static readonly X86_Reg_No[] thiscall_param_regs = { X86_Reg_No.X86_ECX, X86_Reg_No.X86_NREG };
+
+        private X86_Reg_No[] callconv_param_regs(MethodDefinition sig)
+        {
+            if (sig.IsPInvokeImpl)
+                return new X86_Reg_No[0];
+
+            switch (sig.CallingConvention)
+            {
+                case MethodCallingConvention.ThisCall:
+                    return thiscall_param_regs;
+                default:
+                    return new X86_Reg_No[0];
+            }
         }
 
         private bool mono_type_is_long(TypeReference type)
@@ -802,17 +1257,11 @@ namespace Zenos.Stages
 
         private TypeDefinition mono_type_get_underlying_type(TypeDefinition type)
         {
-
-            if (type.IsValueType && IsEnum(type) && !type.IsByReference)
+            if (type.IsValueType && type.IsEnum && !type.IsByReference)
                 return GetEnumUnderlyingType(type);
-            //TODO:  investigate further if (type.IsGenericInstance && type->data.generic_class->container_class->enumtype && !type.IsByReference)
-            //    return GetEnumUnderlyingType(type->data.generic_class->container_class);
+            //TODO:  investigate further if (type.IsGenericInstance && type.data.generic_class.container_class.enumtype && !type.IsByReference)
+            //    return GetEnumUnderlyingType(type.data.generic_class.container_class);
             return type;
-        }
-
-        private bool IsEnum(TypeDefinition self)
-        {
-            return self.BaseType != null && self.BaseType.FullName == "System.Enum";
         }
 
         public static TypeDefinition GetEnumUnderlyingType(TypeDefinition self)
@@ -859,19 +1308,19 @@ namespace Zenos.Stages
             inst.klass = mono_class_from_mono_type(type);
             type_to_eval_stack_type(cfg, type, inst);
             //    /* if set to 1 the variable is native */
-            //    inst->backend.is_pinvoke = 0;
+            //    inst.backend.is_pinvoke = 0;
             inst.Destination = vreg;
 
             //if (inst.klass.IsExceptionType())
             //    mono_cfg_set_exception(cfg, MONO_EXCEPTION_TYPE_LOAD);
 
-            //    if (cfg->compute_gc_maps) {
-            //        if (type->byref) {
+            //    if (cfg.compute_gc_maps) {
+            //        if (type.byref) {
             //            mono_mark_vreg_as_mp (cfg, vreg);
             //        } else {
             //            MonoType *t = mini_type_get_underlying_type (NULL, type);
-            //            if ((MONO_TYPE_ISSTRUCT (t) && inst->klass->has_references) || mini_type_is_reference (cfg, t)) {
-            //                inst->flags |= MONO_INST_GC_TRACK;
+            //            if ((MONO_TYPE_ISSTRUCT (t) && inst.klass.has_references) || mini_type_is_reference (cfg, t)) {
+            //                inst.flags |= MONO_INST_GC_TRACK;
             //                mono_mark_vreg_as_ref (cfg, vreg);
             //            }
             //        }
@@ -896,7 +1345,7 @@ namespace Zenos.Stages
 
                 /* 
                      * These two cannot be allocated using create_var_for_vreg since that would
-                     * put it into the cfg->varinfo array, confusing many parts of the JIT.
+                     * put it into the cfg.varinfo array, confusing many parts of the JIT.
                      */
 
                 /* 
@@ -904,7 +1353,7 @@ namespace Zenos.Stages
                      */
 
                 //if (cfg.verbose_level >= 4) {
-                //    printf ("  Create LVAR R%d (R%d, R%d)\n", inst->dreg, inst->dreg + 1, inst->dreg + 2);
+                //    printf ("  Create LVAR R%d (R%d, R%d)\n", inst.dreg, inst.dreg + 1, inst.dreg + 2);
                 //}
 
 
@@ -961,6 +1410,66 @@ namespace Zenos.Stages
         }
     }
 
+    internal class CallInfo
+    {
+        public int nargs;
+        public uint stack_usage;
+        public uint reg_usage;
+        public uint freg_usage;
+        public bool need_stack_align;
+        public uint stack_align_amount;
+        public bool vtype_retaddr;
+        /* The index of the vret arg in the argument list */
+        public int vret_arg_index;
+        public uint vret_arg_offset;
+        /* Argument space popped by the callee */
+        public int callee_stack_pop;
+
+        public ArgInfo ret;
+        public ArgInfo sig_cookie;
+        public ArgInfo[] args;
+    }
+
+    internal class ArgInfo
+    {
+        public uint offset;
+        public X86_Reg_No reg;
+        public ArgStorage storage;
+        public int nslots;
+        public bool is_pair;
+
+        /* Only if storage == ArgValuetypeInReg */
+        public ArgStorage[] pair_storage = new ArgStorage[2];
+        public byte[] pair_regs  = new byte[2];
+    }
+
+    internal enum ArgStorage
+    {
+        ArgInIReg,
+        ArgInFloatSSEReg,
+        ArgInDoubleSSEReg,
+        ArgOnStack,
+        ArgValuetypeInReg,
+        ArgOnFloatFpStack,
+        ArgOnDoubleFpStack,
+        /* gsharedvt argument passed by addr */
+        ArgGSharedVt,
+        ArgNone
+    }
+
+    internal enum X86_Reg_No
+    {
+        X86_EAX = 0,
+        X86_ECX = 1,
+        X86_EDX = 2,
+        X86_EBX = 3,
+        X86_ESP = 4,
+        X86_EBP = 5,
+        X86_ESI = 6,
+        X86_EDI = 7,
+        X86_NREG
+    };
+
     static class Mixins
     {
         public static IRegister alloc_dreg(this IMethodContext context, StackType stackType)
@@ -1015,7 +1524,7 @@ namespace Zenos.Stages
             var vreg = alloc_ireg(context);
 
             /* TODO: investigate this in mini code
-            if (cfg->compute_gc_maps)
+            if (cfg.compute_gc_maps)
                 mono_mark_vreg_as_mp(cfg, vreg);
             */
             return vreg;
