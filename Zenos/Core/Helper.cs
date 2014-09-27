@@ -65,7 +65,7 @@ namespace Zenos.Core
         /// <param name="argName">Name of the argument being validated</param>
         /// <exception cref="System.ArgumentNullException"></exception>
         [DebuggerHidden]
-        public static void IsNotNull<T>(T arg, string argName)
+        public static void NotNull<T>(T arg, string argName)
             where T : class
         {
             if (arg == null)
@@ -94,7 +94,7 @@ namespace Zenos.Core
         /// <param name="argName">Name of the argument being validated</param>
         /// <exception cref="System.ArgumentNullException"></exception>
         [DebuggerHidden]
-        public static void IsNotNull<T>(T arg)
+        public static void NotNull<T>(T arg)
             where T : class
         {
             if (arg == null)

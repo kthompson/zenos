@@ -14,7 +14,10 @@ namespace Zenos.Tests
         public override void Load()
         {
             this.Bind<Compiler>().ToSelf();
+            this.Bind<Emitter>().ToSelf();
 
+            this.Bind<IArchitecture>().To<X86>();
+            
             this.Bind<ICompilerStage>().To<TypeQueuingStage>();
             this.Bind<ICompilerStage>().To<MethodQueuingStage>();
             this.Bind<ICompilerStage>().To<CecilToZenos>();

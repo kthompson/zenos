@@ -86,6 +86,7 @@
   <ItemGroup>
     <Compile Include="Core\Extensions.cs" />
     <Compile Include="Core\Helper.cs" />
+    <Compile Include="Framework\IArchitecture.cs" />
     <Compile Include="Framework\CompilationContext.cs" />
     <Compile Include="Framework\CompilerContext.cs" />
     <Compile Include="Framework\ICompilationContext.cs" />
@@ -98,7 +99,6 @@
     </Compile>
     <Compile Include="Framework\IInstruction.cs" />
     <Compile Include="Framework\InstructionCode.cs" />
-    <Compile Include="Framework\InstructionCompilerStage.cs" />
     <Compile Include="Framework\MemberContext.cs" />
     <Compile Include="Framework\MethodContext.cs" />
     <Compile Include="Framework\Compiler.cs" />
@@ -118,6 +118,7 @@
     <Compile Include="Framework\MemberCompilerStage.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Stages\Emitter.cs" />
     <Compile Include="Stages\MethodToIr.cs" />
     <Compile Include="Framework\StackType.cs" />
     <Compile Include="Framework\TypeContext.cs" />
@@ -129,9 +130,11 @@
     <Compile Include="Stages\MethodQueuingStage.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Stages\mono_defaults.cs" />
     <Compile Include="Stages\TypeQueuingStage.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Stages\X86.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
