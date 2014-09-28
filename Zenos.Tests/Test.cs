@@ -39,11 +39,11 @@ namespace Zenos.Tests
             public Library(string libraryPath)
             {
                 this._module = LoadLibrary(libraryPath);
-                if (_module == IntPtr.Zero)
-                {
-                    var error = Marshal.GetLastWin32Error();
-                    throw new ArgumentException(string.Format("Could not load library at '{0}' due to error code {1}", libraryPath, error), "libraryPath");
-                }
+                if (_module != IntPtr.Zero) 
+                    return;
+
+                var error = Marshal.GetLastWin32Error();
+                throw new ArgumentException(string.Format("Could not load library at '{0}' due to error code {1}", libraryPath, error), "libraryPath");
             }
 
             ~Library()

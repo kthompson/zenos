@@ -22,22 +22,28 @@ namespace Zenos.Tests
             this.Bind<ICompilerStage>().To<MethodQueuingStage>();
             this.Bind<ICompilerStage>().To<CecilToZenos>();
             this.Bind<ICompilerStage>().To<MethodToIr>();
+
+            this.Bind<ICompilerStage>().To<LocalPropagation>();
+            this.Bind<ICompilerStage>().To<BranchOptimization>();
+            this.Bind<ICompilerStage>().To<DeadCodeElimination>();
+
+            this.Bind<ICompilerStage>().To<StaticSingleAssignmentTranslation>();
             
             //this.Bind<ICompilerStage>().To<CodeSimplifier>();
             //this.Bind<ICompilerStage>().To<CilToExpressionTranslator>();
-            //this.Bind<ICompilerStage>().To<ExportMethodsStage>();
+            this.Bind<ICompilerStage>().To<ExportMethodsStage>();
 
-            //this.Bind<ICompilerStage>().To<EmitterStage>();
-            //this.Bind<ICompilerStage>().To<WriteCodeToDisk>();
-            //this.Bind<ICompilerStage>().To<GccBuildStage>();
+            this.Bind<ICompilerStage>().To<EmitterStage>();
+            this.Bind<ICompilerStage>().To<WriteCodeToDisk>();
+            this.Bind<ICompilerStage>().To<GccBuildStage>();
         }
     }
 
-    //class ExportMethodsStage : CodeCompilerStage
-    //{
-    //    public override void Compile(ICompilationContext context, MethodBody body)
-    //    {
-    //        context.Sections["drectve"].WriteLine(".ascii \" -export:\\\"{0}\\\"\"", body.Method.Name);
-    //    }
-    //}
+    class ExportMethodsStage : CodeCompilerStage
+    {
+        public override void Compile(IMethodContext context)
+        {
+            context.Sections["drectve"].WriteLine(".ascii \" -export:\\\"{0}\\\"\"", context.Method.Name);
+        }
+    }
 }

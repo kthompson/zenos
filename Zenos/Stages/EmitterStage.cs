@@ -13,8 +13,10 @@ namespace Zenos.Stages
 {
     public class EmitterStage : CodeCompilerStage
     {
-        public override void Compile(ICompilationContext context, MethodBody body)
+        public override void Compile(IMethodContext context)
         {
+            var body = context.Method.Body;
+
             context.OutputFile = body.Method.Name.ToFileName().AppendRandom("_", 32, ".s");
 
             context.Text.WriteLine(".globl _{0}", body.Method.Name);
@@ -35,7 +37,13 @@ namespace Zenos.Stages
 
             context.Text.WriteLine("# body ");
 
-            base.Compile(context, body);
+            var inst = context.Instruction;
+            while (inst != null)
+            {
+                Compile(context, inst);
+                inst = inst.Next;
+            }
+            //TODO: base.Compile(context);
 
             context.Text.WriteLine("# epilogue ");
 
@@ -44,39 +52,43 @@ namespace Zenos.Stages
             context.Text.WriteLine("ret");
         }
 
-        public override void Compile(ICompilationContext context, Instruction instruction)
+        private void Compile(IMethodContext context, IInstruction instruction)
         {
             Trace.WriteLine(instruction);
 
-            switch (instruction.OpCode.Code)
+            switch (instruction.Code)
             {
-                case Code.Ldc_I4:
-                    context.Text.WriteLine("movl ${0}, %eax     # {1}", instruction.Operand, instruction);
+                case InstructionCode.OP_ICONST:
+                    context.Text.WriteLine("movl ${0}, %{1}     # {2}", instruction.Operand0, instruction.Destination, instruction);
                     break;
-                case Code.Stloc:
-                    context.Text.WriteLine("movl %eax, {0}      # {1} ", EmitLocation(context, instruction), instruction);
-                    break;
-                case Code.Nop:
-                    break;
-                case Code.Ldloc:
-                    var varType = ((VariableReference) (instruction.Operand)).VariableType;
-                    var inst = varType.FullName == "System.Single" ? "flds {0}       # {1} " : "movl {0}, %eax       # {1} ";
 
-                    context.Text.WriteLine(inst, EmitLocation(context, instruction), instruction);
+                case InstructionCode.OP_MOVE:
+
                     break;
-                case Code.Ldarg:
-                    context.Text.WriteLine("movl {0}, %eax      # {1} ", EmitLocation(context, instruction), instruction);
-                    break;
-                case Code.Ret:
-                    //ret is handled in the method body
-                    Helper.IsNull(instruction.Next);
-                    break;
-                case Code.Ldc_R4:
-                    var inIEEE754 = BitConverter.ToInt32(BitConverter.GetBytes((float) instruction.Operand), 0);
-                    context.Text.WriteLine("movl $0x{0}, %eax    # {1}", inIEEE754.ToString("x"),  instruction);
-                    break;
+                //case Code.Stloc:
+                //    context.Text.WriteLine("movl %eax, {0}      # {1} ", EmitLocation(context, instruction), instruction);
+                //    break;
+                //case Code.Nop:
+                //    break;
+                //case Code.Ldloc:
+                //    var varType = ((VariableReference)(instruction.Operand)).VariableType;
+                //    var inst = varType.FullName == "System.Single" ? "flds {0}       # {1} " : "movl {0}, %eax       # {1} ";
+
+                //    context.Text.WriteLine(inst, EmitLocation(context, instruction), instruction);
+                //    break;
+                //case Code.Ldarg:
+                //    context.Text.WriteLine("movl {0}, %eax      # {1} ", EmitLocation(context, instruction), instruction);
+                //    break;
+                //case Code.Ret:
+                //    //ret is handled in the method body
+                //    Helper.IsNull(instruction.Next);
+                //    break;
+                //case Code.Ldc_R4:
+                //    var inIEEE754 = BitConverter.ToInt32(BitConverter.GetBytes((float)instruction.Operand), 0);
+                //    context.Text.WriteLine("movl $0x{0}, %eax    # {1}", inIEEE754.ToString("x"), instruction);
+                //    break;
                 default:
-                    Helper.NotSupported(string.Format("Instruction not supported: {0}", instruction));
+                    Helper.NotSupported(string.Format("InstructionCode not supported: {0}", instruction.Code));
                     break;
             }
         }

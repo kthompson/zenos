@@ -12,7 +12,7 @@ namespace Zenos.Stages
 {
     public class WriteCodeToDisk : CodeCompilerStage
     {
-        public override void Compile(ICompilationContext context, MethodBody body)
+        public override void Compile(IMethodContext context)
         {
             using (var writer = new StreamWriter(File.OpenWrite(context.OutputFile)))
             {

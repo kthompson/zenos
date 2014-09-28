@@ -7,16 +7,16 @@ namespace Zenos.Framework
     {
         public Section this[string name]
         {
-            get { 
-                var section = this.FirstOrDefault(s => s.Name == name);
-                if (section == null)
-                {
-                    section = new Section(name);
-                    this.Add(section);
-                }
-
-                return section;
+            get {
+                return this.FirstOrDefault(s => s.Name == name) ?? CreateSection(name);
             }
+        }
+
+        private Section CreateSection(string name)
+        {
+            var section = new Section(name);
+            this.Add(section);
+            return section;
         }
     }
 }

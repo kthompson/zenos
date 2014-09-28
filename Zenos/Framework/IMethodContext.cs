@@ -46,6 +46,14 @@ namespace Zenos.Framework
         IInstruction vret_addr { get; set; }
         bool ret_var_is_local { get; set; }
         int arch_eh_jit_info { get; set; }
+
+        BasicBlock start_bblock { get; set; }
+        BasicBlock end_bblock { get; set; }
+        int num_bblocks { get; set; }
+        BasicBlock bblock { get; set; }
+        int cil_start { get; set; }
+        int real_offset { get; set; }
+        Dictionary<int, BasicBlock> cil_offset_to_bb { get; set; }
     }
 
     public interface IVariableDefinition
@@ -76,5 +84,26 @@ namespace Zenos.Framework
         /* the next basic block in the order it appears in IL */
         BasicBlock next_bb;
         public IInstruction code;
+        public IInstruction cil_code;
+        public int block_num;
+        public int out_count;
+        public List<BasicBlock> out_bb;
+
+        public int in_count;
+        public List<BasicBlock> in_bb;
+        public int real_offset;
+    }
+
+    [Flags]
+    internal enum BasicBlockFlags
+    {
+        BB_VISITED = 1 << 0,
+        BB_REACHABLE = 1 << 1,
+        BB_EXCEPTION_DEAD_OBJ = 1 << 2,
+        BB_EXCEPTION_UNSAFE = 1 << 3,
+        BB_EXCEPTION_HANDLER = 1 << 4,
+
+        /* for Native Client, mark the blocks that can be jumped to indirectly */
+        BB_INDIRECT_JUMP_TARGET = 1 << 5
     }
 }

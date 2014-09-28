@@ -118,7 +118,12 @@
     <Compile Include="Framework\MemberCompilerStage.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Stages\BranchOptimization.cs" />
+    <Compile Include="Stages\DeadCodeElimination.cs" />
     <Compile Include="Stages\Emitter.cs" />
+    <Compile Include="Stages\EmitterStage.cs" />
+    <Compile Include="Stages\GccBuildStage.cs" />
+    <Compile Include="Stages\LocalPropagation.cs" />
     <Compile Include="Stages\MethodToIr.cs" />
     <Compile Include="Framework\StackType.cs" />
     <Compile Include="Framework\TypeContext.cs" />
@@ -131,9 +136,11 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Stages\mono_defaults.cs" />
+    <Compile Include="Stages\StaticSingleAssignmentTranslation.cs" />
     <Compile Include="Stages\TypeQueuingStage.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Stages\WriteCodeToDisk.cs" />
     <Compile Include="Stages\X86.cs" />
   </ItemGroup>
   <ItemGroup />

@@ -10,12 +10,12 @@ namespace Zenos.Stages
 {
     public class GccBuildStage : CompilerStage
     {
-        public override void Compile(ICompilerContext context, ModuleDefinition module)
+        public override void Compile(IAssemblyContext context)
         {
             var cmd = new StringBuilder("gcc -Wall -shared -o ");
             cmd.Append(context.OutputFile);
 
-            foreach (var code in context.Members.SelectMany(m => m.CodeContexts))
+            foreach (var code in context.Types.SelectMany(t => t.MethodContexts))
                 cmd.AppendFormat(" {0}", code.OutputFile);
 
             string output;
@@ -28,7 +28,7 @@ namespace Zenos.Stages
                 return;
             }
 
-            Helper.Stop(() => new ApplicationException(error + output));
+            Helper.Stop(new ApplicationException(error + output));
         }
     }
 }

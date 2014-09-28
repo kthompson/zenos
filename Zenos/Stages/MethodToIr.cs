@@ -23,7 +23,7 @@ namespace Zenos.Stages
         {
             CreateVars(context);
 
-            //BuildBasicBlocks(context);
+            BuildBasicBlocks(context);
 
             if (context.CurrentBasicBlock == null)
                 context.CurrentBasicBlock = new BasicBlock();
@@ -41,10 +41,19 @@ namespace Zenos.Stages
             }
         }
 
-        //private void BuildBasicBlocks(IMethodContext context)
-        //{
-        //    context.CurrentBasicBlock
-        //}
+        private void BuildBasicBlocks(IMethodContext context)
+        {
+            /* FIRST CODE BLOCK */
+            var  bblock = NEW_BBLOCK(context);
+            //bblock->cil_code = ip;
+            context.CurrentBasicBlock = bblock;
+            //cfg->ip = ip;
+
+            ADD_BBLOCK(context, bblock);
+
+            context.start_bblock = new BasicBlock();
+            context.end_bblock = new BasicBlock();
+        }
 
         //mono_method_to_ir
         private IInstruction Compile(IMethodContext context, IInstruction instruction)
@@ -143,7 +152,7 @@ namespace Zenos.Stages
 
                         //g_assert (!return_var);
                         CHECK_STACK(context, 1);
-                        //--sp;
+                        instruction = instruction.Previous;
 
                         //if ((method.wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method.wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
                         //    UNVERIFIED;
@@ -173,6 +182,14 @@ namespace Zenos.Stages
                         }
                     }
 
+                    var inst = _emitter.MONO_INST_NEW(context, InstructionCode.OP_BR);
+
+                    //ip++;
+                    inst.Operand0 = context.end_bblock;
+                    _emitter.MONO_ADD_INS(context.CurrentBasicBlock, inst);
+                    link_bblock(context, context.CurrentBasicBlock, context.end_bblock);
+                    start_new_bblock = 1;
+
                     break;
                 }
                 default:
@@ -185,9 +202,35 @@ namespace Zenos.Stages
             return instruction;
         }
 
+        private void link_bblock(IMethodContext cfg, BasicBlock from, BasicBlock to)
+        {
+            if (!from.out_bb.Contains(to))
+                from.out_bb.Add(to);
+
+            if (!to.in_bb.Contains(from))
+                to.in_bb.Add(from);
+        }
+
         private void CHECK_STACK_OVF(IMethodContext context, int n)
         {
             //if (((sp - stack_start) + n) > header.max_stack) UNVERIFIED();
+        }
+
+        private BasicBlock NEW_BBLOCK(IMethodContext cfg)
+        {
+            return new BasicBlock
+            {
+                block_num = cfg.num_bblocks++
+            };
+        }
+
+        private void ADD_BBLOCK(IMethodContext cfg, BasicBlock b)
+        {
+            if (b.cil_code != null)
+            {
+                cfg.cil_offset_to_bb[(int)(b.cil_code.Offset - cfg.cil_start)] = b;	
+            } 
+            b.real_offset = cfg.real_offset;	
         }
 
         private void CHECK_LOCAL(IMethodContext context, int num)
@@ -315,6 +358,8 @@ namespace Zenos.Stages
 
         private void CHECK_STACK(IMethodContext context, int num)
         {
+            //TODO: basically we need to verify if there are at least "num" previous instructions
+            
             //if ((sp - stack_start) < (num)) UNVERIFIED();
         }
 
@@ -457,54 +502,52 @@ namespace Zenos.Stages
             //#endif
 
 
-            if (regpair)
-            {
-                IInstruction tree;
+            if (!regpair) 
+                return inst;
 
-                /* 
+            /* 
                      * These two cannot be allocated using create_var_for_vreg since that would
                      * put it into the cfg.varinfo array, confusing many parts of the JIT.
                      */
 
-                /* 
+            /* 
                      * Set flags to VOLATILE so SSA skips it.
                      */
 
-                //if (cfg.verbose_level >= 4) {
-                //    printf ("  Create LVAR R%d (R%d, R%d)\n", inst.dreg, inst.dreg + 1, inst.dreg + 2);
-                //}
+            //if (cfg.verbose_level >= 4) {
+            //    printf ("  Create LVAR R%d (R%d, R%d)\n", inst.dreg, inst.dreg + 1, inst.dreg + 2);
+            //}
 
 
-                //if (cfg.opt & MONO_OPT_SSA) {
-                //    if (mono_type_is_float (type))
-                //        inst.flags = MONO_INST_VOLATILE;
-                //}
+            //if (cfg.opt & MONO_OPT_SSA) {
+            //    if (mono_type_is_float (type))
+            //        inst.flags = MONO_INST_VOLATILE;
+            //}
 
 
-                /* Allocate a dummy MonoInst for the first vreg */
-                tree = _emitter.MONO_INST_NEW(cfg, InstructionCode.OP_LOCAL);
-                tree.Destination = new Register(inst.Destination.Id + 1);
-                //if (cfg.opt & MONO_OPT_SSA)
-                //    tree.flags = MONO_INST_VOLATILE;
-                tree.Operand0 = vi;
-                tree.StackType = StackType.STACK_I4;
-                tree.Operand1 = mono_defaults.int32_class;
-                tree.klass = (mono_defaults.int32_class).mono_class_from_mono_type();
+            /* Allocate a dummy MonoInst for the first vreg */
+            var tree = _emitter.MONO_INST_NEW(cfg, InstructionCode.OP_LOCAL);
+            tree.Destination = new Register(inst.Destination.Id + 1);
+            //if (cfg.opt & MONO_OPT_SSA)
+            //    tree.flags = MONO_INST_VOLATILE;
+            tree.Operand0 = vi;
+            tree.StackType = StackType.STACK_I4;
+            tree.Operand1 = mono_defaults.int32_class;
+            tree.klass = (mono_defaults.int32_class).mono_class_from_mono_type();
 
-                set_vreg_to_inst(cfg, tree.Destination, tree);
+            set_vreg_to_inst(cfg, tree.Destination, tree);
 
-                /* Allocate a dummy MonoInst for the second vreg */
-                tree = _emitter.MONO_INST_NEW(cfg, InstructionCode.OP_LOCAL);
-                tree.Destination = new Register(inst.Destination.Id + 2);
-                //if (cfg.opt & MONO_OPT_SSA)
-                //    tree.flags = MONO_INST_VOLATILE;
-                tree.Operand0 = vi;
-                tree.StackType = StackType.STACK_I4;
-                tree.Operand1 = mono_defaults.int32_class;
-                tree.klass = (mono_defaults.int32_class).mono_class_from_mono_type();
+            /* Allocate a dummy MonoInst for the second vreg */
+            tree = _emitter.MONO_INST_NEW(cfg, InstructionCode.OP_LOCAL);
+            tree.Destination = new Register(inst.Destination.Id + 2);
+            //if (cfg.opt & MONO_OPT_SSA)
+            //    tree.flags = MONO_INST_VOLATILE;
+            tree.Operand0 = vi;
+            tree.StackType = StackType.STACK_I4;
+            tree.Operand1 = mono_defaults.int32_class;
+            tree.klass = mono_defaults.int32_class.mono_class_from_mono_type();
 
-                set_vreg_to_inst(cfg, tree.Destination, tree);
-            }
+            set_vreg_to_inst(cfg, tree.Destination, tree);
 
             return inst;
         }

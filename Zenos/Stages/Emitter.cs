@@ -39,7 +39,7 @@ namespace Zenos.Stages
             return NEW_VARLOAD(context, context.Parameters[num], context.Parameters[num].GetVariableType());
         }
 
-        private void MONO_ADD_INS(BasicBlock b, IInstruction inst)
+        public void MONO_ADD_INS(BasicBlock b, IInstruction inst)
         {
             if (b.last_ins != null)
             {
