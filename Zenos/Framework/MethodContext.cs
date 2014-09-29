@@ -21,6 +21,7 @@ namespace Zenos.Framework
             this.Variables = new List<IInstruction>();
             this.VariableDefinitions = new List<IVariableDefinition>();
             this.VRegisterToInstruction = new Dictionary<IRegister, IInstruction>();
+            this.cil_offset_to_bb = new Dictionary<int, BasicBlock>();
         }
 
         private int _lastLabel = 1;
@@ -75,6 +76,7 @@ namespace Zenos.Framework
         public int cil_start { get; set; }
         public int real_offset { get; set; }
         public Dictionary<int, BasicBlock> cil_offset_to_bb { get; set; }
+        public BasicBlock bb_init { get; set; }
 
         protected virtual void Dispose(bool disposing)
         {

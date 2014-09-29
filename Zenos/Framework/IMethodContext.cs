@@ -54,6 +54,7 @@ namespace Zenos.Framework
         int cil_start { get; set; }
         int real_offset { get; set; }
         Dictionary<int, BasicBlock> cil_offset_to_bb { get; set; }
+        BasicBlock bb_init { get; set; }
     }
 
     public interface IVariableDefinition
@@ -82,16 +83,29 @@ namespace Zenos.Framework
         public IInstruction last_ins;
 
         /* the next basic block in the order it appears in IL */
-        BasicBlock next_bb;
+        public BasicBlock next_bb;
         public IInstruction code;
         public IInstruction cil_code;
         public int block_num;
-        public int out_count;
-        public List<BasicBlock> out_bb;
-
-        public int in_count;
-        public List<BasicBlock> in_bb;
+        public List<BasicBlock> out_bb { get; set; }
+        public List<BasicBlock> in_bb { get; set; }
         public int real_offset;
+        public long cil_length;
+        public List<IInstruction> in_stack { get; set; }
+        public List<IInstruction> out_stack { get; set; }
+
+        public BasicBlock()
+        {
+            this.out_bb = new List<BasicBlock>();
+            this.out_stack = new List<IInstruction>();
+            this.in_stack = new List<IInstruction>();
+            this.in_bb = new List<BasicBlock>();
+        }
+
+        public override string ToString()
+        {
+            return string.Format("BasicBlock[N{0}, I{1}, O{2}]", block_num, in_bb.Count, out_bb.Count);
+        }
     }
 
     [Flags]

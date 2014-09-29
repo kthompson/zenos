@@ -27,7 +27,7 @@ namespace Zenos.Core
         /// Stops the debugger if attached
         /// </summary>
         [DebuggerHidden]
-        public static void Break()
+        public static void Break(string message = null)
         {
             if (System.Diagnostics.Debugger.IsAttached)
                 System.Diagnostics.Debugger.Break();
@@ -217,15 +217,15 @@ namespace Zenos.Core
         }
 
         [DebuggerHidden]
-        public static void NotSupported()
-        {
-            NotSupported(string.Empty);
-        }
-
-        [DebuggerHidden]
         public static void NotSupported(string fmt = "", params object[] args)
         {
             Throw(new NotSupportedException(string.Format(fmt, args)));
+        }
+        
+        [DebuggerHidden]
+        public static void NotImplemented(string fmt = "", params object[] args)
+        {
+            Throw(new NotImplementedException(string.Format(fmt, args)));
         }
 
         [DebuggerHidden]

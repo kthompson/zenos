@@ -37,11 +37,11 @@ namespace Zenos.Stages
 
             context.Text.WriteLine("# body ");
 
-            var inst = context.Instruction;
-            while (inst != null)
+            var block = context.start_bblock;
+            while (block != null)
             {
-                Compile(context, inst);
-                inst = inst.Next;
+                Compile(context, block);
+                block = block.next_bb;
             }
             //TODO: base.Compile(context);
 
@@ -50,6 +50,26 @@ namespace Zenos.Stages
             //reset to callee stack frame
             context.Text.WriteLine("leave               # restore calling function stack frame");
             context.Text.WriteLine("ret");
+        }
+
+        private void Compile(IMethodContext context, BasicBlock block)
+        {
+            var label = GetBlockLabel(context, block);
+            context.Text.WriteLine("{0}:     # {1}", label, block);
+            var instruction = block.code;
+            while (instruction != null)
+            {
+                Compile(context, instruction);
+                instruction = instruction.Next;
+            }
+            //Block epilogue?
+            context.Text.WriteLine("# end of {0}", label);
+            context.Text.WriteLine();
+        }
+
+        private static string GetBlockLabel(IMethodContext context, BasicBlock block)
+        {
+            return string.Format("{0}_bb{1}", context.Method.Name, block.block_num);
         }
 
         private void Compile(IMethodContext context, IInstruction instruction)

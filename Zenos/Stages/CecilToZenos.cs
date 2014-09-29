@@ -55,7 +55,6 @@ namespace Zenos.Stages
 
                 instruction = instruction.Next;
             }
-
         }
 
         private static IrInstruction CilToZenosInstruction(Instruction cecilInstr)

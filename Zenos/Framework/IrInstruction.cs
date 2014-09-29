@@ -9,7 +9,7 @@ namespace Zenos.Framework
         public InstructionCode Code { get; set; }
         public StackType StackType { get; set; }
         public InstructionFlags Flags { get; set; }
-        public long Offset { get; set; }
+        public int Offset { get; set; }
         public IRegister Destination { get; set; }
         public IRegister Source1 { get; set; }
         public IRegister Source2 { get; set; }

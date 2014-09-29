@@ -21,186 +21,264 @@ namespace Zenos.Stages
 
         public override void Compile(IMethodContext context)
         {
-            CreateVars(context);
+            var start_new_bblock = 0;
+            BasicBlock tblock = null;
 
-            BuildBasicBlocks(context);
+            /* ENTRY BLOCK */
+            var start_bblock = NEW_BBLOCK(context);
+            context.start_bblock = start_bblock;
 
-            if (context.CurrentBasicBlock == null)
-                context.CurrentBasicBlock = new BasicBlock();
+            /* EXIT BLOCK */
+            var end_bblock = NEW_BBLOCK(context);
+            context.end_bblock = end_bblock;
 
-            var instruction = context.Instruction;
-            while (instruction != null)
-            {
-                instruction = Compile(context, instruction);
-
-                // if this has no Previous instruction then it should become our first instruction
-                if (instruction.Previous == null)
-                    context.Instruction = instruction;
-
-                instruction = instruction.Next;
-            }
-        }
-
-        private void BuildBasicBlocks(IMethodContext context)
-        {
+            
             /* FIRST CODE BLOCK */
-            var  bblock = NEW_BBLOCK(context);
-            //bblock->cil_code = ip;
+            var bblock = NEW_BBLOCK(context);
+            bblock.cil_code = context.Instruction;
             context.CurrentBasicBlock = bblock;
             //cfg->ip = ip;
 
             ADD_BBLOCK(context, bblock);
 
-            context.start_bblock = new BasicBlock();
-            context.end_bblock = new BasicBlock();
-        }
 
-        //mono_method_to_ir
-        private IInstruction Compile(IMethodContext context, IInstruction instruction)
-        {
-            switch (instruction.Code)
+            /* we use a separate basic block for the initialization code */
+            var init_localsbb = NEW_BBLOCK(context);
+            context.bb_init = init_localsbb;
+            init_localsbb.real_offset = context.real_offset;
+            start_bblock.next_bb = init_localsbb;
+            init_localsbb.next_bb = bblock;
+            link_bblock(context, start_bblock, init_localsbb);
+            link_bblock(context, init_localsbb, bblock);
+
+            context.CurrentBasicBlock = init_localsbb;
+
+            CreateVars(context);
+
+
+            var stack_start = context.Instruction;
+            /* TODO: this might should be a clone of the first instruction but that doesnt seem right 
+             * 
+             */
+            IInstruction sp = null; 
+            var ip = context.Instruction;
+
+            context.CurrentBasicBlock = bblock;
+            
+            Helper.Break();
+            
+            while (ip != null)
             {
-                case InstructionCode.CilLdc_I4_0:
-                case InstructionCode.CilLdc_I4_1:
-                case InstructionCode.CilLdc_I4_2:
-                case InstructionCode.CilLdc_I4_3:
-                case InstructionCode.CilLdc_I4_4:
-                case InstructionCode.CilLdc_I4_5:
-                case InstructionCode.CilLdc_I4_6:
-                case InstructionCode.CilLdc_I4_7:
-                case InstructionCode.CilLdc_I4_8:
+                context.Instruction = ip;
+                if (start_new_bblock != 0)
                 {
-                    CHECK_STACK_OVF(context, 1);
-                    var ins = _emitter.EMIT_NEW_ICONST(context, (instruction.Code) - InstructionCode.CilLdc_I4_0);
-                    return instruction.ReplaceWith(ins);
-                    //TODO:
-                    //ip++;
-                    //*sp++ = ins;
-                    break;
+                    bblock.cil_length = ip.Offset - bblock.cil_code.Offset;
+                    if (start_new_bblock == 2)
+                    {
+                        //g_assert(instruction.Offset == tblock->cil_code);
+                    }
+                    else
+                    {
+                        tblock = GET_BBLOCK(context, ip);
+                    }
+                    bblock.next_bb = tblock;
+                    bblock = tblock;
+                    context.CurrentBasicBlock = bblock;
+                    start_new_bblock = 0;
+                    for (var i = 0; i < bblock.in_stack.Count; ++i)
+                    {
+                        //if (context.verbose_level > 3)
+                        //    printf("loading %d from temp %d\n", i, (int)bblock.in_stack[i]->inst_c0);
+                        var ins = _emitter.EMIT_NEW_TEMPLOAD(context, bblock.in_stack[i].inst_c0());
+                        sp = sp.SetNext(ins);
+                    }
+                    //if (class_inits)
+                    //    g_slist_free(class_inits);
+                    //class_inits = NULL;
                 }
-                case InstructionCode.CilLdarg_0:
-                case InstructionCode.CilLdarg_1:
-                case InstructionCode.CilLdarg_2:
-                case InstructionCode.CilLdarg_3:
+                else
                 {
-                    CHECK_STACK_OVF(context, 1);
-                    var n = (instruction.Code) - InstructionCode.CilLdarg_0;
-                    CHECK_ARG(context, n);
-                    var ins = _emitter.EMIT_NEW_LOAD_ARG(context, n);
-                    return instruction.ReplaceWith(ins);
-                    //TODO:
-                    //ip++;
-                    //*sp++ = ins;
-
-                    break;
-                }
-                case InstructionCode.CilLdloc_0:
-                case InstructionCode.CilLdloc_1:
-                case InstructionCode.CilLdloc_2:
-                case InstructionCode.CilLdloc_3:
-                {
-                    CHECK_STACK_OVF(context, 1);
-                    var n = (instruction.Code) - InstructionCode.CilLdloc_0;
-                    CHECK_LOCAL(context, n);
-                    var ins = _emitter.EMIT_NEW_LOCLOAD(context, n);
-                    return instruction.ReplaceWith(ins);
-                    //ip++;
-                    //*sp++ = ins;
-                    break;
+                    if ((tblock = context.cil_offset_to_bb.GetOrDefault(ip.Offset - context.cil_start)) != null && (tblock != bblock))
+                    {
+                        link_bblock(context, bblock, tblock);
+                        if (sp != stack_start)
+                        {
+                            handle_stack_args(context, stack_start, sp.Offset);
+                            sp = stack_start;
+                            //CHECK_UNVERIFIABLE(context);
+                        }
+                        bblock.next_bb = tblock;
+                        bblock = tblock;
+                        context.CurrentBasicBlock = bblock;
+                        for (var i = 0; i < bblock.in_stack.Count; ++i)
+                        {
+                            //if (context.verbose_level > 3)
+                            //    printf("loading %d from temp %d\n", i, (int)bblock.in_stack[i]->inst_c0);
+                            var ins = _emitter.EMIT_NEW_TEMPLOAD(context, bblock.in_stack[i].inst_c0());
+                            sp = sp.SetNext(ins);
+                        }
+                        //g_slist_free(class_inits);
+                        //class_inits = NULL;
+                    }
                 }
 
-                case InstructionCode.CilStloc_0:
-                case InstructionCode.CilStloc_1:
-                case InstructionCode.CilStloc_2:
-                case InstructionCode.CilStloc_3:
+                switch (ip.Code)
                 {
-                    CHECK_STACK(context, 1);
-                    var n = (instruction.Code) - InstructionCode.CilStloc_0;
-                    CHECK_LOCAL(context, n);
+                    case InstructionCode.CilLdc_I4_0:
+                    case InstructionCode.CilLdc_I4_1:
+                    case InstructionCode.CilLdc_I4_2:
+                    case InstructionCode.CilLdc_I4_3:
+                    case InstructionCode.CilLdc_I4_4:
+                    case InstructionCode.CilLdc_I4_5:
+                    case InstructionCode.CilLdc_I4_6:
+                    case InstructionCode.CilLdc_I4_7:
+                    case InstructionCode.CilLdc_I4_8:
+                    {
+                        CHECK_STACK_OVF(context, 1);
+                        var ins = _emitter.EMIT_NEW_ICONST(context, (ip.Code) - InstructionCode.CilLdc_I4_0);
+                        ip = ip.Next;
+                        sp = sp.SetNext(ins);
+                        break;
+                    }
+                    case InstructionCode.CilLdarg_0:
+                    case InstructionCode.CilLdarg_1:
+                    case InstructionCode.CilLdarg_2:
+                    case InstructionCode.CilLdarg_3:
+                    {
+                        CHECK_STACK_OVF(context, 1);
+                        var n = (ip.Code) - InstructionCode.CilLdarg_0;
+                        CHECK_ARG(context, n);
+                        var ins = _emitter.EMIT_NEW_LOAD_ARG(context, n);
+                        ip = ip.Next;
+                        sp = sp.SetNext(ins);
+                        break;
+                    }
+                    case InstructionCode.CilLdloc_0:
+                    case InstructionCode.CilLdloc_1:
+                    case InstructionCode.CilLdloc_2:
+                    case InstructionCode.CilLdloc_3:
+                    {
+                        CHECK_STACK_OVF(context, 1);
+                        var n = (ip.Code) - InstructionCode.CilLdloc_0;
+                        CHECK_LOCAL(context, n);
+                        var ins = _emitter.EMIT_NEW_LOCLOAD(context, n);
+                        ip = ip.Next;
+                        sp = sp.SetNext(ins);
+                        break;
+                    }
 
-                    /* basically we need to look at the previous instr to see if we can do a small optimiation
+                    case InstructionCode.CilStloc_0:
+                    case InstructionCode.CilStloc_1:
+                    case InstructionCode.CilStloc_2:
+                    case InstructionCode.CilStloc_3:
+                    {
+                        CHECK_STACK(context, 1);
+                        var n = (ip.Code) - InstructionCode.CilStloc_0;
+                        CHECK_LOCAL(context, n);
+
+                        /* basically we need to look at the previous instr to see if we can do a small optimiation
                          * once we do it we need to skip the current instr(CilStloc) and continue with the one after
                          */
-                    instruction = instruction.Previous;
-                    //if (!dont_verify_stloc && target_type_is_incompatible(cfg, header.locals[n], *sp))
-                    //    UNVERIFIED;
-                    emit_stloc_ir(context, instruction, n);
-                    instruction.Next.Remove();
-                    //++ip;
-                    //inline_costs += 1;
-                    break;
-                }
-
-                case InstructionCode.CilRet:
-                {
-
-                    if (context.ReturnType != null)
-                    {
-                        var ret_type = context.Method.ReturnType;
-
-                        //if (seq_points && !sym_seq_points) {
-                        //    /* 
-                        //     * Place a seq point here too even through the IL stack is not
-                        //     * empty, so a step over on
-                        //     * call <FOO>
-                        //     * ret
-                        //     * will work correctly.
-                        //     */
-                        //    NEW_SEQ_POINT (cfg, ins, ip - header.code, TRUE);
-                        //    MONO_ADD_INS (cfg.cbb, ins);
-                        //}
-
-                        //g_assert (!return_var);
-                        CHECK_STACK(context, 1);
-                        instruction = instruction.Previous;
-
-                        //if ((method.wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method.wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
+                        sp = sp.Previous;
+                        //if (!dont_verify_stloc && target_type_is_incompatible(cfg, header.locals[n], *sp))
                         //    UNVERIFIED;
+                        emit_stloc_ir(context, sp, n);
+                        ip = ip.Next;
+                        //inline_costs += 1;
+                        break;
+                    }
 
-                        if (mini_type_to_stind(context, ret_type) == InstructionCode.CilStobj)
+                    case InstructionCode.CilRet:
+                    {
+
+                        if (context.ReturnType != null)
                         {
-                            if (context.vret_addr == null)
+                            var ret_type = context.Method.ReturnType;
+
+                            //if (seq_points && !sym_seq_points) {
+                            //    /* 
+                            //     * Place a seq point here too even through the IL stack is not
+                            //     * empty, so a step over on
+                            //     * call <FOO>
+                            //     * ret
+                            //     * will work correctly.
+                            //     */
+                            //    NEW_SEQ_POINT (cfg, ins, ip - header.code, TRUE);
+                            //    MONO_ADD_INS (cfg.cbb, ins);
+                            //}
+
+                            //g_assert (!return_var);
+                            CHECK_STACK(context, 1);
+
+                            Helper.Break("we should have sp++ but since sp starts null, it breaks this");
+                            sp = sp.Previous;
+
+                            //if ((method.wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method.wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
+                            //    UNVERIFIED;
+
+                            if (mini_type_to_stind(context, ret_type) == InstructionCode.CilStobj)
                             {
-                                var ins = _emitter.EMIT_NEW_VARSTORE(context, context.ReturnType, ret_type, instruction);
-                                return instruction.ReplaceWith(ins);
+                                if (context.vret_addr == null)
+                                {
+                                    var ins = _emitter.EMIT_NEW_VARSTORE(context, context.ReturnType, ret_type, ip);
+                                    sp.ReplaceWith(ins);
+                                }
+                                else
+                                {
+                                    var ret_addr = _emitter.EMIT_NEW_RETLOADA(context);
+
+                                    var ins = _emitter.EMIT_NEW_STORE_MEMBASE(context, InstructionCode.OP_STOREV_MEMBASE,
+                                        ret_addr.Destination, 0, ip.Destination);
+
+                                    ins.klass = ret_type.mono_class_from_mono_type();
+                                }
                             }
                             else
                             {
-                                var ret_addr = _emitter.EMIT_NEW_RETLOADA(context);
-
-                                var ins = _emitter.EMIT_NEW_STORE_MEMBASE(context, InstructionCode.OP_STOREV_MEMBASE,
-                                    ret_addr.Destination, 0, instruction.Destination);
-
-                                ins.klass = ret_type.mono_class_from_mono_type();
-
-                                return instruction.ReplaceWith(ins);
+                                _architecture.mono_arch_emit_setret(context, context.Method, sp);
                             }
                         }
-                        else
-                        {
-                            _architecture.mono_arch_emit_setret(context, context.Method, instruction);
-                        }
+
+                        var inst = _emitter.MONO_INST_NEW(context, InstructionCode.OP_BR);
+
+                        ip = ip.Next;
+                        inst.set_inst_target_bb(context.end_bblock);
+                        _emitter.MONO_ADD_INS(context.CurrentBasicBlock, inst);
+                        link_bblock(context, context.CurrentBasicBlock, context.end_bblock);
+                        start_new_bblock = 1;
+
+                        break;
                     }
-
-                    var inst = _emitter.MONO_INST_NEW(context, InstructionCode.OP_BR);
-
-                    //ip++;
-                    inst.Operand0 = context.end_bblock;
-                    _emitter.MONO_ADD_INS(context.CurrentBasicBlock, inst);
-                    link_bblock(context, context.CurrentBasicBlock, context.end_bblock);
-                    start_new_bblock = 1;
-
-                    break;
+                    default:
+                        Helper.Stop("Unsupported instruction: " + ip.Code);
+                        break;
                 }
-                default:
-                    Helper.Stop("Unsupported instruction: " + instruction.Code);
-                    break;
+            }
+
+            if (bblock.next_bb != null)
+            {
+                /* This could already be set because of inlining, #693905 */
+                var bb = bblock;
+
+                while (bb.next_bb != null)
+                    bb = bb.next_bb;
+                
+                bb.next_bb = end_bblock;
+            }
+            else
+            {
+                bblock.next_bb = end_bblock;
             }
 
 
-
-            return instruction;
         }
+
+        private void handle_stack_args(IMethodContext context, IInstruction stackStart, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        //mono_method_to_ir
 
         private void link_bblock(IMethodContext cfg, BasicBlock from, BasicBlock to)
         {
@@ -228,9 +306,25 @@ namespace Zenos.Stages
         {
             if (b.cil_code != null)
             {
-                cfg.cil_offset_to_bb[(int)(b.cil_code.Offset - cfg.cil_start)] = b;	
+                cfg.cil_offset_to_bb[b.cil_code.Offset - cfg.cil_start] = b;	
             } 
             b.real_offset = cfg.real_offset;	
+        }
+
+        private BasicBlock GET_BBLOCK(IMethodContext cfg, IInstruction ip)
+        {
+            var tblock = cfg.cil_offset_to_bb.GetOrDefault(ip.Offset - cfg.cil_start);
+
+            if (tblock != null)
+                return tblock;
+            //if ((ip) >= end || (ip) < header->code) 
+            //    UNVERIFIED;
+
+            tblock = NEW_BBLOCK(cfg);
+            tblock.cil_code = ip;
+            ADD_BBLOCK(cfg, tblock);
+
+            return tblock;
         }
 
         private void CHECK_LOCAL(IMethodContext context, int num)
@@ -364,9 +458,9 @@ namespace Zenos.Stages
         }
 
 
+        //mono_compile_create_vars
         private void CreateVars(IMethodContext context)
         {
-            //mono_compile_create_vars
             var method = context.Method;
 
             if (method.ReturnType.FullName != "System.Void")

@@ -345,5 +345,17 @@ namespace Zenos.Stages
             }
         }
 
+        public IInstruction EMIT_NEW_TEMPLOAD(IMethodContext cfg, int num)
+        {
+            var dest = NEW_TEMPLOAD(cfg, num); 
+            MONO_ADD_INS(cfg.CurrentBasicBlock, dest);
+
+            return dest;
+        }
+
+        private IInstruction NEW_TEMPLOAD(IMethodContext cfg, int num)
+        {
+            return NEW_VARLOAD(cfg, cfg.Variables[num], cfg.Variables[num].inst_vtype());
+        }
     }
 }
