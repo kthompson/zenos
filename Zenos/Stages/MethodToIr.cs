@@ -56,30 +56,26 @@ namespace Zenos.Stages
             CreateVars(context);
 
 
-            var stack_start = context.Instruction;
-            /* TODO: this might should be a clone of the first instruction but that doesnt seem right 
-             * 
-             */
-            IInstruction sp = null; 
-            var ip = context.Instruction;
+            var sp = new InstructionChain(); 
+            var ip = InstructionChain.FromInstructions(context.Instruction);
 
             context.CurrentBasicBlock = bblock;
             
             Helper.Break();
             
-            while (ip != null)
+            while (ip.Instruction != null)
             {
-                context.Instruction = ip;
+                context.Instruction = ip.Instruction;
                 if (start_new_bblock != 0)
                 {
-                    bblock.cil_length = ip.Offset - bblock.cil_code.Offset;
+                    bblock.cil_length = ip.Instruction.Offset - bblock.cil_code.Offset;
                     if (start_new_bblock == 2)
                     {
                         //g_assert(instruction.Offset == tblock->cil_code);
                     }
                     else
                     {
-                        tblock = GET_BBLOCK(context, ip);
+                        tblock = GET_BBLOCK(context, ip.Instruction);
                     }
                     bblock.next_bb = tblock;
                     bblock = tblock;
@@ -90,7 +86,7 @@ namespace Zenos.Stages
                         //if (context.verbose_level > 3)
                         //    printf("loading %d from temp %d\n", i, (int)bblock.in_stack[i]->inst_c0);
                         var ins = _emitter.EMIT_NEW_TEMPLOAD(context, bblock.in_stack[i].inst_c0());
-                        sp = sp.SetNext(ins);
+                        sp.AssignAndIncrement(ins);
                     }
                     //if (class_inits)
                     //    g_slist_free(class_inits);
@@ -101,10 +97,12 @@ namespace Zenos.Stages
                     if ((tblock = context.cil_offset_to_bb.GetOrDefault(ip.Offset - context.cil_start)) != null && (tblock != bblock))
                     {
                         link_bblock(context, bblock, tblock);
-                        if (sp != stack_start)
+                        if (sp.Index != 0)
                         {
-                            handle_stack_args(context, stack_start, sp.Offset);
-                            sp = stack_start;
+                            Helper.Break("this should be the first instruction where the null is but its not implemented anyways");
+                            handle_stack_args(context, null /* stack_start */, sp.Offset);
+                            //handle_stack_args(context, stack_start, sp.Offset);
+                            sp.Reset();;
                             //CHECK_UNVERIFIABLE(context);
                         }
                         bblock.next_bb = tblock;
@@ -115,14 +113,14 @@ namespace Zenos.Stages
                             //if (context.verbose_level > 3)
                             //    printf("loading %d from temp %d\n", i, (int)bblock.in_stack[i]->inst_c0);
                             var ins = _emitter.EMIT_NEW_TEMPLOAD(context, bblock.in_stack[i].inst_c0());
-                            sp = sp.SetNext(ins);
+                            sp.AssignAndIncrement(ins);
                         }
                         //g_slist_free(class_inits);
                         //class_inits = NULL;
                     }
                 }
 
-                switch (ip.Code)
+                switch (ip.Instruction.Code)
                 {
                     case InstructionCode.CilLdc_I4_0:
                     case InstructionCode.CilLdc_I4_1:
@@ -136,8 +134,8 @@ namespace Zenos.Stages
                     {
                         CHECK_STACK_OVF(context, 1);
                         var ins = _emitter.EMIT_NEW_ICONST(context, (ip.Code) - InstructionCode.CilLdc_I4_0);
-                        ip = ip.Next;
-                        sp = sp.SetNext(ins);
+                        ip.Increment();
+                        sp.AssignAndIncrement(ins);
                         break;
                     }
                     case InstructionCode.CilLdarg_0:
@@ -149,8 +147,8 @@ namespace Zenos.Stages
                         var n = (ip.Code) - InstructionCode.CilLdarg_0;
                         CHECK_ARG(context, n);
                         var ins = _emitter.EMIT_NEW_LOAD_ARG(context, n);
-                        ip = ip.Next;
-                        sp = sp.SetNext(ins);
+                        ip.Increment();
+                        sp.AssignAndIncrement(ins);
                         break;
                     }
                     case InstructionCode.CilLdloc_0:
@@ -162,8 +160,8 @@ namespace Zenos.Stages
                         var n = (ip.Code) - InstructionCode.CilLdloc_0;
                         CHECK_LOCAL(context, n);
                         var ins = _emitter.EMIT_NEW_LOCLOAD(context, n);
-                        ip = ip.Next;
-                        sp = sp.SetNext(ins);
+                        ip.Increment();
+                        sp.AssignAndIncrement(ins);
                         break;
                     }
 
@@ -179,11 +177,11 @@ namespace Zenos.Stages
                         /* basically we need to look at the previous instr to see if we can do a small optimiation
                          * once we do it we need to skip the current instr(CilStloc) and continue with the one after
                          */
-                        sp = sp.Previous;
+                        sp.Decrement();
                         //if (!dont_verify_stloc && target_type_is_incompatible(cfg, header.locals[n], *sp))
                         //    UNVERIFIED;
-                        emit_stloc_ir(context, sp, n);
-                        ip = ip.Next;
+                        emit_stloc_ir(context, sp.Instruction, n);
+                        ip.Increment();
                         //inline_costs += 1;
                         break;
                     }
@@ -211,7 +209,7 @@ namespace Zenos.Stages
                             CHECK_STACK(context, 1);
 
                             Helper.Break("we should have sp++ but since sp starts null, it breaks this");
-                            sp = sp.Previous;
+                            sp.Decrement();
 
                             //if ((method.wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method.wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
                             //    UNVERIFIED;
@@ -220,8 +218,8 @@ namespace Zenos.Stages
                             {
                                 if (context.vret_addr == null)
                                 {
-                                    var ins = _emitter.EMIT_NEW_VARSTORE(context, context.ReturnType, ret_type, ip);
-                                    sp.ReplaceWith(ins);
+                                    var ins = _emitter.EMIT_NEW_VARSTORE(context, context.ReturnType, ret_type, sp.Instruction);
+                                    sp.Instruction = ins;
                                 }
                                 else
                                 {
@@ -235,13 +233,13 @@ namespace Zenos.Stages
                             }
                             else
                             {
-                                _architecture.mono_arch_emit_setret(context, context.Method, sp);
+                                _architecture.mono_arch_emit_setret(context, context.Method, sp.Instruction);
                             }
                         }
 
                         var inst = _emitter.MONO_INST_NEW(context, InstructionCode.OP_BR);
 
-                        ip = ip.Next;
+                        ip.Increment();
                         inst.set_inst_target_bb(context.end_bblock);
                         _emitter.MONO_ADD_INS(context.CurrentBasicBlock, inst);
                         link_bblock(context, context.CurrentBasicBlock, context.end_bblock);

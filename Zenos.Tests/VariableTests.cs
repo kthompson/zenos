@@ -1,14 +1,13 @@
-﻿using NUnit.Framework;
+﻿using Xunit;
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable ConvertToConstant.Local
 
 namespace Zenos.Tests
 {
-    [TestFixture]
     public class VariableTests
     {
-        [Test]
+        [Fact]
         public void Bools()
         {
             Test.Runs<BoolDelegate>(() =>
@@ -26,7 +25,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Test]
+        [Fact]
         public void Ints()
         {
 
@@ -61,7 +60,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Test]
+        [Fact]
         public void Longs()
         {
 
@@ -96,7 +95,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Test]
+        [Fact]
         public void Chars()
         {
             Test.Runs<CharDelegate>(() =>
@@ -115,7 +114,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Test]
+        [Fact]
         public void Floats()
         {
             Test.Runs<SingleDelegate>(() =>
@@ -133,7 +132,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Test]
+        [Fact]
         public void Doubles()
         {
             Test.Runs<DoubleDelegate>(() =>

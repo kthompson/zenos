@@ -8,12 +8,13 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using NUnit.Framework;
 using Ninject;
 using Zenos.Core;
 using Zenos.Framework;
 using SR = System.Reflection;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
+using Assert = Xunit.Assert;
+
 
 namespace Zenos.Tests
 {
@@ -127,7 +128,7 @@ namespace Zenos.Tests
                 //compile 
                 Compiler.Compile(context);
 
-                Assert.IsNotNull(context);
+                Assert.NotNull(context);
 
                 //run the compiled exe and return output
                 var result = del.DynamicInvoke(arguments);
@@ -136,7 +137,7 @@ namespace Zenos.Tests
                 {
                     var nativeResult = library.Call<TDelegate>(name);
 
-                    Assert.AreEqual(result, nativeResult);    
+                    Assert.Equal(result, nativeResult);    
                 }
             }
             //catch (Exception e)

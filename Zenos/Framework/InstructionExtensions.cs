@@ -33,7 +33,10 @@ namespace Zenos.Framework
         public static IInstruction SetNext(this IInstruction @this, IInstruction next)
         {
             @this.Next = next;
-            next.Previous = @this;
+            
+            if(next != null)
+                next.Previous = @this;
+
             return next;
         }
 
@@ -47,8 +50,9 @@ namespace Zenos.Framework
 
             if(prev != null)
                 prev.SetNext(newInstr);
-
-            newInstr.SetNext(next);
+            
+            if(next != null)
+                newInstr.SetNext(next);
 
             return newInstr;
         }

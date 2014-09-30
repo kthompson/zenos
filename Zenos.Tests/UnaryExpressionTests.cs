@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+﻿using Xunit;
 
 namespace Zenos.Tests
 {
@@ -10,11 +10,10 @@ namespace Zenos.Tests
     delegate double DoubleDelegate();
     delegate char CharDelegate();
 
-    [TestFixture]
     public class UnaryExpressionTests
     {
 
-        [Test]
+        [Fact]
         public void UnaryLogicalNotExpression()
         {
 
@@ -31,7 +30,7 @@ namespace Zenos.Tests
                                                             });
         }
 
-        [Test]
+        [Fact]
         public void UnaryBitwiseNotExpression()
         {
             Test.Runs<UInt32Delegate>(() =>
@@ -47,7 +46,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Test]
+        [Fact]
         public void UnaryNegateExpression()
         {
             Test.Runs<Int32Delegate>(() =>

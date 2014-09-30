@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 
 namespace Zenos.Tests
 {
-    [TestFixture]
     public class ImmediateTests
     {
-        [Test]
+        [Fact]
         public void Integers()
         {
             Test.Runs<Int32Delegate>(() => 0);
@@ -23,7 +22,7 @@ namespace Zenos.Tests
             Test.Runs<Int32Delegate>(() => -536870912);
         }
 
-        [Test]
+        [Fact]
         public void Longs()
         {
             Test.Runs<Int64Delegate>(() => 0x1234567891011120L);
@@ -31,7 +30,7 @@ namespace Zenos.Tests
             Test.Runs<Int64Delegate>(() => 429496121113456735L);
         }
 
-        [Test]
+        [Fact]
         public void Boolean()
         {
             Test.Runs<BoolDelegate>(() => true);
@@ -39,7 +38,7 @@ namespace Zenos.Tests
         }
 
 
-        [Test]
+        [Fact]
         public void Characters()
         {
             Test.Runs<CharDelegate>(() => 'a');
@@ -57,7 +56,7 @@ namespace Zenos.Tests
             Test.Runs<CharDelegate>(() => '5');
         }
 
-        [Test]
+        [Fact]
         public void Floats()
         {
             Test.Runs<SingleDelegate>(() => 3.14f);
@@ -68,7 +67,7 @@ namespace Zenos.Tests
             Test.Runs<SingleDelegate>(() => 1233.11f);
         }
 
-        [Test]
+        [Fact]
         public void Doubles()
         {
             Test.Runs<DoubleDelegate>(() => 3.14d);
