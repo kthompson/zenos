@@ -37,7 +37,7 @@ namespace Zenos.Stages
 
             context.Text.WriteLine("# body ");
 
-            var block = context.start_bblock;
+            var block = context.bb_entry;
             while (block != null)
             {
                 Compile(context, block);

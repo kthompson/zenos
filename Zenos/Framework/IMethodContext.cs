@@ -47,14 +47,14 @@ namespace Zenos.Framework
         bool ret_var_is_local { get; set; }
         int arch_eh_jit_info { get; set; }
 
-        BasicBlock start_bblock { get; set; }
-        BasicBlock end_bblock { get; set; }
         int num_bblocks { get; set; }
-        BasicBlock bblock { get; set; }
         int cil_start { get; set; }
         int real_offset { get; set; }
         Dictionary<int, BasicBlock> cil_offset_to_bb { get; set; }
+
         BasicBlock bb_init { get; set; }
+        BasicBlock bb_entry { get; set; }
+        BasicBlock bb_exit { get; set; }
     }
 
     public interface IVariableDefinition
@@ -94,6 +94,8 @@ namespace Zenos.Framework
         public List<IInstruction> in_stack { get; set; }
         public List<IInstruction> out_stack { get; set; }
 
+        public BasicBlockFlags Flags { get; set; }
+
         public BasicBlock()
         {
             this.out_bb = new List<BasicBlock>();
@@ -109,7 +111,7 @@ namespace Zenos.Framework
     }
 
     [Flags]
-    internal enum BasicBlockFlags
+    public enum BasicBlockFlags
     {
         BB_VISITED = 1 << 0,
         BB_REACHABLE = 1 << 1,

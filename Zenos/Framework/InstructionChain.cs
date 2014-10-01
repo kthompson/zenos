@@ -168,6 +168,14 @@ namespace Zenos.Framework
                 _instructions.Add(null);
         }
 
+        public override string ToString()
+        {
+            if (this.Instruction != null)
+                return string.Format("InstructionChain[{0}]", this.Instruction);
+
+            return base.ToString();
+        }
+
         public static InstructionChain operator ++(InstructionChain c)
         {
             c.Increment();

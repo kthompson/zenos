@@ -81,12 +81,22 @@ namespace Zenos.Framework
     {
         public static TypeReference inst_vtype(this IInstruction instruction)
         {
-            return (TypeReference) instruction.Operand1;
+            return (TypeReference)instruction.Operand1;
+        }
+
+        public static void set_inst_vtype(this IInstruction instruction, TypeReference value)
+        {
+            instruction.Operand1 = value;
         }
 
         public static int inst_c0(this IInstruction instruction)
         {
             return (int)instruction.Operand0;
+        }
+
+        public static void set_inst_c0(this IInstruction instruction, int value)
+        {
+            instruction.Operand0 = value;
         }
 
         public static int inst_c1(this IInstruction instruction)
@@ -128,6 +138,27 @@ namespace Zenos.Framework
         public static BasicBlock inst_false_bb(this IInstruction instruction)
         {
             return instruction.inst_many_bb()[1];
+        }
+
+
+        public static void set_inst_p0(this IInstruction instruction, IInstruction value)
+        {
+            instruction.Operand0 = value;
+        }
+
+        public static IInstruction inst_p0(this IInstruction instruction)
+        {
+            return (IInstruction)instruction.Operand0;
+        }
+
+        public static void set_inst_p1(this IInstruction instruction, IInstruction value)
+        {
+            instruction.Operand1 = value;
+        }
+
+        public static IInstruction inst_p1(this IInstruction instruction)
+        {
+            return (IInstruction)instruction.Operand1;
         }
     }
 }

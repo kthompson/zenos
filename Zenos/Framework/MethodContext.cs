@@ -65,18 +65,14 @@ namespace Zenos.Framework
         public IInstruction vret_addr { get; set; }
         public bool ret_var_is_local { get; set; }
         public int arch_eh_jit_info { get; set; }
-        public BasicBlock start_bblock { get; set; }
-        public BasicBlock end_bblock { get; set; }
         public int num_bblocks { get; set; }
-        public BasicBlock bblock {
-            get { return this.CurrentBasicBlock; }
-            set { this.CurrentBasicBlock = value; }
-        }
 
         public int cil_start { get; set; }
         public int real_offset { get; set; }
         public Dictionary<int, BasicBlock> cil_offset_to_bb { get; set; }
         public BasicBlock bb_init { get; set; }
+        public BasicBlock bb_entry { get; set; }
+        public BasicBlock bb_exit { get; set; }
 
         protected virtual void Dispose(bool disposing)
         {

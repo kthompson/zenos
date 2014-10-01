@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using Zenos.Core;
@@ -21,17 +22,24 @@ namespace Zenos.Stages
 
         public override void Compile(IMethodContext context)
         {
+
+            bool init_locals;
+            
+            //if(unsafe code)
+            //    init_locals = context.Method.Body.InitLocals;
+            init_locals = true;
+
             var start_new_bblock = 0;
             BasicBlock tblock = null;
 
             /* ENTRY BLOCK */
             var start_bblock = NEW_BBLOCK(context);
-            context.start_bblock = start_bblock;
+            context.bb_entry = start_bblock;
 
             /* EXIT BLOCK */
             var end_bblock = NEW_BBLOCK(context);
-            context.end_bblock = end_bblock;
-
+            context.bb_exit = end_bblock;
+            end_bblock.Flags |= BasicBlockFlags.BB_INDIRECT_JUMP_TARGET;
             
             /* FIRST CODE BLOCK */
             var bblock = NEW_BBLOCK(context);
@@ -60,8 +68,6 @@ namespace Zenos.Stages
             var ip = InstructionChain.FromInstructions(context.Instruction);
 
             context.CurrentBasicBlock = bblock;
-            
-            Helper.Break();
             
             while (ip.Instruction != null)
             {
@@ -208,7 +214,6 @@ namespace Zenos.Stages
                             //g_assert (!return_var);
                             CHECK_STACK(context, 1);
 
-                            Helper.Break("we should have sp++ but since sp starts null, it breaks this");
                             sp.Decrement();
 
                             //if ((method.wrapper_type == MONO_WRAPPER_DYNAMIC_METHOD || method.wrapper_type == MONO_WRAPPER_NONE) && target_type_is_incompatible (cfg, ret_type, *sp))
@@ -240,9 +245,9 @@ namespace Zenos.Stages
                         var inst = _emitter.MONO_INST_NEW(context, InstructionCode.OP_BR);
 
                         ip.Increment();
-                        inst.set_inst_target_bb(context.end_bblock);
-                        _emitter.MONO_ADD_INS(context.CurrentBasicBlock, inst);
-                        link_bblock(context, context.CurrentBasicBlock, context.end_bblock);
+                        inst.set_inst_target_bb(end_bblock);
+                        _emitter.MONO_ADD_INS(bblock, inst);
+                        link_bblock(context, bblock, end_bblock);
                         start_new_bblock = 1;
 
                         break;
@@ -268,8 +273,23 @@ namespace Zenos.Stages
                 bblock.next_bb = end_bblock;
             }
 
+            Helper.Break();
+
+            if (init_localsbb != null)
+            {
+                context.CurrentBasicBlock = init_localsbb;
+                context.Instruction = null;
+                for (int i = 0; i < context.VariableDefinitions.Count; i++)
+                {
+                    _emitter.emit_init_local(context, i, context.VariableDefinitions[i].VariableType, init_locals);
+                }
+            }
+
+            //TODO: emit ref vars
+
 
         }
+
 
         private void handle_stack_args(IMethodContext context, IInstruction stackStart, int count)
         {
@@ -495,7 +515,7 @@ namespace Zenos.Stages
             //var sig = mono_method_signature(cfg.Method);
 
             var cinfo = _architecture.get_call_info(cfg, cfg.Method);
-            var sig_ret = _emitter.mini_replace_type(cfg.Method.ReturnType);
+            var sig_ret = cfg.Method.ReturnType.mini_replace_type();
             
             if (cinfo.ret.storage == ArgStorage.ArgValuetypeInReg)
                 cfg.ret_var_is_local = true;
@@ -554,13 +574,13 @@ namespace Zenos.Stages
 
         private IInstruction mono_compile_create_var_for_vreg(IMethodContext cfg, TypeReference type, InstructionCode opcode, IRegister vreg)
         {
-            var vi = MONO_INIT_VARINFO(cfg);
-            vi.VirtualRegister = vreg;
-
+            type = type.mini_replace_type();
+            var num = cfg.Variables.Count;
             var inst = _emitter.MONO_INST_NEW(cfg, opcode);
-            inst.Operand0 = vi;
-            inst.Operand1 = type;
-            inst.klass = (type).mono_class_from_mono_type();
+
+            inst.set_inst_c0(num);
+            inst.set_inst_vtype(type);
+            inst.klass = type.mono_class_from_mono_type();
             _emitter.type_to_eval_stack_type(cfg, type, inst);
             //    /* if set to 1 the variable is native */
             //    inst.backend.is_pinvoke = 0;
@@ -583,7 +603,9 @@ namespace Zenos.Stages
 
             cfg.Variables.Add(inst);
 
-
+            var vi = MONO_INIT_VARINFO(cfg, type);
+            vi.VirtualRegister = vreg;
+            
             if (vreg != null)
                 set_vreg_to_inst(cfg, vreg, inst);
 
@@ -654,9 +676,13 @@ namespace Zenos.Stages
             return cfg.VariableDefinitions[varnum];
         }
 
-        private IVariableDefinition MONO_INIT_VARINFO(IMethodContext cfg)
+        private IVariableDefinition MONO_INIT_VARINFO(IMethodContext cfg, TypeReference type)
         {
-            var vi = new VariableDefinition {Index = cfg.VariableDefinitions.Count};
+            var vi = new VariableDefinition
+            {
+                Index = cfg.VariableDefinitions.Count,
+                VariableType = type,
+            };
             cfg.VariableDefinitions.Add(vi);
             //vi.range.first_use.pos.bid = 0xffff; 
             return vi;
@@ -755,6 +781,17 @@ namespace Zenos.Stages
         public static bool MONO_TYPE_IS_REFERENCE(this TypeReference retType)
         {
             throw new NotImplementedException();
+        }
+
+        public static TypeReference mini_replace_type(this TypeReference type)
+        {
+            type = type.Resolve().mono_type_get_underlying_type();
+            return mini_native_type_replace_type(type);
+        }
+
+        public static TypeReference mini_native_type_replace_type(this TypeReference type)
+        {
+            return type;
         }
 
 

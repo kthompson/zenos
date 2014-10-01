@@ -235,7 +235,7 @@ namespace Zenos.Core
         }
 
         [DebuggerHidden]
-        public static void Stop(string fmt = "", params object[] args)
+        public static void Stop(string fmt, params object[] args)
         {
             Throw(new Exception(string.Format(fmt, args)));
         }

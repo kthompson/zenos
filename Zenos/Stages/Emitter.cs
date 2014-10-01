@@ -169,24 +169,12 @@ namespace Zenos.Stages
             return dest;
         }
 
-
-        public TypeReference mini_replace_type(TypeReference type)
-        {
-            type = type.Resolve().mono_type_get_underlying_type();
-            return mini_native_type_replace_type(type);
-        }
-
-        public TypeReference mini_native_type_replace_type(TypeReference type)
-        {
-            return type;
-        }
-
         public InstructionCode mono_type_to_regmove(IMethodContext cfg, TypeReference type)
         {
             if (type.IsByReference)
                 return InstructionCode.OP_MOVE;
 
-            type = mini_replace_type(type);
+            type = type.mini_replace_type();
 
         handle_enum:
             switch (type.MetadataType)
@@ -356,6 +344,99 @@ namespace Zenos.Stages
         private IInstruction NEW_TEMPLOAD(IMethodContext cfg, int num)
         {
             return NEW_VARLOAD(cfg, cfg.Variables[num], cfg.Variables[num].inst_vtype());
+        }
+
+
+        public void emit_init_local(IMethodContext context, int local, TypeReference type, bool init)
+        {
+            var var = context.Variables[local];
+            //if (COMPILE_SOFT_FLOAT(cfg))
+            //{
+            //    MonoInst* store;
+            //    int reg = alloc_dreg(cfg, var->type);
+            //    emit_init_rvar(cfg, reg, type);
+            //    EMIT_NEW_LOCSTORE(cfg, store, local, cfg->cbb->last_ins);
+            //}
+            //else
+            {
+                if (init)
+                    emit_init_rvar(context, var.Destination, type);
+                else
+                    emit_dummy_init_rvar(context, var.Destination, type);
+            }
+        }
+
+        private void emit_dummy_init_rvar(IMethodContext context, IRegister destination, TypeReference type)
+        {
+            throw new NotImplementedException();
+        }
+
+        static double r8_0 = 0.0;
+
+        private void emit_init_rvar(IMethodContext cfg, IRegister dreg, TypeReference rtype)
+        {
+            rtype = rtype.mini_replace_type();
+            var t = rtype.MetadataType;
+
+            if (rtype.IsByReference)
+            {
+                MONO_EMIT_NEW_PCONST(cfg, dreg, null);
+            }
+            else if (t >= MetadataType.Boolean && t <= MetadataType.UInt32)
+            {
+                MONO_EMIT_NEW_ICONST(cfg, dreg, 0);
+            }
+            else if (t == MetadataType.Int64 || t == MetadataType.UInt64)
+            {
+                Helper.Stop();
+                //MONO_EMIT_NEW_I8CONST(cfg, dreg, 0);
+            }
+            else if (t == MetadataType.Single || t == MetadataType.Double)
+            {
+                var ins = MONO_INST_NEW(cfg, InstructionCode.OP_R8CONST);
+                ins.StackType = StackType.STACK_R8;
+                Helper.Stop("ins->inst_p0 = (void*) &r8_0;");
+                ins.Destination = dreg;
+                MONO_ADD_INS(cfg.CurrentBasicBlock, ins);
+            }
+            else if ((t == MetadataType.ValueType) || (t == MetadataType.TypedByReference) ||
+                     ((t == MetadataType.GenericInstance) && rtype.mono_type_generic_inst_is_valuetype()))
+            {
+                Helper.Stop();
+                //MONO_EMIT_NEW_VZERO(cfg, dreg, mono_class_from_mono_type(rtype));
+            }
+            else if (((t == MetadataType.Var) || (t == MetadataType.MVar)) && mini_type_var_is_vt(cfg, rtype))
+            {
+                Helper.Stop();
+                //MONO_EMIT_NEW_VZERO(cfg, dreg, mono_class_from_mono_type(rtype));
+            }
+            else
+            {
+                MONO_EMIT_NEW_PCONST(cfg, dreg, null);
+            }
+        }
+
+        private void MONO_EMIT_NEW_ICONST(IMethodContext cfg, IRegister dr, int imm)
+        {
+            var inst = MONO_INST_NEW((cfg), InstructionCode.OP_ICONST);
+            inst.Destination = dr;
+            inst.set_inst_c0(imm);
+
+            MONO_ADD_INS(cfg.CurrentBasicBlock, inst);
+        }
+
+        private bool mini_type_var_is_vt(IMethodContext cfg, TypeReference rtype)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void MONO_EMIT_NEW_PCONST(IMethodContext cfg, IRegister dr, IInstruction val)
+        {
+            var inst = MONO_INST_NEW(cfg, InstructionCode.OP_ICONST);
+            inst.Destination = dr;
+            inst.set_inst_p0(val);
+            inst.StackType = StackType.STACK_PTR;
+            MONO_ADD_INS((cfg).CurrentBasicBlock, inst);
         }
     }
 }
