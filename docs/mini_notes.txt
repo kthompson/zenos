@@ -1,0 +1,412 @@
+
+"ip" i think this is some kind of size counter for the method. Maybe total length including data?
+"sp" this is the instruction pointer.
+	sp++ is the same as: instruction = instruction.Next;
+	sp-- is the same as: instruction = instruction.Previous;
+	*sp++ = ins is the same as: sp = sp.SetNext(ins);
+                        
+
+MonoCompile:
+
+
+/*
+ * Control Flow Graph and compilation unit information
+ */
+typedef struct {
+	MonoMethod      *method;
+	MonoMethodHeader *header;
+	MonoMemPool     *mempool;
+	MonoInst       **varinfo;
+	MonoMethodVar   *vars;
+	MonoInst        *ret;
+	MonoBasicBlock  *bb_entry;
+	MonoBasicBlock  *bb_exit;
+	MonoBasicBlock  *bb_init;
+	MonoBasicBlock **bblocks;
+	MonoBasicBlock **cil_offset_to_bb;
+	MonoMemPool     *state_pool; /* used by instruction selection */
+	MonoBasicBlock  *cbb;        /* used by instruction selection */
+	MonoInst        *prev_ins;   /* in decompose */
+	MonoJumpInfo    *patch_info;
+	MonoJitInfo     *jit_info;
+	MonoJitDynamicMethodInfo *dynamic_info;
+	guint            num_bblocks, max_block_num;
+	guint            locals_start;
+	guint            num_varinfo; /* used items in varinfo */
+	guint            varinfo_count; /* total storage in varinfo */
+	gint             stack_offset;
+	gint             max_ireg;
+	gint             cil_offset_to_bb_len;
+	MonoRegState    *rs;
+	MonoSpillInfo   *spill_info [16]; /* machine register spills */
+	gint             spill_count;
+	gint             spill_info_len [16];
+	/* unsigned char   *cil_code; */
+	MonoMethod      *inlined_method; /* the method which is currently inlined */
+	MonoInst        *domainvar; /* a cache for the current domain */
+	MonoInst        *got_var; /* Global Offset Table variable */
+	MonoInst        **locals;
+	MonoInst	*rgctx_var; /* Runtime generic context variable (for static generic methods) */
+	MonoInst        **args;
+	MonoType        **arg_types;
+	MonoMethod      *current_method; /* The method currently processed by method_to_ir () */
+	MonoMethod      *method_to_register; /* The method to register in JIT info tables */
+	MonoGenericContext *generic_context;
+
+	/* 
+	 * This variable represents the hidden argument holding the vtype
+	 * return address. If the method returns something other than a vtype, or
+	 * the vtype is returned in registers this is NULL.
+	 */
+	MonoInst        *vret_addr;
+
+	/*
+	 * This is used to initialize the cil_code field of MonoInst's.
+	 */
+	const unsigned char *ip;
+	
+	struct MonoAliasingInformation *aliasing_info;
+
+	/* A hashtable of region ID-> SP var mappings */
+	/* An SP var is a place to store the stack pointer (used by handlers)*/
+	GHashTable      *spvars;
+
+	/* A hashtable of region ID -> EX var mappings */
+	/* An EX var stores the exception object passed to catch/filter blocks */
+	GHashTable      *exvars;
+
+	GList           *ldstr_list; /* used by AOT */
+	
+	MonoDomain      *domain;
+
+	guint            real_offset;
+	GHashTable      *cbb_hash;
+
+	/* The current virtual register number */
+	guint32 next_vreg;
+
+	MonoGenericSharingContext *generic_sharing_context;
+
+	MonoGenericSharingContext gsctx;
+
+	gboolean gsharedvt;
+
+	MonoGSharedVtMethodInfo *gsharedvt_info;
+
+	/* Points to the gsharedvt locals area at runtime */
+	MonoInst *gsharedvt_locals_var;
+
+	/* The localloc instruction used to initialize gsharedvt_locals_var */
+	MonoInst *gsharedvt_locals_var_ins;
+
+	/* Points to a MonoGSharedVtMethodRuntimeInfo at runtime */
+	MonoInst *gsharedvt_info_var;
+
+	/* For native-to-managed wrappers, the saved old domain */
+	MonoInst *orig_domain_var;
+
+	MonoInst *lmf_var;
+	MonoInst *lmf_addr_var;
+
+	unsigned char   *cil_start;
+#ifdef __native_client_codegen__
+	/* this alloc is not aligned, native_code */
+	/* is the 32-byte aligned version of this */
+	unsigned char   *native_code_alloc;
+#endif
+	unsigned char   *native_code;
+	guint            code_size;
+	guint            code_len;
+	guint            prolog_end;
+	guint            epilog_begin;
+	regmask_t        used_int_regs;
+	guint32          opt;
+	guint32          prof_options;
+	guint32          flags;
+	guint32          comp_done;
+	guint32          verbose_level;
+	guint32          stack_usage;
+	guint32          param_area;
+	guint32          frame_reg;
+	gint32           sig_cookie;
+	guint            disable_aot : 1;
+	guint            disable_ssa : 1;
+	guint            disable_llvm : 1;
+	guint            enable_extended_bblocks : 1;
+	guint            run_cctors : 1;
+	guint            need_lmf_area : 1;
+	guint            compile_aot : 1;
+	guint            compile_llvm : 1;
+	guint            got_var_allocated : 1;
+	guint            ret_var_is_local : 1;
+	guint            ret_var_set : 1;
+	guint            globalra : 1;
+	guint            unverifiable : 1;
+	guint            skip_visibility : 1;
+	guint            disable_reuse_registers : 1;
+	guint            disable_reuse_stack_slots : 1;
+	guint            disable_reuse_ref_stack_slots : 1;
+	guint            disable_ref_noref_stack_slot_share : 1;
+	guint            disable_initlocals_opt : 1;
+	guint            disable_initlocals_opt_refs : 1;
+	guint            disable_omit_fp : 1;
+	guint            disable_vreg_to_lvreg : 1;
+	guint            disable_deadce_vars : 1;
+	guint            disable_out_of_line_bblocks : 1;
+	guint            create_lmf_var : 1;
+	/*
+	 * When this is set, the code to push/pop the LMF from the LMF stack is generated as IR
+	 * instead of being generated in emit_prolog ()/emit_epilog ().
+	 */
+	guint            lmf_ir : 1;
+	/*
+	 * Whenever to use the mono_lmf TLS variable instead of indirection through the
+	 * mono_lmf_addr TLS variable.
+	 */
+	guint            lmf_ir_mono_lmf : 1;
+	guint            gen_write_barriers : 1;
+	guint            init_ref_vars : 1;
+	guint            extend_live_ranges : 1;
+	guint            compute_precise_live_ranges : 1;
+	guint            has_got_slots : 1;
+	guint            uses_rgctx_reg : 1;
+	guint            uses_vtable_reg : 1;
+	guint            uses_simd_intrinsics : 1;
+	guint            keep_cil_nops : 1;
+	guint            gen_seq_points : 1;
+	guint            explicit_null_checks : 1;
+	guint            compute_gc_maps : 1;
+	guint            soft_breakpoints : 1;
+	guint            arch_eh_jit_info : 1;
+	guint            has_indirection : 1;
+	gpointer         debug_info;
+	guint32          lmf_offset;
+    guint16          *intvars;
+	MonoProfileCoverageInfo *coverage_info;
+	GHashTable       *token_info_hash;
+	MonoCompileArch  arch;
+	guint32          inline_depth;
+	guint32          exception_type;	/* MONO_EXCEPTION_* */
+	guint32          exception_data;
+	char*            exception_message;
+	gpointer         exception_ptr;
+
+	guint8 *         encoded_unwind_ops;
+	guint32          encoded_unwind_ops_len;
+	GSList*          unwind_ops;
+
+	/* Fields used by the local reg allocator */
+	void*            reginfo;
+	int              reginfo_len;
+
+	/* Maps vregs to their associated MonoInst's */
+	/* vregs with an associated MonoInst are 'global' while others are 'local' */
+	MonoInst **vreg_to_inst;
+
+	/* Size of above array */
+	guint32 vreg_to_inst_len;
+
+	/* Marks vregs which hold a GC ref */
+	/* FIXME: Use a bitmap */
+	gboolean *vreg_is_ref;
+
+	/* Size of above array */
+	guint32 vreg_is_ref_len;
+
+	/* Marks vregs which hold a managed pointer */
+	/* FIXME: Use a bitmap */
+	gboolean *vreg_is_mp;
+
+	/* Size of above array */
+	guint32 vreg_is_mp_len;
+
+	/* 
+	 * The original method to compile, differs from 'method' when doing generic
+	 * sharing.
+	 */
+	MonoMethod *orig_method;
+
+	/* Patches which describe absolute addresses embedded into the native code */
+	GHashTable *abs_patches;
+
+	/* If the arch passes valuetypes by address, then for methods
+	   which use JMP the arch code should use these local
+	   variables to store the addresses of incoming valuetypes.
+	   The addresses should be stored in mono_arch_emit_prolog()
+	   and can be used when emitting code for OP_JMP.  See
+	   mini-ppc.c. */
+	MonoInst **tailcall_valuetype_addrs;
+
+	/* Used to implement iconv_to_r8_raw on archs that can't do raw
+	copy between an ireg and a freg. This is an int32 var.*/
+	MonoInst *iconv_raw_var;
+
+	/* Used to implement fconv_to_r8_x. This is a double (8 bytes) var.*/
+	MonoInst *fconv_to_r8_x_var;
+
+	/*Use to implement simd constructors. This is a vector (16 bytes) var.*/
+	MonoInst *simd_ctor_var;
+
+	/* Used to implement dyn_call */
+	MonoInst *dyn_call_var;
+
+	/*
+	 * List of sequence points represented as IL offset+native offset pairs.
+	 * Allocated using glib.
+	 * IL offset can be -1 or 0xffffff to refer to the sequence points
+	 * inside the prolog and epilog used to implement method entry/exit events.
+	 */
+	GPtrArray *seq_points;
+
+	/* The encoded sequence point info */
+	MonoSeqPointInfo *seq_point_info;
+
+	/* Method headers which need to be freed after compilation */
+	GSList *headers_to_free;
+
+	/* Used by AOT */
+	guint32 got_offset, ex_info_offset, method_info_offset, method_index;
+	/* Symbol used to refer to this method in generated assembly */
+	char *asm_symbol;
+	char *llvm_method_name;
+
+	MonoJitExceptionInfo *llvm_ex_info;
+	guint32 llvm_ex_info_len;
+	int llvm_this_reg, llvm_this_offset;
+
+	GSList *try_block_holes;
+
+	/* DWARF location list for 'this' */
+	GSList *this_loclist;
+
+	/* DWARF location list for 'rgctx_var' */
+	GSList *rgctx_loclist;
+
+	/* GC Maps */
+   
+	/* The offsets of the locals area relative to the frame pointer */
+	gint locals_min_stack_offset, locals_max_stack_offset;
+
+	/* The final CFA rule at the end of the prolog */
+	int cfa_reg, cfa_offset;
+
+	/* Points to a MonoCompileGC */
+	gpointer gc_info;
+
+	/*
+	 * The encoded GC map along with its size. This contains binary data so it can be saved in an AOT
+	 * image etc, but it requires a 4 byte alignment.
+	 */
+	guint8 *gc_map;
+	guint32 gc_map_size;
+
+	/* Stats */
+	int stat_allocate_var;
+	int stat_locals_stack_size;
+	int stat_basic_blocks;
+	int stat_cil_code_size;
+	int stat_n_regvars;
+	int stat_inlineable_methods;
+	int stat_inlined_methods;
+	int stat_cas_demand_generation;
+	int stat_code_reallocs;
+} MonoCompile;
+
+
+
+struct MonoInst {
+ 	guint16 opcode;
+	guint8  type; /* stack type */
+	guint8  flags;
+	
+	/* used by the register allocator */
+	gint32 dreg, sreg1, sreg2, sreg3;
+
+	MonoInst *next, *prev;
+
+	union {
+		union {
+			MonoInst *src;
+			MonoMethodVar *var;
+			mgreg_t const_val;
+#if (SIZEOF_REGISTER > SIZEOF_VOID_P) && (G_BYTE_ORDER == G_BIG_ENDIAN)
+			struct {
+				gpointer p[SIZEOF_REGISTER/SIZEOF_VOID_P];
+			} pdata;
+#else
+			gpointer p;
+#endif
+			MonoMethod *method;
+			MonoMethodSignature *signature;
+			MonoBasicBlock **many_blocks;
+			MonoBasicBlock *target_block;
+			MonoInst **args;
+			MonoType *vtype;
+			MonoClass *klass;
+			int *phi_args;
+			MonoCallInst *call_inst;
+			MonoExceptionClause *exception_clause;
+		} op [2];
+		gint64 i8const;
+		double r8const;
+	} data;
+
+	const unsigned char* cil_code; /* for debugging and bblock splitting */
+
+	/* used mostly by the backend to store additional info it may need */
+	union {
+		gint32 reg3;
+		gint32 arg_info;
+		gint32 size;
+		MonoMemcpyArgs *memcpy_args; /* in OP_MEMSET and OP_MEMCPY */
+		gpointer data;
+		gint shift_amount;
+		gboolean is_pinvoke; /* for variables in the unmanaged marshal format */
+		gboolean record_cast_details; /* For CEE_CASTCLASS */
+		MonoInst *spill_var; /* for OP_ICONV_TO_R8_RAW and OP_FCONV_TO_R8_X */
+		guint16 source_opcode; /*OP_XCONV_R8_TO_I4 needs to know which op was used to do proper widening*/
+		int pc_offset; /* OP_GC_LIVERANGE_START/END */
+		int memory_barrier_kind; /* see mono-memory-model.h for valid values */
+	} backend;
+	
+	MonoClass *klass;
+};
+
+MonoInst Extensions:
+
+	#define inst_c0 data.op[0].const_val
+	#define inst_c1 data.op[1].const_val
+	#define inst_i0 data.op[0].src
+	#define inst_i1 data.op[1].src
+	#if (SIZEOF_REGISTER > SIZEOF_VOID_P) && (G_BYTE_ORDER == G_BIG_ENDIAN)
+	#define inst_p0 data.op[0].pdata.p[SIZEOF_REGISTER/SIZEOF_VOID_P - 1]
+	#define inst_p1 data.op[1].pdata.p[SIZEOF_REGISTER/SIZEOF_VOID_P - 1]
+	#else
+	#define inst_p0 data.op[0].p
+	#define inst_p1 data.op[1].p
+	#endif
+	#define inst_l  data.i8const
+	#define inst_r  data.r8const
+	#define inst_left  data.op[0].src
+	#define inst_right data.op[1].src
+
+	#define inst_newa_len   data.op[0].src
+	#define inst_newa_class data.op[1].klass
+
+	#define inst_var    data.op[0].var
+	#define inst_vtype  data.op[1].vtype
+	/* in branch instructions */
+	#define inst_many_bb   data.op[1].many_blocks
+	#define inst_target_bb data.op[0].target_block
+	#define inst_true_bb   data.op[1].many_blocks[0]
+	#define inst_false_bb  data.op[1].many_blocks[1]
+
+	#define inst_basereg sreg1
+	#define inst_indexreg sreg2
+	#define inst_destbasereg dreg
+	#define inst_offset data.op[0].const_val
+	#define inst_imm    data.op[1].const_val
+	#define inst_call   data.op[1].call_inst
+
+	#define inst_phi_args   data.op[1].phi_args
+	#define inst_eh_block	 data.op[1].exception_clause

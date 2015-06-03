@@ -11,6 +11,7 @@ using Zenos.Framework;
 
 namespace Zenos.Stages
 {
+    //mini.c/mono_codegen
     public class EmitterStage : CodeCompilerStage
     {
         public override void Compile(IMethodContext context)
