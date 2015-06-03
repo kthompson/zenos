@@ -37,7 +37,6 @@ namespace Zenos.Tests
             Test.Runs<BoolDelegate>(() => false);
         }
 
-
         [Fact]
         public void Characters()
         {

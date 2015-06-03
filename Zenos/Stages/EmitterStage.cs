@@ -79,13 +79,13 @@ namespace Zenos.Stages
 
             switch (instruction.Code)
             {
-                case InstructionCode.OP_ICONST:
-                    context.Text.WriteLine("movl ${0}, %{1}     # {2}", instruction.Operand0, instruction.Destination, instruction);
-                    break;
+                //case InstructionCode.OP_ICONST:
+                //    context.Text.WriteLine("movl ${0}, %{1}     # {2}", instruction.Operand0, instruction.Destination, instruction);
+                //    break;
 
-                case InstructionCode.OP_MOVE:
+                //case InstructionCode.OP_MOVE:
 
-                    break;
+                //    break;
                 //case Code.Stloc:
                 //    context.Text.WriteLine("movl %eax, {0}      # {1} ", EmitLocation(context, instruction), instruction);
                 //    break;

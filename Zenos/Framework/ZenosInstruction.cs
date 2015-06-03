@@ -4,7 +4,7 @@ using Mono.Cecil.Cil;
 
 namespace Zenos.Framework
 {
-    class IrInstruction : IInstruction
+    class ZenosInstruction : IInstruction
     {
         public InstructionCode Code { get; set; }
         public StackType StackType { get; set; }

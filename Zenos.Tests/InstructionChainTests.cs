@@ -14,7 +14,7 @@ namespace Zenos.Tests
         public void InstructionChain_OnInstructionAssignment_SetsFirstInstruction()
         {
             var chain = new InstructionChain();
-            var inst = new IrInstruction();
+            var inst = new ZenosInstruction();
             Assert.Null(chain.Instruction);
 
             chain.Instruction = inst;
@@ -27,8 +27,8 @@ namespace Zenos.Tests
         public void InstructionChain__OnInstructionAssignment_InstructionIsReplaced()
         {
             var chain = new InstructionChain();
-            var inst = new IrInstruction();
-            var inst2 = new IrInstruction();
+            var inst = new ZenosInstruction();
+            var inst2 = new ZenosInstruction();
 
             chain.Instruction = inst;
             chain.Instruction = inst2;
@@ -44,7 +44,7 @@ namespace Zenos.Tests
         {
             var chain = new InstructionChain
             {
-                Instruction = new IrInstruction()
+                Instruction = new ZenosInstruction()
             };
 
             chain.Increment();
@@ -56,8 +56,8 @@ namespace Zenos.Tests
         public void InstructionChain_ReplacingInstruction_UpdatesNextAndPreviousLinks()
         {
             var chain = new InstructionChain();
-            var first = new IrInstruction();
-            var second = new IrInstruction();
+            var first = new ZenosInstruction();
+            var second = new ZenosInstruction();
 
             chain.Instruction = first;
             chain.Increment();
@@ -73,9 +73,9 @@ namespace Zenos.Tests
         public void InstructionChain_OnDecrement_InstructionIsReplaced()
         {
             var chain = new InstructionChain();
-            var first = new IrInstruction();
-            var newFirst = new IrInstruction();
-            var second = new IrInstruction();
+            var first = new ZenosInstruction();
+            var newFirst = new ZenosInstruction();
+            var second = new ZenosInstruction();
 
             chain.Instruction = first;
             chain.Increment();

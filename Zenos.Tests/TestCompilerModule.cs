@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Ninject.Modules;
 using Zenos.Framework;
 using Zenos.Stages;
@@ -14,9 +12,8 @@ namespace Zenos.Tests
         public override void Load()
         {
             this.Bind<Compiler>().ToSelf();
-            this.Bind<Emitter>().ToSelf();
 
-            this.Bind<IArchitecture>().To<X86>();
+            this.Bind<IArchitecture>().To<AMD64>();
             
             this.Bind<ICompilerStage>().To<TypeQueuingStage>();
             this.Bind<ICompilerStage>().To<MethodQueuingStage>();

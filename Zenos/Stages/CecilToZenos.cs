@@ -57,9 +57,9 @@ namespace Zenos.Stages
             }
         }
 
-        private static IrInstruction CilToZenosInstruction(Instruction cecilInstr)
+        private static ZenosInstruction CilToZenosInstruction(Instruction cecilInstr)
         {
-            return new IrInstruction
+            return new ZenosInstruction
             {
                 Code = (InstructionCode) cecilInstr.OpCode.Code,
                 Offset = cecilInstr.Offset,

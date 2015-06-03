@@ -37,5 +37,10 @@ namespace Zenos.Tests
             var array = results.Select(x => x.ToArray()).ToArray();
             return array;
         }
+
+        public bool SupportsDiscoveryEnumeration(IAttributeInfo dataAttribute, IMethodInfo testMethod)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

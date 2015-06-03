@@ -36,7 +36,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;TARGET_AMD64</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisLogFile>bin\Debug\Zenos.Core.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -68,17 +68,21 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Mono.Cecil">
-      <HintPath>..\packages\Mono.Cecil.0.9.5.4\lib\net40\Mono.Cecil.dll</HintPath>
+    <Reference Include="Mono.Cecil, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil.Mdb">
-      <HintPath>..\packages\Mono.Cecil.0.9.5.4\lib\net40\Mono.Cecil.Mdb.dll</HintPath>
+    <Reference Include="Mono.Cecil.Mdb, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.Mdb.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil.Pdb">
-      <HintPath>..\packages\Mono.Cecil.0.9.5.4\lib\net40\Mono.Cecil.Pdb.dll</HintPath>
+    <Reference Include="Mono.Cecil.Pdb, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.Pdb.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>..\packages\Mono.Cecil.0.9.5.4\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
+    <Reference Include="Mono.Cecil.Rocks, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.Rocks.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -101,8 +105,9 @@
     <Compile Include="Framework\ICompilerContext.cs" />
     <Compile Include="Framework\IMemberContext.cs" />
     <Compile Include="Framework\InstructionChain.cs" />
+    <Compile Include="Framework\InstructionFlags.cs" />
     <Compile Include="Framework\IRegister.cs" />
-    <Compile Include="Framework\IrInstruction.cs" />
+    <Compile Include="Framework\ZenosInstruction.cs" />
     <Compile Include="Framework\CodeCompilerStage.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -127,9 +132,10 @@
     <Compile Include="Framework\MemberCompilerStage.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Stages\AMD64.cs" />
     <Compile Include="Stages\BranchOptimization.cs" />
+    <Compile Include="Stages\CodeSimplifier.cs" />
     <Compile Include="Stages\DeadCodeElimination.cs" />
-    <Compile Include="Stages\Emitter.cs" />
     <Compile Include="Stages\EmitterStage.cs" />
     <Compile Include="Stages\GccBuildStage.cs" />
     <Compile Include="Stages\LocalPropagation.cs" />
@@ -144,15 +150,16 @@
     <Compile Include="Stages\MethodQueuingStage.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Stages\mono_defaults.cs" />
     <Compile Include="Stages\StaticSingleAssignmentTranslation.cs" />
     <Compile Include="Stages\TypeQueuingStage.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Stages\WriteCodeToDisk.cs" />
-    <Compile Include="Stages\X86.cs" />
+    <Compile Include="Framework\Architecture.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

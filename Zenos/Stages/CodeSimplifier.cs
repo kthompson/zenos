@@ -1,186 +1,149 @@
-﻿using System.Linq;
+﻿using System.ComponentModel;
+using System.Linq;
 using Mono.Cecil.Cil;
 
 namespace Zenos.Framework
 {
-    public class CodeSimplifier : InstructionCompilerStage
+    public class CodeSimplifier : CodeCompilerStage
     {
-
-        public override IInstruction Compile(IMethodContext context, IInstruction instruction)
+        public virtual void Compile(IMethodContext context, IInstruction ins)
         {
-            if (instruction.SourceInstruction.OpCode.OpCodeType != OpCodeType.Macro)
-                return instruction;
+            if (ins.SourceInstruction.OpCode.OpCodeType != OpCodeType.Macro)
+                return;
 
-            switch (instruction.Code)
+            switch (ins.Code)
             {
                 case InstructionCode.CilLdarg_0:
-                    Simplify(i, OpCodes.Ldarg, body.Method.Parameters[0]);
-                    break;
                 case InstructionCode.CilLdarg_1:
-                    Simplify(i, OpCodes.Ldarg, body.Method.Parameters[1]);
-                    break;
                 case InstructionCode.CilLdarg_2:
-                    Simplify(i, OpCodes.Ldarg, body.Method.Parameters[2]);
-                    break;
                 case InstructionCode.CilLdarg_3:
-                    Simplify(i, OpCodes.Ldarg, body.Method.Parameters[3]);
+                    Simplify(ins, InstructionCode.CilLdarg, context.Parameters[ins.Code - InstructionCode.CilLdarg_0]);
                     break;
+
                 case InstructionCode.CilLdloc_0:
-                    Simplify(i, OpCodes.Ldloc, body.Variables[0]);
-                    break;
                 case InstructionCode.CilLdloc_1:
-                    Simplify(i, OpCodes.Ldloc, body.Variables[1]);
-                    break;
                 case InstructionCode.CilLdloc_2:
-                    Simplify(i, OpCodes.Ldloc, body.Variables[2]);
-                    break;
                 case InstructionCode.CilLdloc_3:
-                    Simplify(i, OpCodes.Ldloc, body.Variables[3]);
+                    Simplify(ins, InstructionCode.CilLdloc, context.Variables[ins.Code - InstructionCode.CilLdloc_0]);
                     break;
+
                 case InstructionCode.CilStloc_0:
-                    Simplify(i, OpCodes.Stloc, body.Variables[0]);
-                    break;
                 case InstructionCode.CilStloc_1:
-                    Simplify(i, OpCodes.Stloc, body.Variables[1]);
-                    break;
                 case InstructionCode.CilStloc_2:
-                    Simplify(i, OpCodes.Stloc, body.Variables[2]);
-                    break;
                 case InstructionCode.CilStloc_3:
-                    Simplify(i, OpCodes.Stloc, body.Variables[3]);
+                    Simplify(ins, InstructionCode.CilStloc, context.Variables[ins.Code - InstructionCode.CilStloc_0]);
                     break;
+
                 case InstructionCode.CilLdarg_S:
-                    i.OpCode = OpCodes.Ldarg;
+                    SimplifyFromByte(ins, InstructionCode.CilLdarg);
                     break;
                 case InstructionCode.CilLdarga_S:
-                    SimplifyFromByte(i, OpCodes.Ldarga);
+                    SimplifyFromByte(ins, InstructionCode.CilLdarga);
                     break;
                 case InstructionCode.CilStarg_S:
-                    i.OpCode = OpCodes.Starg;
+                    SimplifyFromByte(ins, InstructionCode.CilStarg);
                     break;
                 case InstructionCode.CilLdloc_S:
-                    i.OpCode = OpCodes.Ldloc;
+                    SimplifyFromByte(ins, InstructionCode.CilLdloc);
                     break;
                 case InstructionCode.CilLdloca_S:
-                    Simplify(i, OpCodes.Ldloca, body.Variables[(sbyte)i.Operand]);
+                    Simplify(ins, InstructionCode.CilLdloca, context.Variables[(sbyte)ins.Operand0]);
                     break;
                 case InstructionCode.CilStloc_S:
-                    i.OpCode = OpCodes.Stloc;
+                    SimplifyFromSByte(ins, InstructionCode.CilStloc);
                     break;
                 case InstructionCode.CilLdc_I4_M1:
-                    Simplify(i, OpCodes.Ldc_I4, -1);
-                    break;
                 case InstructionCode.CilLdc_I4_0:
-                    Simplify(i, OpCodes.Ldc_I4, 0);
-                    break;
                 case InstructionCode.CilLdc_I4_1:
-                    Simplify(i, OpCodes.Ldc_I4, 1);
-                    break;
                 case InstructionCode.CilLdc_I4_2:
-                    Simplify(i, OpCodes.Ldc_I4, 2);
-                    break;
                 case InstructionCode.CilLdc_I4_3:
-                    Simplify(i, OpCodes.Ldc_I4, 3);
-                    break;
                 case InstructionCode.CilLdc_I4_4:
-                    Simplify(i, OpCodes.Ldc_I4, 4);
-                    break;
                 case InstructionCode.CilLdc_I4_5:
-                    Simplify(i, OpCodes.Ldc_I4, 5);
-                    break;
                 case InstructionCode.CilLdc_I4_6:
-                    Simplify(i, OpCodes.Ldc_I4, 6);
-                    break;
                 case InstructionCode.CilLdc_I4_7:
-                    Simplify(i, OpCodes.Ldc_I4, 7);
-                    break;
                 case InstructionCode.CilLdc_I4_8:
-                    Simplify(i, OpCodes.Ldc_I4, 8);
+                    Simplify(ins, InstructionCode.CilLdc_I4, ins.Code - InstructionCode.CilLdc_I4_0);
                     break;
+
                 case InstructionCode.CilLdc_I4_S:
-                    SimplifyFromSByte(i, OpCodes.Ldc_I4);
+                    SimplifyFromSByte(ins, InstructionCode.CilLdc_I4);
                     break;
                 case InstructionCode.CilBr_S:
-                    SimplifyFromSByte(i, OpCodes.Br);
+                    SimplifyFromSByte(ins, InstructionCode.CilBr);
                     break;
                 case InstructionCode.CilBrfalse_S:
-                    SimplifyFromSByte(i, OpCodes.Brfalse);
+                    SimplifyFromSByte(ins, InstructionCode.CilBrfalse);
                     break;
                 case InstructionCode.CilBrtrue_S:
-                    SimplifyFromSByte(i, OpCodes.Brtrue);
+                    SimplifyFromSByte(ins, InstructionCode.CilBrtrue);
                     break;
                 case InstructionCode.CilBeq_S:
-                    SimplifyFromSByte(i, OpCodes.Beq);
+                    SimplifyFromSByte(ins, InstructionCode.CilBeq);
                     break;
                 case InstructionCode.CilBge_S:
-                    SimplifyFromSByte(i, OpCodes.Bge);
+                    SimplifyFromSByte(ins, InstructionCode.CilBge);
                     break;
                 case InstructionCode.CilBgt_S:
-                    SimplifyFromSByte(i, OpCodes.Bgt);
+                    SimplifyFromSByte(ins, InstructionCode.CilBgt);
                     break;
                 case InstructionCode.CilBle_S:
-                    SimplifyFromSByte(i, OpCodes.Ble);
+                    SimplifyFromSByte(ins, InstructionCode.CilBle);
                     break;
                 case InstructionCode.CilBlt_S:
-                    SimplifyFromSByte(i, OpCodes.Blt);
+                    SimplifyFromSByte(ins, InstructionCode.CilBlt);
                     break;
                 case InstructionCode.CilBne_Un_S:
-                    SimplifyFromSByte(i, OpCodes.Bne_Un);
+                    SimplifyFromSByte(ins, InstructionCode.CilBne_Un);
                     break;
                 case InstructionCode.CilBge_Un_S:
-                    SimplifyFromSByte(i, OpCodes.Bge_Un);
+                    SimplifyFromSByte(ins, InstructionCode.CilBge_Un);
                     break;
                 case InstructionCode.CilBgt_Un_S:
-                    SimplifyFromSByte(i, OpCodes.Bgt_Un);
+                    SimplifyFromSByte(ins, InstructionCode.CilBgt_Un);
                     break;
                 case InstructionCode.CilBle_Un_S:
-                    SimplifyFromSByte(i, OpCodes.Ble_Un);
+                    SimplifyFromSByte(ins, InstructionCode.CilBle_Un);
                     break;
                 case InstructionCode.CilBlt_Un_S:
-                    SimplifyFromSByte(i, OpCodes.Blt_Un);
+                    SimplifyFromSByte(ins, InstructionCode.CilBlt_Un);
                     break;
             }
-        }
 
-        public override void Compile(ICompilationContext context, MethodBody body)
-        {
-            foreach (var i in body.Instructions.Where(i => i.OpCode.OpCodeType == OpCodeType.Macro))
-            {
-                
-            }
-
-
-            this.Compile(context, body.Instructions);
-        }
-
-        static void Simplify(Instruction i, OpCode op, object operand)
-        {
-            i.OpCode = op;
-            i.Operand = operand;
-        }
-
-        static void SimplifyFromSByte(Instruction i, OpCode op)
-        {
-            i.OpCode = op;
-            if (!(i.Operand is Instruction))
-                i.Operand = (int)(sbyte)i.Operand;
-        }
-
-        static void SimplifyFromByte(Instruction i, OpCode op)
-        {
-            i.OpCode = op;
-            i.Operand = (int)(byte)i.Operand;
-        }
-
-        public override void Compile(ICompilationContext context, Instruction instruction)
-        {
             //remove jumping branches that go to the next instruction
-            if (instruction.OpCode.Code == Code.Br && instruction.Operand == instruction.Next)
+            if (ins.Code == InstructionCode.CilBr && ins.Operand0 == ins.Next)
             {
-                instruction.OpCode = OpCodes.Nop;
-                instruction.Operand = null;
+                ins.Code = InstructionCode.CilNop;
+                ins.Operand0 = null;
             }
         }
 
+        static void Simplify(IInstruction i, InstructionCode op, object operand)
+        {
+            i.Code = op;
+            i.Operand0 = operand;
+        }
+
+        static void SimplifyFromSByte(IInstruction i, InstructionCode op)
+        {
+            i.Code = op;
+            if (!(i.Operand0 is IInstruction))
+                i.Operand0 = (int)(sbyte)i.Operand0;
+        }
+
+        static void SimplifyFromByte(IInstruction i, InstructionCode op)
+        {
+            i.Code = op;
+            i.Operand0 = (int)(byte)i.Operand0;
+        }
+
+        public override void Compile(IMethodContext context)
+        {
+            var ins = context.Instruction;
+            while (ins!=null)
+            {
+                Compile(context, ins);
+                ins = ins.Next;
+            }
+        }
     }
 }
