@@ -38,7 +38,6 @@ namespace Zenos.Tests
         public void Boolean()
         {
             var func = Test.Runs<BoolDelegate, bool>(f => f());
-
             func(() => true);
             func(() => false);
         }

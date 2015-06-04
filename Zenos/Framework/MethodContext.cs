@@ -15,6 +15,7 @@ namespace Zenos.Framework
         public MethodContext(MethodDefinition method)
         {
             this.Method = method;
+            this.Parameters = new List<IInstruction>(method.Parameters.Count);
             this.Sections = new Sections();
             this.Variables = new List<IInstruction>();
             this.VariableDefinitions = new List<IVariableDefinition>();

@@ -114,6 +114,7 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="BinaryExpressionTests.cs" />
+    <Compile Include="Function.cs" />
     <Compile Include="Immediates.cs" />
     <Compile Include="InstructionChainTests.cs" />
     <Compile Include="PermuteDataAttribute.cs" />
