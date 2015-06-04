@@ -9,5 +9,7 @@ namespace Zenos.Framework
     public interface IArchitecture
     {
         string Name { get; }
+
+        void CreateVariables(IMethodContext context);
     }
 }

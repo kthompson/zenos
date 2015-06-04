@@ -229,7 +229,10 @@ namespace Zenos.Framework
 
         ZirFirst = 1000,
 
-
+        ZilLoad,
+        ZilStore,
+        ZilLocal,
+        ZilArgument,
 
         Unknown
     }

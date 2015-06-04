@@ -18,7 +18,7 @@ namespace Zenos.Tests
             //this.Bind<ICompilerStage>().To<TypeQueuingStage>();
             //this.Bind<ICompilerStage>().To<MethodQueuingStage>();
             this.Bind<ICompilerStage>().To<CecilToZenos>();
-            this.Bind<ICompilerStage>().To<MethodToIr>();
+            this.Bind<ICompilerStage>().To<MethodToZil>();
 
             this.Bind<ICompilerStage>().To<LocalPropagation>();
             this.Bind<ICompilerStage>().To<BranchOptimization>();

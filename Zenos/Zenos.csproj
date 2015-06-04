@@ -137,7 +137,7 @@
     <Compile Include="Stages\DeadCodeElimination.cs" />
     <Compile Include="Stages\EmitterStage.cs" />
     <Compile Include="Stages\LocalPropagation.cs" />
-    <Compile Include="Stages\MethodToIr.cs" />
+    <Compile Include="Stages\MethodToZil.cs" />
     <Compile Include="Framework\StackType.cs" />
     <Compile Include="Framework\TypeContext.cs" />
     <Compile Include="Framework\Section.cs" />

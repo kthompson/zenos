@@ -56,6 +56,8 @@ namespace Zenos.Framework
         BasicBlock bb_init { get; set; }
         BasicBlock bb_entry { get; set; }
         BasicBlock bb_exit { get; set; }
+
+        IRegister AllocateDestReg(StackType type = StackType.STACK_I4);
     }
 
     public interface IVariableDefinition
