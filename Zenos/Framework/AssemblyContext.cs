@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
@@ -7,40 +8,21 @@ namespace Zenos.Framework
 {
     public class AssemblyContext : IAssemblyContext
     {
-        readonly Dictionary<object, ITypeContext> _memberContexts = new Dictionary<object, ITypeContext>();
+        private readonly Dictionary<object, ITypeContext> _memberContexts = new Dictionary<object, ITypeContext>();
 
         public bool IsDisposed { get; private set; }
-        public string OutputFile { get; private set; }
-
-        public ITypeContext[] Types
+        
+        public void Add(string key, ITypeContext type)
         {
-            get { return _memberContexts.Values.ToArray(); }
+            _memberContexts[key] = type;
         }
 
-        public ModuleDefinition Module { get; private set; }
-
-        public AssemblyContext(ModuleDefinition module, string outputFile)
+        public ITypeContext GetTypeContext(string key)
         {
-            this.Module = module;
-            this.OutputFile = outputFile;
-        }
-
-        public ITypeContext GetTypeContext(TypeDefinition type)
-        {
-            if (_memberContexts.ContainsKey(type))
-                return _memberContexts[type];
+            if (_memberContexts.ContainsKey(key))
+                return _memberContexts[key];
 
             return null;
-        }
-
-        public ITypeContext GetOrCreateTypeContext(TypeDefinition type)
-        {
-            return GetTypeContext(type) ?? CreateTypeContext(type);
-        }
-
-        public ITypeContext CreateTypeContext(TypeDefinition type)
-        {
-            return (_memberContexts[type] = new TypeContext(this, type));
         }
 
         protected virtual void Dispose(bool disposing)
@@ -50,7 +32,7 @@ namespace Zenos.Framework
 
             if (disposing)
             {
-                foreach (var member in this.Types)
+                foreach (var member in this)
                     member.Dispose();
             }
 
@@ -61,6 +43,16 @@ namespace Zenos.Framework
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public IEnumerator<ITypeContext> GetEnumerator()
+        {
+            return _memberContexts.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

@@ -5,16 +5,12 @@ using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    public interface ITypeContext : IDisposable
+    public interface ITypeContext : IDisposable, IEnumerable<IMethodContext>
     {
-        IAssemblyContext Context { get; }
         bool IsDisposed { get; }
-        TypeDefinition Type { get; }
 
-        IMethodContext[] MethodContexts { get; }
+        void Add(string key, IMethodContext methodContext);
 
-        IMethodContext GetMethodContext(MethodDefinition method);
-        IMethodContext GetOrCreateMethodContext(MethodDefinition method);
-        IMethodContext CreateMethodContext(MethodDefinition method);
+        IMethodContext GetMethodContext(string key);
     }
 }

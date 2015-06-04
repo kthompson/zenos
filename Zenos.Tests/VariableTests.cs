@@ -10,14 +10,16 @@ namespace Zenos.Tests
         [Fact]
         public void Bools()
         {
-            Test.Runs<BoolDelegate>(() =>
+            var func = Test.Runs<BoolDelegate, bool>(f => f());
+
+            func(() =>
             {
                 var fieldT = true;
                 var fieldF = false;
                 return fieldT;
             });
 
-            Test.Runs<BoolDelegate>(() =>
+            func(() =>
             {
                 var fieldF = false;
                 var fieldT = true;
@@ -28,22 +30,23 @@ namespace Zenos.Tests
         [Fact]
         public void Ints()
         {
+            var func = Test.Runs<Int32Delegate, int>(f => f());
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var fieldF = 1;
                 var fieldT = 234;
                 return fieldF;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var fieldF = 2;
                 var fieldT = 234;
                 return fieldF;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var fieldF = 5;
                 var field2 = fieldF;
@@ -52,7 +55,7 @@ namespace Zenos.Tests
                 return field2;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var fieldF = -2;
                 var fieldT = 234;
@@ -63,22 +66,23 @@ namespace Zenos.Tests
         [Fact]
         public void Longs()
         {
+            var func = Test.Runs<Int64Delegate, long>(f => f());
 
-            Test.Runs<Int64Delegate>(() =>
+            func(() =>
             {
                 var fieldF = 1L;
                 var fieldT = 234L;
                 return fieldF;
             });
 
-            Test.Runs<Int64Delegate>(() =>
+            func(() =>
             {
                 var fieldF = 2L;
                 var fieldT = 234L;
                 return fieldF;
             });
 
-            Test.Runs<Int64Delegate>(() =>
+            func(() =>
             {
                 var fieldF = 5L;
                 var field2 = fieldF;
@@ -87,7 +91,7 @@ namespace Zenos.Tests
                 return field2;
             });
 
-            Test.Runs<Int64Delegate>(() =>
+            func(() =>
             {
                 var fieldF = -2L;
                 var fieldT = 234L;
@@ -98,14 +102,16 @@ namespace Zenos.Tests
         [Fact]
         public void Chars()
         {
-            Test.Runs<CharDelegate>(() =>
+            var func = Test.Runs<CharDelegate, char>(f => f());
+
+            func(() =>
             {
                 var fieldF = 'a';
                 var fieldT = 'l';
                 return fieldF;
             });
 
-            Test.Runs<CharDelegate>(() =>
+            func(() =>
             {
                 var fieldF = 'a';
                 var field2 = fieldF;
@@ -117,14 +123,16 @@ namespace Zenos.Tests
         [Fact]
         public void Floats()
         {
-            Test.Runs<SingleDelegate>(() =>
+            var func = Test.Runs<SingleDelegate, float>(f => f());
+
+            func(() =>
             {
                 var fieldF = 3.14f;
                 var fieldT = 1.2f;
                 return fieldF;
             });
 
-            Test.Runs<SingleDelegate>(() =>
+            func(() =>
             {
                 var fieldF = 1.2f;
                 var fieldT = 3.14f;
@@ -135,14 +143,16 @@ namespace Zenos.Tests
         [Fact]
         public void Doubles()
         {
-            Test.Runs<DoubleDelegate>(() =>
+            var func = Test.Runs<DoubleDelegate, double>(f => f());
+
+            func(() =>
             {
                 var fieldF = 3.14;
                 var fieldT = 1.2;
                 return fieldF;
             });
 
-            Test.Runs<DoubleDelegate>(() =>
+            func(() =>
             {
                 var fieldF = 1.2;
                 var fieldT = 3.14;

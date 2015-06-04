@@ -8,20 +8,19 @@ namespace Zenos.Framework
 {
     public class MethodContext : IMethodContext
     {
-        public ITypeContext Context { get; private set; }
         public Sections Sections { get; private set; }
         public string OutputFile { get; set; }
         public bool IsDisposed { get; private set; }
 
-        public MethodContext(ITypeContext context, MethodDefinition method)
+        public MethodContext(MethodDefinition method)
         {
-            this.Context = context;
             this.Method = method;
             this.Sections = new Sections();
             this.Variables = new List<IInstruction>();
             this.VariableDefinitions = new List<IVariableDefinition>();
             this.VRegisterToInstruction = new Dictionary<IRegister, IInstruction>();
             this.cil_offset_to_bb = new Dictionary<int, BasicBlock>();
+            this.Code = new List<byte>();
         }
 
         private int _lastLabel = 1;
@@ -37,6 +36,8 @@ namespace Zenos.Framework
         }
 
         public int StackSize { get; private set; }
+
+        public List<byte> Code { get; private set; }
 
         public IList<IInstruction> Variables { get; set; }
         public IList<IVariableDefinition> VariableDefinitions { get; set; }
@@ -87,7 +88,6 @@ namespace Zenos.Framework
                 section.Dispose();
             }
 
-            this.Context = null;
             this.IsDisposed = true;
         }
 

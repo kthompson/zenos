@@ -9,7 +9,7 @@ namespace Zenos.Framework
     {
         public override void Compile(ITypeContext context)
         {
-            foreach(var cc in context.MethodContexts)
+            foreach(var cc in context)
                 this.Compile(cc);
         }
 

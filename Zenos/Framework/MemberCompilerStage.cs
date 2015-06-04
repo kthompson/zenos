@@ -6,7 +6,7 @@ namespace Zenos.Framework
     {
         public override void Compile(IAssemblyContext context)
         {
-            foreach (var mc in context.Types)
+            foreach (var mc in context)
                 this.Compile(mc);
         }
 

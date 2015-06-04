@@ -13,7 +13,7 @@ namespace Zenos.Tests
 
         private delegate bool BinaryFloatExpressionDelegate(float a, float b);
 
-        private delegate bool BinaryDoubleExpressionDelegate(float a, float b);
+        private delegate bool BinaryDoubleExpressionDelegate(double a, double b);
 
         private delegate bool BinaryByteExpressionDelegate(byte a, byte b);
 
@@ -25,10 +25,12 @@ namespace Zenos.Tests
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
         public void Arithmetic(int a, int b)
         {
-            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa + bb, a, b);
-            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa - bb, a, b);
-            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa/bb, a, b);
-            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa*bb, a, b);
+            var func = Test.Runs<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) => aa + bb);
+            func((aa, bb) => aa - bb);
+            func((aa, bb) => aa / bb);
+            func((aa, bb) => aa * bb);
         }
 
 
@@ -36,10 +38,11 @@ namespace Zenos.Tests
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
         public void Bitwise(int a, int b)
         {
+            var func = Test.Runs<BinaryExpressionDelegate, int>(f => f(a, b));
 
-            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa & bb, a, b);
-            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa | bb, a, b);
-            Test.Runs<BinaryExpressionDelegate>((aa, bb) => aa ^ bb, a, b);
+            func((aa, bb) => aa & bb);
+            func((aa, bb) => aa | bb);
+            func((aa, bb) => aa ^ bb);
         }
 
         #region Equality tests
@@ -48,12 +51,14 @@ namespace Zenos.Tests
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
         public void Equality(int a, int b)
         {
-            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa > bb, a, b);
-            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa >= bb, a, b);
-            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa == bb, a, b);
-            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa <= bb, a, b);
-            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa < bb, a, b);
-            Test.Runs<BinaryIntBoolExpressionDelegate>((aa, bb) => aa != bb, a, b);
+            var func = Test.Runs<BinaryIntBoolExpressionDelegate, bool>(f => f(a, b));
+
+            func((aa, bb) => aa > bb);
+            func((aa, bb) => aa >= bb);
+            func((aa, bb) => aa == bb);
+            func((aa, bb) => aa <= bb);
+            func((aa, bb) => aa < bb);
+            func((aa, bb) => aa != bb);
         }
 
         [Theory]
@@ -63,8 +68,10 @@ namespace Zenos.Tests
         [InlineData(false, false)]
         public void Equality(bool a, bool b)
         {
-            Test.Runs<BinaryBoolExpressionDelegate>((aa, bb) => aa == bb, a, b);
-            Test.Runs<BinaryBoolExpressionDelegate>((aa, bb) => aa != bb, a, b);
+            var func = Test.Runs<BinaryBoolExpressionDelegate, bool>(f => f(a, b));
+
+            func((aa, bb) => aa == bb);
+            func((aa, bb) => aa != bb);
         }
 
         [Theory]
@@ -73,12 +80,14 @@ namespace Zenos.Tests
             2720938902384902834.034234234234323423f)]
         public void Equality(float a, float b)
         {
-            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa > bb, a, b);
-            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa >= bb, a, b);
-            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa == bb, a, b);
-            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa <= bb, a, b);
-            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa < bb, a, b);
-            Test.Runs<BinaryFloatExpressionDelegate>((aa, bb) => aa != bb, a, b);
+            var func = Test.Runs<BinaryFloatExpressionDelegate, bool>(f => f(a, b));
+
+            func((aa, bb) => aa > bb);
+            func((aa, bb) => aa >= bb);
+            func((aa, bb) => aa == bb);
+            func((aa, bb) => aa <= bb);
+            func((aa, bb) => aa < bb);
+            func((aa, bb) => aa != bb);
         }
 
         [Theory]
@@ -87,48 +96,56 @@ namespace Zenos.Tests
             2720938902384902834.034234234234323422334234234234234234234230989080890812321313D)]
         public void Equality(double a, double b)
         {
-            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa > bb, a, b);
-            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa >= bb, a, b);
-            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa == bb, a, b);
-            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa <= bb, a, b);
-            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa < bb, a, b);
-            Test.Runs<BinaryDoubleExpressionDelegate>((aa, bb) => aa != bb, a, b);
+            var func = Test.Runs<BinaryDoubleExpressionDelegate, bool>(f => f(a, b));
+
+            func((aa, bb) => aa > bb);
+            func((aa, bb) => aa >= bb);
+            func((aa, bb) => aa == bb);
+            func((aa, bb) => aa <= bb);
+            func((aa, bb) => aa < bb);
+            func((aa, bb) => aa != bb);
         }
 
         [Theory]
         [PermuteData(char.MaxValue, char.MinValue, 'a', '0', 'z', 'A')]
         public void Equality(char a, char b)
         {
-            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa > bb, a, b);
-            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa >= bb, a, b);
-            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa == bb, a, b);
-            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa <= bb, a, b);
-            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa < bb, a, b);
-            Test.Runs<BinaryCharExpressionDelegate>((aa, bb) => aa != bb, a, b);
+            var func = Test.Runs<BinaryCharExpressionDelegate, bool>(f => f(a, b));
+
+            func((aa, bb) => aa > bb);
+            func((aa, bb) => aa >= bb);
+            func((aa, bb) => aa == bb);
+            func((aa, bb) => aa <= bb);
+            func((aa, bb) => aa < bb);
+            func((aa, bb) => aa != bb);
         }
 
         [Theory]
         [PermuteData(short.MaxValue, short.MinValue, 0, 12365, 12374, 9999, 50, 27)]
         public void Equality(short a, short b)
         {
-            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa > bb, a, b);
-            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa >= bb, a, b);
-            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa == bb, a, b);
-            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa <= bb, a, b);
-            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa < bb, a, b);
-            Test.Runs<BinaryInt16ExpressionDelegate>((aa, bb) => aa != bb, a, b);
+            var func = Test.Runs<BinaryInt16ExpressionDelegate, bool>(f => f(a, b));
+
+            func((aa, bb) => aa > bb);
+            func((aa, bb) => aa >= bb);
+            func((aa, bb) => aa == bb);
+            func((aa, bb) => aa <= bb);
+            func((aa, bb) => aa < bb);
+            func((aa, bb) => aa != bb);
         }
 
         [Theory]
         [PermuteData(byte.MinValue, 50, 59, 90, byte.MaxValue)]
         public void Equality(byte a, byte b)
         {
-            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa > bb, a, b);
-            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa >= bb, a, b);
-            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa == bb, a, b);
-            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa <= bb, a, b);
-            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa < bb, a, b);
-            Test.Runs<BinaryByteExpressionDelegate>((aa, bb) => aa != bb, a, b);
+            var func = Test.Runs<BinaryByteExpressionDelegate, bool>(f => f(a, b));
+
+            func((aa, bb) => aa > bb);
+            func((aa, bb) => aa >= bb);
+            func((aa, bb) => aa == bb);
+            func((aa, bb) => aa <= bb);
+            func((aa, bb) => aa < bb);
+            func((aa, bb) => aa != bb);
         }
 
         #endregion

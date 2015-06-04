@@ -9,7 +9,6 @@ namespace Zenos.Tests
     /// <summary>
     /// Provides a data source for a data theory, with the data coming from inline values.
     /// </summary>
-    [CLSCompliant(false)]
     [DataDiscoverer("Zenos.Tests.PermuteDataDiscoverer", "Zenos.Tests")]
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public sealed class PermuteDataAttribute : DataAttribute

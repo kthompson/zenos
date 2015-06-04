@@ -10,7 +10,6 @@ namespace Zenos.Framework
     //MonoCompile
     public interface IMethodContext : IDisposable
     {
-        ITypeContext Context { get; }
         bool IsDisposed { get; }
 
         Sections Sections { get; }
@@ -18,6 +17,8 @@ namespace Zenos.Framework
         Section Text { get; }
         Section Data { get; }
         int StackSize { get; }
+        
+        List<byte> Code { get; }
 
         IList<IInstruction> Variables { get; set; }
         IList<IVariableDefinition> VariableDefinitions { get; set; }

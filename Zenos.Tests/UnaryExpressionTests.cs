@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System;
+using Xunit;
 
 namespace Zenos.Tests
 {
@@ -16,30 +17,31 @@ namespace Zenos.Tests
         [Fact]
         public void UnaryLogicalNotExpression()
         {
+            var func = Test.Runs<BoolDelegate, bool>(f => f());
 
+            func(() =>
+            {
+                var fieldT = true;
+                return !fieldT;
+            });
 
-            Test.Runs<BoolDelegate>(() =>
-                                                             {
-                                                                 var fieldT = true;
-                                                                 return !fieldT;
-                                                             });
-            Test.Runs<BoolDelegate>(() =>
-                                                            {
-                                                                var fieldF = false;
-                                                                return !fieldF;
-                                                            });
+            func(() =>
+            {
+                var fieldF = false;
+                return !fieldF;
+            });
         }
 
         [Fact]
         public void UnaryBitwiseNotExpression()
         {
-            Test.Runs<UInt32Delegate>(() =>
+            Test.Runs<UInt32Delegate, uint>(f => f())(() =>
             {
                 var field = 0xfffffff0;
                 return ~field;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            Test.Runs<Int32Delegate, int>(f => f())(() =>
             {
                 var field = 0xf;
                 return ~field;
@@ -49,44 +51,45 @@ namespace Zenos.Tests
         [Fact]
         public void UnaryNegateExpression()
         {
-            Test.Runs<Int32Delegate>(() =>
+            var func = Test.Runs<Int32Delegate, int>(f => f());
+
+            func(() =>
             {
                 var field = -15;
                 return -field;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var field = 16;
                 return -field;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var field = 0;
                 return -field;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var field = 21897;
                 return -field;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var field = -673;
                 return -field;
             });
 
-            Test.Runs<Int32Delegate>(() =>
+            func(() =>
             {
                 var field = 673;
                 return -field;
             });
 
-
-            Test.Runs<SingleDelegate>(() =>
+            Test.Runs<SingleDelegate, float>(f => f())(() =>
             {
                 var field = 3.4f;
                 return -field;

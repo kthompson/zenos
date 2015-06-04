@@ -5,29 +5,12 @@ using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    public interface IAssemblyContext : IDisposable
+    public interface IAssemblyContext : IDisposable, IEnumerable<ITypeContext>
     {
         bool IsDisposed { get; }
-        string OutputFile { get; }
 
-        ModuleDefinition Module { get; }
+        void Add(string key, ITypeContext type);
 
-        ITypeContext[] Types { get; }
-
-        ITypeContext GetTypeContext(TypeDefinition type);
-        ITypeContext GetOrCreateTypeContext(TypeDefinition type);
-        ITypeContext CreateTypeContext(TypeDefinition type);
+        ITypeContext GetTypeContext(string key);
     }
-
-    //public interface IHasArchitecture
-    //{
-    //    IArchitecture Architecture { get; }
-    //}
-
-
-    //public interface IArchitecture
-    //{
-    //    bool SoftwareFloat { get; }
-    //    int RegisterSize { get; }
-    //}
 }

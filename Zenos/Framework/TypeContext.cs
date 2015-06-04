@@ -1,47 +1,27 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Mono.Cecil;
 
 namespace Zenos.Framework
 {
     public class TypeContext : ITypeContext
     {
-        readonly Dictionary<object, IMethodContext> _compilationContexts = new Dictionary<object, IMethodContext>();
+        readonly Dictionary<string, IMethodContext> _compilationContexts = new Dictionary<string, IMethodContext>();
 
-        public IAssemblyContext Context { get; private set; }
         public bool IsDisposed { get; private set; }
-        public TypeDefinition Type { get; private set; }
 
-        public IMethodContext[] MethodContexts
+        public void Add(string key, IMethodContext methodContext)
         {
-            get { return _compilationContexts.Values.ToArray(); }
+            _compilationContexts[key] = methodContext;
         }
 
-        public TypeContext(IAssemblyContext context, TypeDefinition type)
+        public IMethodContext GetMethodContext(string key)
         {
-            this.Context = context;
-            this.Type = type;
+            IMethodContext mc;
+            _compilationContexts.TryGetValue(key, out mc);
+            return mc;
         }
-
-        public IMethodContext GetMethodContext(MethodDefinition method)
-        {
-            if (_compilationContexts.ContainsKey(method))
-                return _compilationContexts[method];
-
-            return null;
-        }
-
-        public IMethodContext GetOrCreateMethodContext(MethodDefinition method)
-        {
-            return GetMethodContext(method) ?? CreateMethodContext(method);
-        }
-
-        public IMethodContext CreateMethodContext(MethodDefinition method)
-        {
-            return (_compilationContexts[method] = new MethodContext(this, method));
-        }
-        
 
         protected virtual void Dispose(bool disposing)
         {
@@ -50,7 +30,7 @@ namespace Zenos.Framework
 
             if (disposing)
             {
-                foreach (var code in this.MethodContexts)
+                foreach (var code in this)
                     code.Dispose();
             }
 
@@ -63,5 +43,14 @@ namespace Zenos.Framework
             GC.SuppressFinalize(this);
         }
 
+        public IEnumerator<IMethodContext> GetEnumerator()
+        {
+            return _compilationContexts.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

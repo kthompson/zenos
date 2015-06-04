@@ -15,8 +15,8 @@ namespace Zenos.Tests
 
             this.Bind<IArchitecture>().To<AMD64>();
             
-            this.Bind<ICompilerStage>().To<TypeQueuingStage>();
-            this.Bind<ICompilerStage>().To<MethodQueuingStage>();
+            //this.Bind<ICompilerStage>().To<TypeQueuingStage>();
+            //this.Bind<ICompilerStage>().To<MethodQueuingStage>();
             this.Bind<ICompilerStage>().To<CecilToZenos>();
             this.Bind<ICompilerStage>().To<MethodToIr>();
 
@@ -26,13 +26,12 @@ namespace Zenos.Tests
 
             this.Bind<ICompilerStage>().To<StaticSingleAssignmentTranslation>();
             
-            //this.Bind<ICompilerStage>().To<CodeSimplifier>();
-            //this.Bind<ICompilerStage>().To<CilToExpressionTranslator>();
+            this.Bind<ICompilerStage>().To<CodeSimplifier>();
             this.Bind<ICompilerStage>().To<ExportMethodsStage>();
 
             this.Bind<ICompilerStage>().To<EmitterStage>();
             this.Bind<ICompilerStage>().To<WriteCodeToDisk>();
-            this.Bind<ICompilerStage>().To<GccBuildStage>();
+            //this.Bind<ICompilerStage>().To<GccBuildStage>();
         }
     }
 
