@@ -2,6 +2,7 @@
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable ConvertToConstant.Local
+#pragma warning disable 219
 
 namespace Zenos.Tests
 {

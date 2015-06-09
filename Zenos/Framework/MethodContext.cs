@@ -76,9 +76,11 @@ namespace Zenos.Framework
         public BasicBlock bb_entry { get; set; }
         public BasicBlock bb_exit { get; set; }
 
+        private int _registers = 0;
+
         public IRegister AllocateDestReg(StackType type = StackType.STACK_I4)
         {
-            throw new NotImplementedException();
+            return new Register(++_registers);
         }
 
         protected virtual void Dispose(bool disposing)
