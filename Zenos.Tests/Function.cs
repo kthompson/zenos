@@ -1,25 +1,20 @@
 using System;
 using System.Runtime.InteropServices;
+using Xunit.Sdk;
 
 namespace Zenos.Tests
 {
     static class Function
     {
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr VirtualAlloc(IntPtr lpAddress, IntPtr dwSize, AllocationType allocationType, MemoryProtection protection);
+        private static extern IntPtr VirtualAlloc(IntPtr lpAddress, IntPtr dwSize, AllocationType allocationType, MemoryProtection protection);
 
-        public static IntPtr VirtualAlloc(uint size, AllocationType allocationType, MemoryProtection protection)
-        {
-            return VirtualAlloc(IntPtr.Zero, new IntPtr(size), allocationType, protection);
-        }
+        public static IntPtr VirtualAlloc(uint size, AllocationType allocationType, MemoryProtection protection) => VirtualAlloc(IntPtr.Zero, new IntPtr(size), allocationType, protection);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool VirtualFree(IntPtr lpAddress, IntPtr dwSize, FreeType dwFreeType);
+        private static extern bool VirtualFree(IntPtr lpAddress, IntPtr dwSize, FreeType dwFreeType);
 
-        public static bool VirtualFree(IntPtr lpAddress)
-        {
-            return VirtualFree(lpAddress, IntPtr.Zero, FreeType.Release);
-        }
+        public static bool VirtualFree(IntPtr lpAddress) => VirtualFree(lpAddress, IntPtr.Zero, FreeType.Release);
 
         public enum FreeType : uint
         {
@@ -55,30 +50,31 @@ namespace Zenos.Tests
             WritecombineModifierflag = 0x400
         }
 
-        public static Function<T> FromBytes<T>(byte[] code)
-            where T : class
-        {
-            return new Function<T>(code);
-        }
+        public static Function<T> FromBytes<T>(byte[] code) where T : class => new Function<T>(code);
     }
 
     class Function<T> : IDisposable
     {
-        private readonly T _func;
         private readonly IntPtr _addr; 
         
         bool _disposed;
 
         public Function(byte[] code)
         {
+            if (code == null)
+                throw new ArgumentNullException("code");
+
+            if (code.Length == 0)
+                throw new ArgumentException("Code cannot be empty", "code");
+
             _addr = Function.VirtualAlloc((uint)code.Length, Function.AllocationType.Reserve | Function.AllocationType.Commit, Function.MemoryProtection.ExecuteReadwrite);
 
             Write(_addr, 0, code);
 
-            _func = Marshal.GetDelegateForFunctionPointer<T>(_addr);
+            this.Instance = Marshal.GetDelegateForFunctionPointer<T>(_addr);
         }
 
-        public T Instance { get { return _func; } }
+        public T Instance { get; }
 
         ~Function()
         {

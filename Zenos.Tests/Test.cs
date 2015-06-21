@@ -25,10 +25,7 @@ namespace Zenos.Tests
 
         private static readonly IKernel Container;
 
-        private static Compiler Compiler
-        {
-            get { return Container.Get<Compiler>(); }
-        }
+        private static Compiler Compiler => Container.Get<Compiler>();
 
         #endregion
 
@@ -73,10 +70,8 @@ namespace Zenos.Tests
                 //}
                 finally
                 {
-                    if (context != null)
-                        context.Dispose();
+                    context?.Dispose();
                 }
-
             };
         }
 
@@ -92,7 +87,7 @@ namespace Zenos.Tests
             return resolver;
         }
 
-        private static MethodDefinition GetMethodDefinitionFromLambda<TDelegate>(TDelegate action, DefaultAssemblyResolver resolver)
+        private static MethodDefinition GetMethodDefinitionFromLambda<TDelegate>(TDelegate action, IAssemblyResolver resolver)
         {
             var delegateAction = action as Delegate;
             if (delegateAction == null)
@@ -102,8 +97,25 @@ namespace Zenos.Tests
             var lambdaParent = lambda.DeclaringType;
 
             var sourceModule = ModuleDefinition.ReadModule(lambdaParent.Assembly.Location, new ReaderParameters{AssemblyResolver = resolver});
-            var sourceType = sourceModule.Types.First(t => t.FullName == lambdaParent.FullName);
-            return sourceType.Methods.First(m => m.Name == lambda.Name);
+
+            var sourceType = FindType(sourceModule, lambdaParent);
+            Assert.NotNull(sourceType);
+
+            var method = sourceType.Methods.First(m => m.Name == lambda.Name);
+            Assert.NotNull(method);
+
+            return method;
+        }
+
+        private static TypeDefinition FindType(ModuleDefinition sourceModule, Type lambdaParent)
+        {
+            if (lambdaParent.DeclaringType != null)
+            {
+                var parent = FindType(sourceModule, lambdaParent.DeclaringType);
+                return parent.NestedTypes.First(t => t.Name == lambdaParent.Name);
+            }
+
+            return sourceModule.Types.First(t => t.Name == lambdaParent.Name);
         }
 
         #endregion

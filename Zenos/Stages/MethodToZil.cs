@@ -21,6 +21,16 @@ namespace Zenos.Stages
         public override void Compile(IMethodContext context)
         {
             CreateVariables(context);
+
+            var inst = context.Instruction;
+            while (inst != null)
+            {
+                switch (inst.Code)
+                {
+                        
+                }
+                inst = inst.Next;
+            }
         }
 
         private void CreateVariables(IMethodContext context)
