@@ -20,40 +20,43 @@ namespace Zenos.Stages
 
         private void Compile(IMethodContext context, Instruction cecilInstr, IInstruction prev = null)
         {
-            IInstruction instruction = null;
+            var chain = new InstructionChain();
+            var cilInstMap = FillInstructions(cecilInstr, chain);
+
+            context.Instruction = chain.FirstInstruction;
+
+            CleanupOperands(chain, cilInstMap);
+        }
+
+        private static Dictionary<long, IInstruction> FillInstructions(Instruction cecilInstr, InstructionChain chain)
+        {
             var instrOffsetMap = new Dictionary<long, IInstruction>();
             while (cecilInstr != null)
             {
-                instruction = CilToZenosInstruction(cecilInstr);
+                var instruction = CilToZenosInstruction(cecilInstr);
+                chain.AssignAndIncrement(instruction);
+
                 instrOffsetMap[instruction.Offset] = instruction;
 
-                if (prev == null)
-                {
-                    //this must be the first instruction
-                    context.Instruction = instruction;
-                }
-                else
-                {
-                    prev.SetNext(instruction);
-                }
-
                 cecilInstr = cecilInstr.Next;
-                prev = instruction;
             }
+            chain.Reset();
+            return instrOffsetMap;
+        }
 
-            //reset to first instruction so we can check operands
-            instruction = context.Instruction;
-
-            while (instruction != null)
+        private static void CleanupOperands(InstructionChain chain, Dictionary<long, IInstruction> instrOffsetMap)
+        {
+            while (!chain.EndOfInstructions)
             {
-                var cil = instruction.Operand0 as Instruction;
+                var inst = chain.Instruction;
+                var cil = inst.Operand0 as Instruction;
                 if (cil != null)
                 {
                     //switch the cecil instruction out for our IInstruction
-                    instruction.Operand0 = instrOffsetMap[cil.Offset];
+                    inst.Operand0 = instrOffsetMap[cil.Offset];
                 }
 
-                instruction = instruction.Next;
+                chain++;
             }
         }
 
@@ -68,5 +71,4 @@ namespace Zenos.Stages
             };
         }
     }
-
 }

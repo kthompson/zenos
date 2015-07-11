@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Zenos.Tests
 {
-    public class BinaryExpressionTests
+    public class BinaryExpressionTests : TestBase
     {
         private delegate int BinaryExpressionDelegate(int a, int b);
 
@@ -25,7 +25,7 @@ namespace Zenos.Tests
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
         public void Arithmetic(int a, int b)
         {
-            var func = Test.Runs<BinaryExpressionDelegate, int>(f => f(a, b));
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
 
             func((aa, bb) => aa + bb);
             func((aa, bb) => aa - bb);
@@ -38,7 +38,7 @@ namespace Zenos.Tests
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
         public void Bitwise(int a, int b)
         {
-            var func = Test.Runs<BinaryExpressionDelegate, int>(f => f(a, b));
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
 
             func((aa, bb) => aa & bb);
             func((aa, bb) => aa | bb);
@@ -51,7 +51,7 @@ namespace Zenos.Tests
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
         public void Equality(int a, int b)
         {
-            var func = Test.Runs<BinaryIntBoolExpressionDelegate, bool>(f => f(a, b));
+            var func = F<BinaryIntBoolExpressionDelegate, bool>(f => f(a, b));
 
             func((aa, bb) => aa > bb);
             func((aa, bb) => aa >= bb);
@@ -68,7 +68,7 @@ namespace Zenos.Tests
         [InlineData(false, false)]
         public void Equality(bool a, bool b)
         {
-            var func = Test.Runs<BinaryBoolExpressionDelegate, bool>(f => f(a, b));
+            var func = F<BinaryBoolExpressionDelegate, bool>(f => f(a, b));
 
             func((aa, bb) => aa == bb);
             func((aa, bb) => aa != bb);
@@ -80,7 +80,7 @@ namespace Zenos.Tests
             2720938902384902834.034234234234323423f)]
         public void Equality(float a, float b)
         {
-            var func = Test.Runs<BinaryFloatExpressionDelegate, bool>(f => f(a, b));
+            var func = F<BinaryFloatExpressionDelegate, bool>(f => f(a, b));
 
             func((aa, bb) => aa > bb);
             func((aa, bb) => aa >= bb);
@@ -96,7 +96,7 @@ namespace Zenos.Tests
             2720938902384902834.034234234234323422334234234234234234234230989080890812321313D)]
         public void Equality(double a, double b)
         {
-            var func = Test.Runs<BinaryDoubleExpressionDelegate, bool>(f => f(a, b));
+            var func = F<BinaryDoubleExpressionDelegate, bool>(f => f(a, b));
 
             func((aa, bb) => aa > bb);
             func((aa, bb) => aa >= bb);
@@ -110,7 +110,7 @@ namespace Zenos.Tests
         [PermuteData(char.MaxValue, char.MinValue, 'a', '0', 'z', 'A')]
         public void Equality(char a, char b)
         {
-            var func = Test.Runs<BinaryCharExpressionDelegate, bool>(f => f(a, b));
+            var func = F<BinaryCharExpressionDelegate, bool>(f => f(a, b));
 
             func((aa, bb) => aa > bb);
             func((aa, bb) => aa >= bb);
@@ -124,7 +124,7 @@ namespace Zenos.Tests
         [PermuteData(short.MaxValue, short.MinValue, 0, 12365, 12374, 9999, 50, 27)]
         public void Equality(short a, short b)
         {
-            var func = Test.Runs<BinaryInt16ExpressionDelegate, bool>(f => f(a, b));
+            var func = F<BinaryInt16ExpressionDelegate, bool>(f => f(a, b));
 
             func((aa, bb) => aa > bb);
             func((aa, bb) => aa >= bb);
@@ -138,7 +138,7 @@ namespace Zenos.Tests
         [PermuteData(byte.MinValue, 50, 59, 90, byte.MaxValue)]
         public void Equality(byte a, byte b)
         {
-            var func = Test.Runs<BinaryByteExpressionDelegate, bool>(f => f(a, b));
+            var func = F<BinaryByteExpressionDelegate, bool>(f => f(a, b));
 
             func((aa, bb) => aa > bb);
             func((aa, bb) => aa >= bb);

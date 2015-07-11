@@ -1,47 +1,54 @@
-﻿using System;
-using Xunit;
+﻿using Xunit;
 
 namespace Zenos.Tests
 {
-    delegate bool BoolDelegate();
-    delegate uint UInt32Delegate();
-    delegate int Int32Delegate();
-    delegate long Int64Delegate();
-    delegate float SingleDelegate();
-    delegate double DoubleDelegate();
-    delegate char CharDelegate();
+    public delegate bool BoolDelegate();
 
-    public class UnaryExpressionTests
+    public delegate uint UInt32Delegate();
+    public delegate int Int32Delegate();
+    public delegate long Int64Delegate();
+    public delegate ulong UInt64Delegate();
+    public delegate float SingleDelegate();
+    public delegate double DoubleDelegate();
+    public delegate char CharDelegate();
+
+    public class UnaryExpressionTests : TestBase
     {
+
+        public UnaryExpressionTests()
+        {
+        }
 
         [Fact]
         public void UnaryLogicalNotExpression()
         {
-            var func = Test.Runs<BoolDelegate, bool>(f => f());
-
-            func(() =>
+            // ReSharper disable ConditionIsAlwaysTrueOrFalse
+            // ReSharper disable ConvertToConstant.Local
+            Fbool(() =>
             {
                 var fieldT = true;
                 return !fieldT;
             });
 
-            func(() =>
+            Fbool(() =>
             {
                 var fieldF = false;
                 return !fieldF;
             });
+            // ReSharper restore ConvertToConstant.Local
+            // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
 
         [Fact]
         public void UnaryBitwiseNotExpression()
         {
-            Test.Runs<UInt32Delegate, uint>(f => f())(() =>
+            Fuint(() =>
             {
                 var field = 0xfffffff0;
                 return ~field;
             });
 
-            Test.Runs<Int32Delegate, int>(f => f())(() =>
+            Fint(() =>
             {
                 var field = 0xf;
                 return ~field;
@@ -51,45 +58,43 @@ namespace Zenos.Tests
         [Fact]
         public void UnaryNegateExpression()
         {
-            var func = Test.Runs<Int32Delegate, int>(f => f());
-
-            func(() =>
+            Fint(() =>
             {
                 var field = -15;
                 return -field;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var field = 16;
                 return -field;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var field = 0;
                 return -field;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var field = 21897;
                 return -field;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var field = -673;
                 return -field;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var field = 673;
                 return -field;
             });
 
-            Test.Runs<SingleDelegate, float>(f => f())(() =>
+            Ffloat(() =>
             {
                 var field = 3.4f;
                 return -field;

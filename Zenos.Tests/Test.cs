@@ -25,13 +25,19 @@ namespace Zenos.Tests
 
         private static readonly IKernel Container;
 
-        private static Compiler Compiler => Container.Get<Compiler>();
+        private static Compiler Compiler
+        {
+            get
+            {
+                return Container.Get<Compiler>();
+            }
+        }
 
         #endregion
 
         #region Test Runners
 
-        public static Action<TDelegate> Runs<TDelegate, TResult>(Func<TDelegate, TResult> executor)
+        public static Action<TDelegate> Runs<TDelegate, TResult>(Func<TDelegate, TResult> executor, Action<TResult, TResult> test, Action<IMethodContext> testMethodContext)
             where TDelegate : class
         {
             return method =>
@@ -53,15 +59,25 @@ namespace Zenos.Tests
                             }
                         }
                     };
+
                     //compile 
                     Compiler.Compile(context);
+
+                    Assert.NotEqual(0, mc.Code.Count);
+                    Assert.Equal(0, mc.Code.Count % 16);
+
+                    if(testMethodContext != null)
+                        testMethodContext(mc);
+
+                    PrintInstructions(mc.Instruction);
+
                     var compiled = Function.FromBytes<TDelegate>(mc.Code.ToArray());
 
-                    //run the compiled exe and return output
+                    //run the compiled method and return output
                     var result = executor(method);
                     var nativeResult = executor(compiled.Instance);
 
-                    Assert.Equal(result, nativeResult);
+                    test(result, nativeResult);
                 }
                 //catch (Exception e)
                 //{
@@ -70,9 +86,20 @@ namespace Zenos.Tests
                 //}
                 finally
                 {
-                    context?.Dispose();
+                    if (context != null)
+                        context.Dispose();
                 }
             };
+        }
+
+        private static void PrintInstructions(IInstruction inst)
+        {
+            Trace.WriteLine("--------------------");
+            while (inst != null)
+            {
+                Trace.WriteLine(inst);
+                inst = inst.Next;
+            }
         }
 
         #endregion

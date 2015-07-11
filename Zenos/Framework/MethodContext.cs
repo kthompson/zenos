@@ -26,9 +26,21 @@ namespace Zenos.Framework
 
         private int _lastLabel = 1;
 
-        public Section Text => this.Sections["text"];
+        public Section Text
+        {
+            get
+            {
+                return this.Sections["text"];
+            }
+        }
 
-        public Section Data => this.Sections["rdata"];
+        public Section Data
+        {
+            get
+            {
+                return this.Sections["rdata"];
+            }
+        }
 
         public int StackSize { get; private set; }
 

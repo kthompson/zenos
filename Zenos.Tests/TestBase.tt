@@ -1,0 +1,47 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+
+using System;
+using Xunit;
+using Zenos.Framework;
+
+namespace Zenos.Tests
+{
+    public class TestBase
+    {
+        <# Function("CharDelegate", "char"); #>
+        <# Function("BoolDelegate", "bool"); #>
+        <# Function("UInt32Delegate", "uint"); #>
+        <# Function("Int32Delegate", "int"); #>
+        <# Function("UInt64Delegate", "ulong"); #>
+        <# Function("Int64Delegate", "long"); #>
+        <# Function("SingleDelegate", "float"); #>
+        <# Function("DoubleDelegate", "double"); #>
+
+        protected Action<TDelegate> F<TDelegate, TResult>(Func<TDelegate, TResult> func, Action<IMethodContext> action = null) 
+            where TDelegate : class
+        {            
+            return Test.Runs(func, Assert.Equal, action);
+        }
+    }
+}
+
+
+<#+
+
+    private void Function(string delegateName, string returnType)
+    {
+#>            
+        protected void F<#= returnType #>(<#= delegateName #> func, Action<IMethodContext> action = null) 
+        {
+            F<<#= delegateName #>, <#= returnType #>>(f => f(), action)(func);
+        }
+<#+        
+
+    }
+#>

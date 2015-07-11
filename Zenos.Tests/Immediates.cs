@@ -1,91 +1,112 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Xunit;
 
 namespace Zenos.Tests
 {
-    public class ImmediateTests
+    public class ImmediateTests : TestBase
     {
         [Fact]
         public void Integers()
         {
-            var func = Test.Runs<Int32Delegate, int>(f => f());
-
-            func(() => 0);
-            func(() => 1);
-            func(() => -1);
-            func(() => 10);
-            func(() => -10);
-            func(() => 2736);
-            func(() => -2736);
-            func(() => 536870911);
-            func(() => -536870912);
+            Fint(() => 0);
+            Fint(() => 1);
+            Fint(() => -1);
+            Fint(() => 10);
+            Fint(() => -10);
+            Fint(() => 2736);
+            Fint(() => -2736);
+            Fint(() => 536870911);
+            Fint(() => -536870912);
         }
 
         [Fact]
         public void Longs()
         {
-            var func = Test.Runs<Int64Delegate, long>(f => f());
+            Flong(() => 1234567891011120L, context =>
+            {
+                var expected = new List<byte>
+                {
+                    0x55,                                                       // pushq   %rbp
+                    0x48, 0x89, 0xe5,                                           // movq    %rsp, %rbp
+                    0x48, 0xb8, 0x30, 0x46, 0x98, 0x3c, 0xd5, 0x62, 0x04, 0x00, // movabsq $-1234567891011120, %rax
+                    0x5d,                                                       // popq    %rbp
+                    0xc3,                                                       // retq   
+                };
 
-            func(() => 0x1234567891011120L);
-            func(() => -5368709121234L);
-            func(() => 429496121113456735L);
+                var actual = context.Code;
+                AssertSequenceDetailed(expected, actual);
+
+                Assert.Equal(expected, actual);
+            });
+            Flong(() => -5368709121234L);
+            Flong(() => 429496121113456735L);
+        }
+
+        private static void AssertSequenceDetailed<T>(IReadOnlyList<T> expected, IReadOnlyList<T> actual)
+        {
+            if (actual.SequenceEqual(expected)) 
+                return;
+
+            var min = Math.Min(actual.Count, expected.Count);
+            for (var i = 0; i < min; i++)
+            {
+                var diff = Equals(expected[i], actual[i]) ? "" : " !!!!";
+                Trace.WriteLine(string.Format("[{0,3}] - Expected: {1,3}, Got: {2,3}{3}", i, expected[i],
+                    actual[i], diff));
+            }
+
+            Assert.True(false, "Sequence not equal");
         }
 
         [Fact]
         public void Boolean()
         {
-            var func = Test.Runs<BoolDelegate, bool>(f => f());
-            func(() => true);
-            func(() => false);
+            Fbool(() => true);
+            Fbool(() => false);
         }
 
         [Fact]
         public void Characters()
         {
-            var func = Test.Runs<CharDelegate, char>(f => f());
+            Fchar(() => 'a');
+            Fchar(() => 'b');
+            Fchar(() => 'c');
+            Fchar(() => 'd');
+            Fchar(() => 'e');
+            Fchar(() => 'f');
 
-            func(() => 'a');
-            func(() => 'b');
-            func(() => 'c');
-            func(() => 'd');
-            func(() => 'e');
-            func(() => 'f');
-
-            func(() => '0');
-            func(() => '1');
-            func(() => '2');
-            func(() => '3');
-            func(() => '4');
-            func(() => '5');
+            Fchar(() => '0');
+            Fchar(() => '1');
+            Fchar(() => '2');
+            Fchar(() => '3');
+            Fchar(() => '4');
+            Fchar(() => '5');
         }
 
         [Fact]
         public void Floats()
         {
-            var func = Test.Runs<SingleDelegate, float>(f => f());
-
-            func(() => 3.14f);
-            func(() => -3.14f);
-            func(() => -9.75f);
-            func(() => 9.75f);
-            func(() => 0.141234f);
-            func(() => 1233.11f);
+            Ffloat(() => 3.14f);
+            Ffloat(() => -3.14f);
+            Ffloat(() => -9.75f);
+            Ffloat(() => 9.75f);
+            Ffloat(() => 0.141234f);
+            Ffloat(() => 1233.11f);
         }
 
         [Fact]
         public void Doubles()
         {
-            var func = Test.Runs<DoubleDelegate, double>(f => f());
-
-            func(() => 3.14d);
-            func(() => -3.14d);
-            func(() => -9.75d);
-            func(() => 9.75d);
-            func(() => 0.141234d);
-            func(() => 1233.11d);
+            Fdouble(() => 3.14d);
+            Fdouble(() => -3.14d);
+            Fdouble(() => -9.75d);
+            Fdouble(() => 9.75d);
+            Fdouble(() => 0.141234d);
+            Fdouble(() => 1233.11d);
         }
     }
 }

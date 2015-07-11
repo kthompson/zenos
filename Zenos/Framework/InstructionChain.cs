@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zenos.Framework
 {
@@ -36,10 +37,7 @@ namespace Zenos.Framework
 
         public int Size
         {
-            get
-            {
-                return this._instructions.Count - 1;
-            }
+            get { return this._instructions.Count - 1; }
         }
 
 
@@ -59,14 +57,14 @@ namespace Zenos.Framework
             }
         }
 
-        public IRegister Destination
+        public IRegister Destination 
         {
             get
             {
                 return EnsureInstruction().Destination;
             }
         }
-        
+
 
         public IInstruction FirstInstruction {
             get
@@ -91,6 +89,14 @@ namespace Zenos.Framework
                 _instructions[Index] = value;
 
                 UpdatePrevAndNextLinks(value);
+            }
+        }
+
+        public bool EndOfInstructions
+        {
+            get
+            {
+                return this.Index >= this.Size - 1;
             }
         }
 
@@ -119,6 +125,24 @@ namespace Zenos.Framework
                 throw new InvalidOperationException("Cannot decrement past beginning.");
 
             this.Index = i;
+        }
+
+        public void Remove()
+        {
+            var inst = this.Instruction;
+
+            var prev = inst == null ? null : inst.Previous;
+            var next = inst == null ? null : inst.Next;
+
+            UnlinkCurrent();
+
+            if (prev != null)
+                prev.Next = next;
+
+            if (next != null)
+                next.Previous = prev;
+
+            this._instructions.Remove(inst);
         }
 
         private IInstruction EnsureInstruction()

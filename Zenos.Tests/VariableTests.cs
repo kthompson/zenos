@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System;
+using Xunit;
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable ConvertToConstant.Local
@@ -6,21 +7,19 @@
 
 namespace Zenos.Tests
 {
-    public class VariableTests
+    public class VariableTests : TestBase
     {
         [Fact]
         public void Bools()
         {
-            var func = Test.Runs<BoolDelegate, bool>(f => f());
-
-            func(() =>
+            Fbool(() =>
             {
                 var fieldT = true;
                 var fieldF = false;
                 return fieldT;
             });
 
-            func(() =>
+            Fbool(() =>
             {
                 var fieldF = false;
                 var fieldT = true;
@@ -31,23 +30,21 @@ namespace Zenos.Tests
         [Fact]
         public void Ints()
         {
-            var func = Test.Runs<Int32Delegate, int>(f => f());
-
-            func(() =>
+            Fint(() =>
             {
                 var fieldF = 1;
                 var fieldT = 234;
                 return fieldF;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var fieldF = 2;
                 var fieldT = 234;
                 return fieldF;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var fieldF = 5;
                 var field2 = fieldF;
@@ -56,7 +53,7 @@ namespace Zenos.Tests
                 return field2;
             });
 
-            func(() =>
+            Fint(() =>
             {
                 var fieldF = -2;
                 var fieldT = 234;
@@ -67,23 +64,21 @@ namespace Zenos.Tests
         [Fact]
         public void Longs()
         {
-            var func = Test.Runs<Int64Delegate, long>(f => f());
-
-            func(() =>
+            Flong(() =>
             {
                 var fieldF = 1L;
                 var fieldT = 234L;
                 return fieldF;
             });
 
-            func(() =>
+            Flong(() =>
             {
                 var fieldF = 2L;
                 var fieldT = 234L;
                 return fieldF;
             });
 
-            func(() =>
+            Flong(() =>
             {
                 var fieldF = 5L;
                 var field2 = fieldF;
@@ -92,7 +87,7 @@ namespace Zenos.Tests
                 return field2;
             });
 
-            func(() =>
+            Flong(() =>
             {
                 var fieldF = -2L;
                 var fieldT = 234L;
@@ -103,16 +98,14 @@ namespace Zenos.Tests
         [Fact]
         public void Chars()
         {
-            var func = Test.Runs<CharDelegate, char>(f => f());
-
-            func(() =>
+            Fchar(() =>
             {
                 var fieldF = 'a';
                 var fieldT = 'l';
                 return fieldF;
             });
 
-            func(() =>
+            Fchar(() =>
             {
                 var fieldF = 'a';
                 var field2 = fieldF;
@@ -124,16 +117,14 @@ namespace Zenos.Tests
         [Fact]
         public void Floats()
         {
-            var func = Test.Runs<SingleDelegate, float>(f => f());
-
-            func(() =>
+            Ffloat(() =>
             {
                 var fieldF = 3.14f;
                 var fieldT = 1.2f;
                 return fieldF;
             });
 
-            func(() =>
+            Ffloat(() =>
             {
                 var fieldF = 1.2f;
                 var fieldT = 3.14f;
@@ -144,16 +135,14 @@ namespace Zenos.Tests
         [Fact]
         public void Doubles()
         {
-            var func = Test.Runs<DoubleDelegate, double>(f => f());
-
-            func(() =>
+            Fdouble(() =>
             {
                 var fieldF = 3.14;
                 var fieldT = 1.2;
                 return fieldF;
             });
 
-            func(() =>
+            Fdouble(() =>
             {
                 var fieldF = 1.2;
                 var fieldT = 3.14;

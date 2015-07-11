@@ -1,2 +1,13 @@
 X(%ebp) where X>8 is a parameter
 X(%ebp) where X<0 is a local variable
+
+https://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax
+
+# opcode suffixes:
+
+b = byte (8 bit)
+s = short (16 bit integer) or single (32-bit floating point)
+w = word (16 bit)
+l = long (32 bit integer or 64-bit floating point)
+q = quad (64 bit)
+t = ten bytes (80-bit floating point)

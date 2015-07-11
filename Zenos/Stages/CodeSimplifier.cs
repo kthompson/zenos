@@ -4,12 +4,14 @@ using Mono.Cecil.Cil;
 
 namespace Zenos.Framework
 {
-    public class CodeSimplifier : CodeCompilerStage
+    public class CilCodeSimplifier : CodeCompilerStage
     {
-        public virtual void Compile(IMethodContext context, IInstruction ins)
+        public virtual bool Compile(IMethodContext context, InstructionChain chain)
         {
+            var ins = chain.Instruction;
+
             if (ins.SourceInstruction.OpCode.OpCodeType != OpCodeType.Macro)
-                return;
+                return true;
 
             switch (ins.Code)
             {
@@ -24,14 +26,14 @@ namespace Zenos.Framework
                 case InstructionCode.CilLdloc_1:
                 case InstructionCode.CilLdloc_2:
                 case InstructionCode.CilLdloc_3:
-                    Simplify(ins, InstructionCode.CilLdloc, context.Variables[ins.Code - InstructionCode.CilLdloc_0]);
+                    Simplify(ins, InstructionCode.CilLdloc, context.Locals[ins.Code - InstructionCode.CilLdloc_0]);
                     break;
 
                 case InstructionCode.CilStloc_0:
                 case InstructionCode.CilStloc_1:
                 case InstructionCode.CilStloc_2:
                 case InstructionCode.CilStloc_3:
-                    Simplify(ins, InstructionCode.CilStloc, context.Variables[ins.Code - InstructionCode.CilStloc_0]);
+                    Simplify(ins, InstructionCode.CilStloc, context.Locals[ins.Code - InstructionCode.CilStloc_0]);
                     break;
 
                 case InstructionCode.CilLdarg_S:
@@ -112,9 +114,11 @@ namespace Zenos.Framework
             //remove jumping branches that go to the next instruction
             if (ins.Code == InstructionCode.CilBr && ins.Operand0 == ins.Next)
             {
-                ins.Code = InstructionCode.CilNop;
-                ins.Operand0 = null;
+                chain.Remove();
+                return false;
             }
+
+            return true;
         }
 
         static void Simplify(IInstruction i, InstructionCode op, object operand)
@@ -138,11 +142,30 @@ namespace Zenos.Framework
 
         public override void Compile(IMethodContext context)
         {
-            var ins = context.Instruction;
-            while (ins!=null)
+            var ic = InstructionChain.FromInstructions(context.Instruction);
+
+            while (!ic.EndOfInstructions)
             {
-                Compile(context, ins);
-                ins = ins.Next;
+                if (Compile(context, ic))
+                    ic.Increment();
+            }
+
+            ic.Reset();
+            
+            for (; !ic.EndOfInstructions; ic++)
+            {
+                var ins = ic.Instruction;
+
+                if (ins.Code != InstructionCode.CilStloc)
+                    continue;
+
+                var next = ins.Next;
+                if (next == null || next.Code != InstructionCode.CilLdloc || ins.Operand0 != next.Operand0)
+                    continue;
+
+                //store and immediate load can be replaced with NOOP
+                ic.Remove(); // store
+                ic.Remove(); // load
             }
         }
     }

@@ -8,7 +8,7 @@ namespace Zenos.Framework
 {
     public class Compiler : CompilerStage
     {
-        public List<ICompilerStage> Stages { get; }
+        public List<ICompilerStage> Stages { get; private set; }
 
         public Compiler(IEnumerable<ICompilerStage> stages)
         {

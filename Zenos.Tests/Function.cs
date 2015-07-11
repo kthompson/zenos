@@ -9,12 +9,18 @@ namespace Zenos.Tests
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr VirtualAlloc(IntPtr lpAddress, IntPtr dwSize, AllocationType allocationType, MemoryProtection protection);
 
-        public static IntPtr VirtualAlloc(uint size, AllocationType allocationType, MemoryProtection protection) => VirtualAlloc(IntPtr.Zero, new IntPtr(size), allocationType, protection);
+        public static IntPtr VirtualAlloc(uint size, AllocationType allocationType, MemoryProtection protection)
+        {
+            return VirtualAlloc(IntPtr.Zero, new IntPtr(size), allocationType, protection);
+        }
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool VirtualFree(IntPtr lpAddress, IntPtr dwSize, FreeType dwFreeType);
 
-        public static bool VirtualFree(IntPtr lpAddress) => VirtualFree(lpAddress, IntPtr.Zero, FreeType.Release);
+        public static bool VirtualFree(IntPtr lpAddress)
+        {
+            return VirtualFree(lpAddress, IntPtr.Zero, FreeType.Release);
+        }
 
         public enum FreeType : uint
         {
@@ -50,12 +56,16 @@ namespace Zenos.Tests
             WritecombineModifierflag = 0x400
         }
 
-        public static Function<T> FromBytes<T>(byte[] code) where T : class => new Function<T>(code);
+        public static Function<T> FromBytes<T>(byte[] code) where T : class
+        {
+            return new Function<T>(code);
+        }
     }
 
     class Function<T> : IDisposable
     {
-        private readonly IntPtr _addr; 
+        private readonly IntPtr _addr;
+        private readonly uint _size;
         
         bool _disposed;
 
@@ -66,15 +76,17 @@ namespace Zenos.Tests
 
             if (code.Length == 0)
                 throw new ArgumentException("Code cannot be empty", "code");
-
-            _addr = Function.VirtualAlloc((uint)code.Length, Function.AllocationType.Reserve | Function.AllocationType.Commit, Function.MemoryProtection.ExecuteReadwrite);
-
-            Write(_addr, 0, code);
+            
+            _size = (uint)code.Length;
+            _addr = Function.VirtualAlloc(_size, Function.AllocationType.Reserve | Function.AllocationType.Commit, Function.MemoryProtection.ExecuteReadwrite);
+            GC.AddMemoryPressure(code.Length);
+            
+            Marshal.Copy(code, 0, _addr, code.Length);
 
             this.Instance = Marshal.GetDelegateForFunctionPointer<T>(_addr);
         }
 
-        public T Instance { get; }
+        public T Instance { get; private set; }
 
         ~Function()
         {
@@ -105,6 +117,7 @@ namespace Zenos.Tests
             _disposed = true;
 
             Function.VirtualFree(_addr);
+            GC.RemoveMemoryPressure(_size);
         }
 
 
@@ -112,6 +125,7 @@ namespace Zenos.Tests
         static void Write(IntPtr addr, int offset, byte[] array)
         {
             for (var i = 0; i < array.Length; i++)
+                
                 Marshal.WriteByte(addr, offset + i, array[i]);
         }
     }

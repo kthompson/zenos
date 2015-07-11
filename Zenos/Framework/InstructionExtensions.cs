@@ -7,6 +7,11 @@ namespace Zenos.Framework
 {
     static class InstructionExtensions
     {
+        /// <summary>
+        /// Removes the instruction, patching up the surrounding instructions.
+        /// </summary>
+        /// <param name="@this"></param>
+        /// <returns>The next instruction</returns>
         public static IInstruction Remove(this IInstruction @this)
         {
             if (@this == null)
@@ -24,12 +29,22 @@ namespace Zenos.Framework
             return null;
         }
 
+        /// <summary>
+        /// Removes previous and next instructions. (Does not modify other instructions)
+        /// </summary>
+        /// <param name="@this"></param>
         public static void Detach(this IInstruction @this)
         {
             @this.Previous = null;
             @this.Next = null;
         }
-        
+
+        /// <summary>
+        /// Sets the following instruction, returning that instruction.
+        /// </summary>
+        /// <param name="@this"></param>
+        /// <param name="next"></param>
+        /// <returns></returns>
         public static IInstruction SetNext(this IInstruction @this, IInstruction next)
         {
             @this.Next = next;
