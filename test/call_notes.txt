@@ -11,3 +11,9 @@ w = word (16 bit)
 l = long (32 bit integer or 64-bit floating point)
 q = quad (64 bit)
 t = ten bytes (80-bit floating point)
+
+
+
+C:\Program Files\mingw-w64\x86_64-5.1.0-win32-seh-rt_v4-rev0\
+
+gcc -m64 -Wall -S -masm=intel test.c

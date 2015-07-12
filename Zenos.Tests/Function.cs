@@ -119,14 +119,5 @@ namespace Zenos.Tests
             Function.VirtualFree(_addr);
             GC.RemoveMemoryPressure(_size);
         }
-
-
-
-        static void Write(IntPtr addr, int offset, byte[] array)
-        {
-            for (var i = 0; i < array.Length; i++)
-                
-                Marshal.WriteByte(addr, offset + i, array[i]);
-        }
     }
 }

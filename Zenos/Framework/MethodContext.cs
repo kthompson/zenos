@@ -86,7 +86,7 @@ namespace Zenos.Framework
 
         public IRegister AllocateDestReg(StackType type = StackType.STACK_I4)
         {
-            return new Register(++_registers);
+            return new Register(_registers++);
         }
 
         protected virtual void Dispose(bool disposing)

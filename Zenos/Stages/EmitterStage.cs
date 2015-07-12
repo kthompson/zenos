@@ -26,46 +26,79 @@ namespace Zenos.Stages
                 0x55,                   // pushq   %rbp
                 0x48, 0x89, 0xe5        // movq    %rsp, %rbp
             });
+            // S mod 8 must be 0;
+            // S(n) = (n*4)
+            var space = SpaceForVariables(context);
 
-            // create some space for local variables
-            // 54:       48 83 ec 10                                     subq    $16, %rsp
-
-
-            /*
-            4:       b8 05 00 00 00                                  movl    $5, %eax
-            */
-
-            for (var inst = ic.Instruction; !ic.EndOfInstructions; ic++)
+            // create some space for our locals and arguments on the stack
+            if (space > 0)
             {
+                context.Code.AddRange(0x48, 0x83, 0xec, space); // sub    rsp, 0x20
+            }
+
+            for (; !ic.EndOfInstructions; ic++)
+            {
+                var inst = ic.Instruction;
                 switch (inst.Code)
                 {
-                    case InstructionCode.CilLdc_I4:
+                    case InstructionCode.ZilLoad:
                     {
-                        var i = (int) inst.Operand0;
-                        var bytes = BitConverter.GetBytes(i);
-                        context.Code.Add(0xb8);
-                        context.Code.AddRange(bytes);
+                        if (inst.Operand0 is int)
+                        {
+                            var i = (int) inst.Operand0;
+                            var bytes = BitConverter.GetBytes(i);
+                            context.Code.Add(0x68); //push imm32
+                            context.Code.AddRange(bytes);
+                        }
+                        else if (inst.Operand0 is long)
+                        {
+                            var l = (long)inst.Operand0;
+                            var bytes = BitConverter.GetBytes((l));
+                            context.Code.AddRange(0x48, 0xb8);  // mov    rax,{l}
+                            context.Code.AddRange(bytes);
+
+                            context.Code.AddRange(0x50);        // push   rax
+                        }
+                        else if (inst.Operand0 is IInstruction)
+                        {
+                            var reg = (IInstruction) inst.Operand0;
+                            var dest = reg.Destination;
+                            var offset = (byte)(-4*(dest.Id+1));
+
+                            context.Code.AddRange(0xff, 0x75, offset); //push -4(%rbp)
+                        }
+                        else
+                        {
+                            throw new InvalidDataException("Load instruction not supported with operand: " + inst.Operand0);
+                        }
                         break;
                     }
-                    case InstructionCode.CilLdc_I8:
+                    case InstructionCode.ZilStore:
                     {
-                        var l = (long) inst.Operand0;
-                        var bytes = BitConverter.GetBytes((l));
-                        context.Code.AddRange(0x48, 0xb8); //48 b8  movabsq $1311768467300487456, %rax
-                        context.Code.AddRange(bytes);
+                        var reg = (IInstruction)inst.Operand0;
+                        var dest = reg.Destination;
+                        var offset = (byte)(-4 * (dest.Id + 1));
+
+                        context.Code.AddRange(0x8f, 0x45, offset); //pop -4(%rbp)
                         break;
                     }
                     case InstructionCode.CilNop:
-                    case InstructionCode.CilRet:
                         break;
+                    case InstructionCode.CilRet:
+                    {
+                        context.Code.AddRange(0x58); //popq    %rax
+                        break;
+                    }
                     default:
                         throw new InvalidDataException("Unsupported instruction: " + inst.Code);
                 }
             }
 
-
-            // reset the stack pointer back to the calling location (nuking locals)
-            // 21:       48 83 c4 08                                     addq    $8, %rsp
+            // reset the stack pointer to nuke our locals and arguments from the stack
+            if (space > 0)
+            {
+                context.Code.AddRange(0x48, 0x83, 0xc4, space); // add    rsp, 0x20
+            }
 
             // epilogue
             context.Code.AddRange(new byte[]
@@ -84,6 +117,19 @@ namespace Zenos.Stages
                 var nop = paddingSize > 9 ? _paddingBytes[8] : _paddingBytes[paddingSize - 1];
                 context.Code.AddRange(nop);
             }
+        }
+
+        private int SpaceForVariables(IMethodContext context)
+        {
+            //Space = (locals + args)*4 bumped to the nearest multiple of 8
+            var locals = context.Locals.Count;
+            var args = context.Parameters.Count;
+            var space = 4*(locals + args);
+
+            //make sure we have a multiple of 8
+            space = space%8 == 0 ? space : space + 4;
+
+            return space > 0 && space < 16 ? 16 : space;
         }
 
         private readonly byte[][] _paddingBytes = 

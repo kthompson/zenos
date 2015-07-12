@@ -1,18 +1,21 @@
-signed long long int funl()
+int func(int a)
 {
-	return 1234567891011120LL;
-}
-
-signed long long int fun2()
-{
-	return -5368709121234LL;
-}
-
-signed long long int fun3()
-{
-	return 429496121113456735LL;
+  int z = 0x4000;
+  int x = 0x4000;
+  int y = 0x4000;
+  int w = 0x4000;
+  int v = 0x4000;
+  int u = 0x4000;
+  int t = 0x4000;
+	return u;
 }
 /*
+
+each int
+
+stack space for n variables
+S mod 8 == 0;
+S(n) = (n*4)
 
 int fun0()
 {

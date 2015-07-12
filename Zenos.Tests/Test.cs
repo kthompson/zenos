@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Mono.Cecil;
 using Ninject;
+using Zenos.Core;
 using Zenos.Framework;
 using SR = System.Reflection;
 using Assert = Xunit.Assert;
@@ -79,11 +80,11 @@ namespace Zenos.Tests
 
                     test(result, nativeResult);
                 }
-                //catch (Exception e)
-                //{
-                //    Helper.Suppress(e);
-                //    throw;
-                //}
+                catch (Exception e)
+                {
+                    Helper.Suppress(e);
+                    throw;
+                }
                 finally
                 {
                     if (context != null)

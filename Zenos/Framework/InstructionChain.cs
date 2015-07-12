@@ -96,7 +96,7 @@ namespace Zenos.Framework
         {
             get
             {
-                return this.Index >= this.Size - 1;
+                return this.Index >= this.Size;
             }
         }
 
