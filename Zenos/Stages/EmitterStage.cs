@@ -43,47 +43,18 @@ namespace Zenos.Stages
                 {
                     case InstructionCode.ZilLoad:
                     {
-                        if (inst.Operand0 is int)
-                        {
-                            var i = (int) inst.Operand0;
-                            var bytes = BitConverter.GetBytes(i);
-                            context.Code.Add(0x68); //push imm32
-                            context.Code.AddRange(bytes);
-                        }
-                        else if (inst.Operand0 is long)
-                        {
-                            var l = (long)inst.Operand0;
-                            var bytes = BitConverter.GetBytes((l));
-                            context.Code.AddRange(0x48, 0xb8);  // mov    rax,{l}
-                            context.Code.AddRange(bytes);
-
-                            context.Code.AddRange(0x50);        // push   rax
-                        }
-                        else if (inst.Operand0 is IInstruction)
-                        {
-                            var reg = (IInstruction) inst.Operand0;
-                            var dest = reg.Destination;
-                            var offset = (byte)(-4*(dest.Id+1));
-
-                            context.Code.AddRange(0xff, 0x75, offset); //push -4(%rbp)
-                        }
-                        else
-                        {
-                            throw new InvalidDataException("Load instruction not supported with operand: " + inst.Operand0);
-                        }
+                        EmitLoad(context, inst);
                         break;
                     }
                     case InstructionCode.ZilStore:
                     {
-                        var reg = (IInstruction)inst.Operand0;
-                        var dest = reg.Destination;
-                        var offset = (byte)(-4 * (dest.Id + 1));
-
-                        context.Code.AddRange(0x8f, 0x45, offset); //pop -4(%rbp)
+                        EmitStore(context, inst);
                         break;
                     }
                     case InstructionCode.CilNop:
+                    {
                         break;
+                    }
                     case InstructionCode.CilRet:
                     {
                         context.Code.AddRange(0x58); //popq    %rax
@@ -116,6 +87,47 @@ namespace Zenos.Stages
 
                 var nop = paddingSize > 9 ? _paddingBytes[8] : _paddingBytes[paddingSize - 1];
                 context.Code.AddRange(nop);
+            }
+        }
+
+        private static void EmitStore(IMethodContext context, IInstruction inst)
+        {
+            var reg = (IInstruction) inst.Operand0;
+            var dest = reg.Destination;
+            var offset = (byte) (-4*(dest.Id + 1));
+
+            context.Code.AddRange(0x8f, 0x45, offset); //pop -4(%rbp)
+        }
+
+        private static void EmitLoad(IMethodContext context, IInstruction inst)
+        {
+            if (inst.Operand0 is int)
+            {
+                var i = (int) inst.Operand0;
+                var bytes = BitConverter.GetBytes(i);
+                context.Code.Add(0x68); //push imm32
+                context.Code.AddRange(bytes);
+            }
+            else if (inst.Operand0 is long)
+            {
+                var l = (long) inst.Operand0;
+                var bytes = BitConverter.GetBytes((l));
+                context.Code.AddRange(0x48, 0xb8); // mov rax,{l}
+                context.Code.AddRange(bytes);
+
+                context.Code.AddRange(0x50); // push   rax
+            }
+            else if (inst.Operand0 is IInstruction)
+            {
+                var reg = (IInstruction) inst.Operand0;
+                var dest = reg.Destination;
+                var offset = (byte) (-4*(dest.Id + 1));
+
+                context.Code.AddRange(0xff, 0x75, offset); //push -4(%rbp)
+            }
+            else
+            {
+                throw new InvalidDataException("Load instruction not supported with operand: " + inst.Operand0);
             }
         }
 
@@ -201,7 +213,7 @@ namespace Zenos.Stages
 
         private static string GetBlockLabel(IMethodContext context, BasicBlock block)
         {
-            return string.Format("{0}_bb{1}", context.Method.Name, block.block_num);
+            return $"{context.Method.Name}_bb{block.block_num}";
         }
 
         private void Compile(IMethodContext context, IInstruction instruction)
@@ -240,25 +252,25 @@ namespace Zenos.Stages
                 //    context.Text.WriteLine("movl $0x{0}, %eax    # {1}", inIEEE754.ToString("x"), instruction);
                 //    break;
                 default:
-                    Helper.NotSupported(string.Format("InstructionCode not supported: {0}", instruction.Code));
+                    Helper.NotSupported($"InstructionCode not supported: {instruction.Code}");
                     break;
             }
         }
 
         private string EmitLocation(ICompilationContext context, Instruction instruction)
         {
-            if (instruction.Operand is VariableReference)
+            var operand = instruction.Operand as VariableReference;
+            if (operand != null)
             {
-                var v = instruction.Operand as VariableReference;
-                var index = (v.Index + 1) * -4;
-                return string.Format("{0}(%ebp)", index);
+                var index = (operand.Index + 1) * -4;
+                return $"{index}(%ebp)";
             }
 
-            if (instruction.Operand is ParameterReference)
+            var parameter = instruction.Operand as ParameterReference;
+            if (parameter != null)
             {
-                var v = instruction.Operand as ParameterReference;
-                var index = 8 + (v.Index) * 4;
-                return string.Format("{0}(%ebp)", index);
+                var index = 8 + (parameter.Index) * 4;
+                return $"{index}(%ebp)";
             }
             Helper.Break();
             return instruction.Operand.ToString();
