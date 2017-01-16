@@ -9,30 +9,30 @@ using Mono.Cecil;
 using Ninject;
 using Zenos.Core;
 using Zenos.Framework;
+using Zenos.Stages;
 using SR = System.Reflection;
 using Assert = Xunit.Assert;
 
 
 namespace Zenos.Tests
 {
-    internal sealed class Test
+    internal static class Test
     {
         #region Properties and Initialization
 
         static Test()
         {
-            Container = new StandardKernel(new TestCompilerModule());
+            var arch = new AMD64();
+            _compiler = Compiler.CreateStagedWithAfter(CodePrinter.Value,
+                new CecilToZenos(),
+                new AllocateStorageForVariables(arch),
+                new CilSimplifier(),
+                new PopulateStackType(),
+                new EmitterStage()
+            );
         }
 
-        private static readonly IKernel Container;
-
-        private static Compiler Compiler
-        {
-            get
-            {
-                return Container.Get<Compiler>();
-            }
-        }
+        private static readonly ICompiler<IMethodContext> _compiler;
 
         #endregion
 
@@ -44,35 +44,21 @@ namespace Zenos.Tests
             return method =>
             {
                 //update arguments
-                IAssemblyContext context = null;
                 try
                 {
-                    var resolver = CreateAssemblyResolver();
-                    var sourceMethod = GetMethodDefinitionFromLambda(method, resolver);
-
-                    var mc = new MethodContext(sourceMethod);
-                    context = new AssemblyContext
-                    {
-                        {
-                            "main", new TypeContext
-                            {
-                                {"test_method", mc}
-                            }
-                        }
-                    };
+                    var mc = CreateMethodContext(method);
 
                     //compile 
-                    Compiler.Compile(context);
+                    var context = _compiler.Compile(mc);
 
-                    Assert.NotEqual(0, mc.Code.Count);
-                    Assert.Equal(0, mc.Code.Count % 16);
+                    Assert.NotEqual(0, context.Code.Count);
+                    Assert.Equal(0, context.Code.Count % 16);
+                    File.WriteAllBytes("temp.bin", context.Code.ToArray());
+                    testMethodContext?.Invoke(context);
 
-                    if(testMethodContext != null)
-                        testMethodContext(mc);
+                    PrintInstructions(context.Instruction);
 
-                    PrintInstructions(mc.Instruction);
-
-                    var compiled = Function.FromBytes<TDelegate>(mc.Code.ToArray());
+                    var compiled = Function.FromBytes<TDelegate>(context.Code.ToArray());
 
                     //run the compiled method and return output
                     var result = executor(method);
@@ -85,12 +71,15 @@ namespace Zenos.Tests
                     Helper.Suppress(e);
                     throw;
                 }
-                finally
-                {
-                    if (context != null)
-                        context.Dispose();
-                }
             };
+        }
+        
+        public static IMethodContext CreateMethodContext<TDelegate>(TDelegate method) where TDelegate : class
+        {
+            var resolver = CreateAssemblyResolver();
+            var sourceMethod = GetMethodDefinitionFromLambda(method, resolver);
+
+            return new MethodContext(sourceMethod);
         }
 
         private static void PrintInstructions(IInstruction inst)

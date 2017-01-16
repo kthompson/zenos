@@ -2,9 +2,6 @@ namespace Zenos.Stages
 {
     public class AMD64 : Architecture
     {
-        public override string Name
-        {
-            get { return "x86-64"; }
-        }
+        public override string Name => "x86-64";
     }
 }

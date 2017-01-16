@@ -72,10 +72,10 @@ namespace Zenos.Tests
         public Function(byte[] code)
         {
             if (code == null)
-                throw new ArgumentNullException("code");
+                throw new ArgumentNullException(nameof(code));
 
             if (code.Length == 0)
-                throw new ArgumentException("Code cannot be empty", "code");
+                throw new ArgumentException("Code cannot be empty", nameof(code));
             
             _size = (uint)code.Length;
             _addr = Function.VirtualAlloc(_size, Function.AllocationType.Reserve | Function.AllocationType.Commit, Function.MemoryProtection.ExecuteReadwrite);

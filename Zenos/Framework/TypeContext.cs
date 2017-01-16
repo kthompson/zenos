@@ -23,26 +23,6 @@ namespace Zenos.Framework
             return mc;
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (this.IsDisposed)
-                return;
-
-            if (disposing)
-            {
-                foreach (var code in this)
-                    code.Dispose();
-            }
-
-            this.IsDisposed = true;
-        }
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         public IEnumerator<IMethodContext> GetEnumerator()
         {
             return _compilationContexts.Values.GetEnumerator();

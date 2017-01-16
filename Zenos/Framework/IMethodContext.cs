@@ -6,58 +6,24 @@ using Mono.Cecil.Cil;
 
 namespace Zenos.Framework
 {
-
     //MonoCompile
-    public interface IMethodContext : IDisposable
+    public interface IMethodContext
     {
-        bool IsDisposed { get; }
-
-        Sections Sections { get; }
-        string OutputFile { get; set; }
-        Section Text { get; }
-        Section Data { get; }
-        int StackSize { get; }
-        
         List<byte> Code { get; }
 
         IList<IInstruction> Variables { get; set; }
-        IList<IVariableDefinition> VariableDefinitions { get; set; }
 
         IInstruction ReturnType { get; set; }
 
         IList<IInstruction> Parameters { get; set; }
         IList<IInstruction> Locals { get; set; }
 
-
-        string CreateLabel(string prefix = null);
-        string CreateTemporary();
-
         IInstruction Instruction { get; set; }
         MethodDefinition Method { get; }
-        BasicBlock CurrentBasicBlock { get; set; }
-        int next_vreg { get; set; }
+        
+        BasicBlocks BasicBlocks { get; }
 
-        IDictionary<IRegister, IInstruction> VRegisterToInstruction { get; }
-
-        /* 
-         * This variable represents the hidden argument holding the vtype
-         * return address. If the method returns something other than a vtype, or
-         * the vtype is returned in registers this is NULL.
-         */
-        IInstruction vret_addr { get; set; }
-        bool ret_var_is_local { get; set; }
-        int arch_eh_jit_info { get; set; }
-
-        int num_bblocks { get; set; }
-        int cil_start { get; set; }
-        int real_offset { get; set; }
-        Dictionary<int, BasicBlock> cil_offset_to_bb { get; set; }
-
-        BasicBlock bb_init { get; set; }
-        BasicBlock bb_entry { get; set; }
-        BasicBlock bb_exit { get; set; }
-
-        IRegister AllocateDestReg(StackType type = StackType.STACK_I4);
+        IRegister AllocateDestReg(StackType type = StackType.Imm32);
     }
 
     public interface IVariableDefinition
@@ -75,42 +41,7 @@ namespace Zenos.Framework
         public IRegister Register { get; set; }
         public IRegister VirtualRegister { get; set; }
 
-        public override string ToString()
-        {
-            return string.Format("var{0}", this.Index);
-        }
-    }
-
-    public class BasicBlock
-    {
-        public IInstruction last_ins;
-
-        /* the next basic block in the order it appears in IL */
-        public BasicBlock next_bb;
-        public IInstruction code;
-        public IInstruction cil_code;
-        public int block_num;
-        public List<BasicBlock> out_bb { get; set; }
-        public List<BasicBlock> in_bb { get; set; }
-        public int real_offset;
-        public long cil_length;
-        public List<IInstruction> in_stack { get; set; }
-        public List<IInstruction> out_stack { get; set; }
-
-        public BasicBlockFlags Flags { get; set; }
-
-        public BasicBlock()
-        {
-            this.out_bb = new List<BasicBlock>();
-            this.out_stack = new List<IInstruction>();
-            this.in_stack = new List<IInstruction>();
-            this.in_bb = new List<BasicBlock>();
-        }
-
-        public override string ToString()
-        {
-            return string.Format("BasicBlock[N{0}, I{1}, O{2}]", block_num, in_bb.Count, out_bb.Count);
-        }
+        public override string ToString() => $"var{this.Index}";
     }
 
     [Flags]

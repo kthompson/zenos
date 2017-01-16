@@ -2,10 +2,7 @@ using Zenos.Framework;
 
 namespace Zenos.Stages
 {
-    public class BranchOptimization : CodeCompilerStage
+    public class BranchOptimization : Compiler<IMethodContext>
     {
-        public override void Compile(IMethodContext context)
-        {
-        }
     }
 }

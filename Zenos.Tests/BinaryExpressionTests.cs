@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using Xunit;
 
 namespace Zenos.Tests
 {
     public class BinaryExpressionTests : TestBase
     {
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate int BinaryExpressionDelegate(int a, int b);
 
         private delegate bool BinaryIntBoolExpressionDelegate(int a, int b);
@@ -22,13 +26,55 @@ namespace Zenos.Tests
         private delegate bool BinaryCharExpressionDelegate(float a, float b);
 
         [Theory]
-        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
-        public void Arithmetic(int a, int b)
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void Addition(int a, int b)
         {
             var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
 
             func((aa, bb) => aa + bb);
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void AdditionLoop(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) =>
+            {
+                int x = 0;
+                while (x < aa)
+                {
+                    x ++;
+                }
+                return x + bb;
+            });
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void Subtraction(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
             func((aa, bb) => aa - bb);
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void Division(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) => aa / bb);
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void Multiplication(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
             func((aa, bb) => aa / bb);
             func((aa, bb) => aa * bb);
         }

@@ -73,13 +73,6 @@ namespace Zenos.Tests
 
             Flong(() =>
             {
-                var fieldF = 2L;
-                var fieldT = 234L;
-                return fieldF;
-            });
-
-            Flong(() =>
-            {
                 var fieldF = 5L;
                 var field2 = fieldF;
 

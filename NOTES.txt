@@ -1,17 +1,6 @@
-AssemblyDefinition
-AssemblyNameDefinition
-ModuleDefinition
-
-IMemberDefinition
-  EventDefinition
-  FieldDefinition
-  MethodDefinition
-  PropertyDefinition
-  TypeDefinition
-
-ParameterDefinition
-Cil/VariableDefinition
-
 TODO:
 * We need to construct BasicBlocks
 * Once we have basic blocks we should be able to convert to 3 address code
+* https://en.m.wikibooks.org/wiki/Compiler_Construction/Stack-based_representation
+
+https://assembly.ynh.io/

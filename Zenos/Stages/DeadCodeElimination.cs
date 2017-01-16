@@ -2,10 +2,7 @@ using Zenos.Framework;
 
 namespace Zenos.Stages
 {
-    public class DeadCodeElimination : CodeCompilerStage
+    public class DeadCodeElimination : Compiler<IMethodContext>
     {
-        public override void Compile(IMethodContext context)
-        {
-        }
     }
 }

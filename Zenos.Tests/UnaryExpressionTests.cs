@@ -19,7 +19,7 @@ namespace Zenos.Tests
         {
         }
 
-        [Fact]
+        [Fact(Skip = "Need to add CilCeq support")]
         public void UnaryLogicalNotExpression()
         {
             // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -39,7 +39,7 @@ namespace Zenos.Tests
             // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
 
-        [Fact]
+        [Fact(Skip = "Need to add CilNot support")]
         public void UnaryBitwiseNotExpression()
         {
             Fuint(() =>
@@ -55,7 +55,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Fact]
+        [Fact(Skip = "Need to add CilNeg support")]
         public void UnaryNegateExpression()
         {
             Fint(() =>

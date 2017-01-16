@@ -90,10 +90,12 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="BasicBlockTests.cs" />
     <Compile Include="BinaryExpressionTests.cs" />
     <Compile Include="Function.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Immediates.cs" />
-    <Compile Include="InstructionChainTests.cs" />
+    <Compile Include="InstructionTests.cs" />
     <Compile Include="PermuteDataAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Test.cs" />
@@ -102,7 +104,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>TestBase.tt</DependentUpon>
     </Compile>
-    <Compile Include="TestCompilerModule.cs" />
     <Compile Include="UnaryExpressionTests.cs" />
     <Compile Include="VariableTests.cs" />
   </ItemGroup>

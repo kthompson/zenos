@@ -5,7 +5,7 @@ using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    public interface ITypeContext : IDisposable, IEnumerable<IMethodContext>
+    public interface ITypeContext : IEnumerable<IMethodContext>
     {
         bool IsDisposed { get; }
 

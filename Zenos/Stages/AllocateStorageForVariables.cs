@@ -9,7 +9,7 @@ using Zenos.Framework;
 
 namespace Zenos.Stages
 {
-    public class AllocateStorageForVariables : CodeCompilerStage
+    public class AllocateStorageForVariables : Compiler<IMethodContext>
     {
         private readonly IArchitecture _architecture;
 
@@ -18,45 +18,73 @@ namespace Zenos.Stages
             _architecture = architecture;
         }
 
-        public override void Compile(IMethodContext context)
+        public override IMethodContext Compile(IMethodContext context)
         {
             var method = context.Method;
 
             if (method.ReturnType.FullName != "System.Void")
-                context.ReturnType = CreateVariable(context, method.ReturnType, InstructionCode.ZilArgument);
+                context.ReturnType = CreateVariable(context, method.ReturnType, InstructionCode.Argument);
 
             context.Parameters = new List<IInstruction>();
             if (method.HasThis)
-                context.Parameters.Add(CreateVariable(context, method.Body.ThisParameter.ParameterType, InstructionCode.ZilArgument));
+                context.Parameters.Add(CreateVariable(context, method.Body.ThisParameter.ParameterType, InstructionCode.Argument));
 
             foreach (var parameter in method.Parameters)
-                context.Parameters.Add(CreateVariable(context, parameter.ParameterType, InstructionCode.ZilArgument));
+                context.Parameters.Add(CreateVariable(context, parameter.ParameterType, InstructionCode.Argument));
 
             context.Locals = new List<IInstruction>();
             foreach (var variable in method.Body.Variables)
-                context.Locals.Add(CreateVariable(context, variable.VariableType, InstructionCode.ZilLocal));
+                context.Locals.Add(CreateVariable(context, variable.VariableType, InstructionCode.Local));
 
             this._architecture.CreateVariables(context);
+            return context;
         }
 
         private IInstruction CreateVariable(IMethodContext context, TypeReference type, InstructionCode op)
         {
             var dreg = context.AllocateDestReg();
+            var num = context.Variables.Count;
+            var ins = new ZenosInstruction {
+                Code = op,
+                Operand0 = num,
+                Operand1 = type,
+                Destination = dreg,
+                StackType = StackTypeFromType(type)
+            };
+            context.Variables.Add (ins);
 
-            return CreateVariableForVreg(context, type, op, dreg);
+            return ins;
         }
 
-        private IInstruction CreateVariableForVreg(IMethodContext context, TypeReference type, InstructionCode op, IRegister dreg)
+        private StackType StackTypeFromType(TypeReference type)
         {
-			var num = context.Variables.Count;
-			var ins = new ZenosInstruction {
-				Code = op,
-				Operand0 = num,
-				Operand1 = type,
-				Destination = dreg,
-			};
-			context.Variables.Add (ins);
-			return ins;
+            if (type.IsValueType)
+            {
+                switch (type.Name)
+                {
+                    case nameof(Boolean):
+                    case nameof(Int16):
+                    case nameof(UInt16):
+                    case nameof(UInt32):
+                    case nameof(Int32):
+                        return StackType.Imm32;
+
+                    case nameof(Int64):
+                    case nameof(UInt64):
+                        return StackType.Imm64;
+
+                    case nameof(Double):
+                    case nameof(Single):
+                        throw new NotImplementedException();
+
+                    default:
+                        return StackType.Unknown;
+                }
+            }
+            else
+            {
+                return StackType.Pointer;
+            }
         }
     }
 }

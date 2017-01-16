@@ -77,45 +77,30 @@
     </Compile>
     <Compile Include="Core\Extensions.cs" />
     <Compile Include="Core\Helper.cs" />
+    <Compile Include="Framework\BasicBlock.cs" />
+    <Compile Include="Framework\FlowControl.cs" />
     <Compile Include="Framework\IArchitecture.cs" />
-    <Compile Include="Framework\CompilationContext.cs" />
-    <Compile Include="Framework\ICompilationContext.cs" />
-    <Compile Include="Framework\ICompilerContext.cs" />
-    <Compile Include="Framework\IMemberContext.cs" />
-    <Compile Include="Framework\InstructionChain.cs" />
     <Compile Include="Framework\InstructionFlags.cs" />
     <Compile Include="Framework\IRegister.cs" />
     <Compile Include="Framework\ZenosInstruction.cs" />
-    <Compile Include="Framework\CodeCompilerStage.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Framework\IInstruction.cs" />
     <Compile Include="Framework\InstructionCode.cs" />
-    <Compile Include="Framework\MemberContext.cs" />
     <Compile Include="Framework\MethodContext.cs" />
-    <Compile Include="Framework\Compiler.cs" />
     <Compile Include="Framework\AssemblyContext.cs" />
-    <Compile Include="Framework\CompilerStage.cs" />
-    <Compile Include="Framework\ICodeCompilerStage.cs">
+    <Compile Include="Framework\Compiler.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Framework\IMethodContext.cs" />
     <Compile Include="Framework\IAssemblyContext.cs" />
-    <Compile Include="Framework\ICompilerStage.cs" />
-    <Compile Include="Framework\IMemberCompilerStage.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Framework\ITypeContext.cs" />
     <Compile Include="Framework\InstructionExtensions.cs" />
-    <Compile Include="Framework\MemberCompilerStage.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Stages\AMD64.cs" />
+    <Compile Include="Stages\BasicBlockAssignment.cs" />
     <Compile Include="Stages\BranchOptimization.cs" />
-    <Compile Include="Stages\CodeSimplifier.cs" />
+    <Compile Include="Stages\CodePrinter.cs" />
+    <Compile Include="Stages\CilSimplifier.cs" />
     <Compile Include="Stages\DeadCodeElimination.cs" />
     <Compile Include="Stages\EmitterStage.cs" />
-    <Compile Include="Stages\LocalPropagation.cs" />
     <Compile Include="Stages\AllocateStorageForVariables.cs" />
     <Compile Include="Framework\StackType.cs" />
     <Compile Include="Framework\TypeContext.cs" />
@@ -124,8 +109,10 @@
     <Compile Include="Framework\Register.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Stages\CecilToZenos.cs" />
-    <Compile Include="Stages\StaticSingleAssignmentTranslation.cs" />
     <Compile Include="Framework\Architecture.cs" />
+    <Compile Include="Stages\LocalPropagation.cs" />
+    <Compile Include="Stages\PopulateStackType.cs" />
+    <Compile Include="Stages\StaticSingleAssignmentTranslation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

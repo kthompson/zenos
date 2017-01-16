@@ -31,12 +31,13 @@ namespace Zenos.Core
 
         public static string AppendRandom(this string t, string prefix, int length = 32, string suffix = "")
         {
-            var tempString = t + prefix;
+            var sb = new StringBuilder();
+            sb.Append(t + prefix);
 
-            while (tempString.Length < length)
-                tempString += Guid.NewGuid().ToString().Replace("-", "").ToLower();
-
-            return tempString.Substring(0, length) + suffix;
+            while (sb.Length < length)
+                sb.Append( Guid.NewGuid().ToString().Replace("-", "").ToLower());
+            
+            return sb.ToString().Substring(0, length) + suffix;
         }
 
         public static string Append(this string t, params string[] arguments)

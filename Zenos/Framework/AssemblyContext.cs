@@ -10,8 +10,6 @@ namespace Zenos.Framework
     {
         private readonly Dictionary<object, ITypeContext> _memberContexts = new Dictionary<object, ITypeContext>();
 
-        public bool IsDisposed { get; private set; }
-        
         public void Add(string key, ITypeContext type)
         {
             _memberContexts[key] = type;
@@ -23,26 +21,6 @@ namespace Zenos.Framework
                 return _memberContexts[key];
 
             return null;
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (this.IsDisposed)
-                return;
-
-            if (disposing)
-            {
-                foreach (var member in this)
-                    member.Dispose();
-            }
-
-            this.IsDisposed = true;
-        }
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         public IEnumerator<ITypeContext> GetEnumerator()

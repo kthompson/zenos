@@ -1,14 +1,20 @@
-﻿using System.Collections.Generic;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using CilInstruction = Mono.Cecil.Cil.Instruction;
+using CilFlowControl = Mono.Cecil.Cil.FlowControl;
 
 namespace Zenos.Framework
 {
-    public interface IInstruction
+    public interface IInstruction : IEnumerable<IInstruction>
     {
         InstructionCode Code { get; set; }
         StackType StackType { get; set; }
         InstructionFlags Flags { get; set; }
+
+        FlowControl FlowControl { get; }
 
         int Offset { get; set; }
 
@@ -24,104 +30,121 @@ namespace Zenos.Framework
         object Operand1 { get; set; }
         object Operand2 { get; set; }
 
-        Instruction SourceInstruction { get; set; }
-        TypeDefinition klass { get; set; }
+        CilInstruction SourceInstruction { get; set; }
+
+        IInstruction Add(IInstruction instruction);
     }
 
-
-    public static class DictionaryMixins
+    public abstract class Instruction : IInstruction
     {
-        public static TValue GetOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> @this, TKey key)
+        public IEnumerator<IInstruction> GetEnumerator()
         {
-            if (@this.ContainsKey(key))
-                return @this[key];
+            yield return this;
+            var next = this.Next;
+            if (next == null)
+                yield break;
 
-            return default(TValue);
-        }
-    }
-
-    public static class InstructionMixins
-    {
-        public static TypeReference inst_vtype(this IInstruction instruction)
-        {
-            return (TypeReference)instruction.Operand1;
+            foreach (var inst in next)
+                yield return inst;
         }
 
-        public static void set_inst_vtype(this IInstruction instruction, TypeReference value)
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            instruction.Operand1 = value;
-        }
-
-        public static int inst_c0(this IInstruction instruction)
-        {
-            return (int)instruction.Operand0;
-        }
-
-        public static void set_inst_c0(this IInstruction instruction, int value)
-        {
-            instruction.Operand0 = value;
-        }
-
-        public static int inst_c1(this IInstruction instruction)
-        {
-            return (int)instruction.Operand1;
+            return GetEnumerator();
         }
 
 
-        public static IInstruction inst_i0(this IInstruction instruction)
+        public override string ToString()
         {
-            return (IInstruction)instruction.Operand0;
+            if (this.Code == InstructionCode.Argument || this.Code == InstructionCode.Local)
+            {
+                return this.Destination.ToString();
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendFormat("IL_{0:X4}: {1}", this.Offset, this.Code);
+
+            sb.Append(" (");
+            if (this.Source1 != null)
+            {
+                sb.Append(this.Source1);
+                if (this.Source2 != null)
+                    sb.AppendFormat(", {0}", Source2);
+                if (this.Source3 != null)
+                    sb.AppendFormat(", {0}", Source3);
+            }
+            else
+            {
+                if (this.Operand0 != null)
+                {
+                    AppendOperand(sb, this.Operand0);
+
+                    if (this.Operand1 != null)
+                    {
+                        sb.Append(", ");
+                        AppendOperand(sb, this.Operand1);
+                    }
+                }
+
+            }
+
+            sb.Append(")");
+            if (this.Destination != null)
+                sb.AppendFormat(" => {0}", this.Destination);
+
+            return sb.ToString();
+        }
+        private void AppendOperand(StringBuilder sb, object operand)
+        {
+            var instruction = operand as IInstruction;
+            if (instruction != null && 
+                (this.FlowControl == FlowControl.Branch ||
+                 this.FlowControl == FlowControl.Cond_Branch))
+            {
+                sb.Append($"IL_{instruction.Offset:X4}");
+            }
+            else
+            {
+                sb.Append(operand);
+            }
         }
 
-        public static IInstruction inst_i1(this IInstruction instruction)
-        {
-            return (IInstruction)instruction.Operand1;
-        }
+        public InstructionCode Code { get; set; }
+        public StackType StackType { get; set; }
+        public InstructionFlags Flags { get; set; }
+        public FlowControl FlowControl { get; set; } = FlowControl.Next;
+        public int Offset { get; set; }
+        public IRegister Destination { get; set; }
+        public IRegister Source1 { get; set; }
+        public IRegister Source2 { get; set; }
+        public IRegister Source3 { get; set; }
+        public IInstruction Previous { get; set; }
+        public IInstruction Next { get; set; }
+        public object Operand0 { get; set; }
+        public object Operand1 { get; set; }
+        public object Operand2 { get; set; }
+        public CilInstruction SourceInstruction { get; set; }
 
-        public static BasicBlock[] inst_many_bb(this IInstruction instruction)
+        /// <summary>
+        /// Append instruction to the end of the instruction chain
+        /// </summary>
+        /// <param name="instruction"></param>
+        /// <returns>The last instruction in the chain</returns>
+        public IInstruction Add(IInstruction instruction)
         {
-            return (BasicBlock[])instruction.Operand1;
-        }
+            var next = this.Next;
+            if (next != null)
+            {
+                return next.Add(instruction);
+            }
 
-        public static BasicBlock inst_target_bb(this IInstruction instruction)
-        {
-            return (BasicBlock)instruction.Operand0;
-        }
+            if (instruction == null)
+                return this;
 
-        public static void set_inst_target_bb(this IInstruction instruction, BasicBlock value)
-        {
-            instruction.Operand0 = value;
-        }
+            this.Next = instruction;
+            instruction.Previous = this;
 
-        public static BasicBlock inst_true_bb(this IInstruction instruction)
-        {
-            return instruction.inst_many_bb()[0];
-        }
-
-        public static BasicBlock inst_false_bb(this IInstruction instruction)
-        {
-            return instruction.inst_many_bb()[1];
-        }
-
-
-        public static void set_inst_p0(this IInstruction instruction, IInstruction value)
-        {
-            instruction.Operand0 = value;
-        }
-
-        public static IInstruction inst_p0(this IInstruction instruction)
-        {
-            return (IInstruction)instruction.Operand0;
-        }
-
-        public static void set_inst_p1(this IInstruction instruction, IInstruction value)
-        {
-            instruction.Operand1 = value;
-        }
-
-        public static IInstruction inst_p1(this IInstruction instruction)
-        {
-            return (IInstruction)instruction.Operand1;
+            return instruction;
         }
     }
 }

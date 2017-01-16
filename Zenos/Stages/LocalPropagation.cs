@@ -2,10 +2,7 @@ using Zenos.Framework;
 
 namespace Zenos.Stages
 {
-    public class LocalPropagation : CodeCompilerStage
+    public class LocalPropagation : Compiler<IMethodContext>
     {
-        public override void Compile(IMethodContext context)
-        {
-        }
     }
 }

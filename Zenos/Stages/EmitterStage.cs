@@ -14,39 +14,36 @@ using Zenos.Framework;
 namespace Zenos.Stages
 {
     //mini.c/mono_codegen
-    public class EmitterStage : CodeCompilerStage
+    public class EmitterStage : Compiler<IMethodContext>
     {
-        public override void Compile(IMethodContext context)
+        public override IMethodContext Compile(IMethodContext context)
         {
-            var ic = InstructionChain.FromInstructions(context.Instruction);
-            
-            // prologue
+            //// prologue
             context.Code.AddRange(new byte[]
             {
                 0x55,                   // pushq   %rbp
                 0x48, 0x89, 0xe5        // movq    %rsp, %rbp
             });
-            // S mod 8 must be 0;
-            // S(n) = (n*4)
-            var space = SpaceForVariables(context);
+            //// S mod 8 must be 0;
+            //// S(n) = (n*4)
+            //var space = SpaceForVariables(context);
 
-            // create some space for our locals and arguments on the stack
-            if (space > 0)
-            {
-                context.Code.AddRange(0x48, 0x83, 0xec, space); // sub    rsp, 0x20
-            }
+            //// create some space for our locals and arguments on the stack
+            //if (space > 0)
+            //{
+            //    context.Code.AddRange(0x48, 0x83, 0xec, space); // sub    rsp, 0x20
+            //}
 
-            for (; !ic.EndOfInstructions; ic++)
+            foreach (var inst in context.Instruction)
             {
-                var inst = ic.Instruction;
                 switch (inst.Code)
                 {
-                    case InstructionCode.ZilLoad:
+                    case InstructionCode.Load:
                     {
                         EmitLoad(context, inst);
                         break;
                     }
-                    case InstructionCode.ZilStore:
+                    case InstructionCode.Store:
                     {
                         EmitStore(context, inst);
                         break;
@@ -57,7 +54,42 @@ namespace Zenos.Stages
                     }
                     case InstructionCode.CilRet:
                     {
-                        context.Code.AddRange(0x58); //popq    %rax
+                        context.Code.AddRange(0x58); // popq    %rax
+                        break;
+                    }
+                    case InstructionCode.CilAdd:
+                    {
+                        EmitAdd(context, inst);
+                        break;
+                    }
+                    case InstructionCode.PushArgument:
+                    {
+                        EmitPushArgument(context, inst);
+                        break;
+                    }
+                    case InstructionCode.PushConstant:
+                    {
+                        EmitPushConstanct(context, inst);
+                        break;
+                    }
+                    case InstructionCode.CilLdarg_0:
+                    {
+                        context.Code.Add(0x51); // push rcx
+                        break;
+                    }
+                    case InstructionCode.CilLdarg_1:
+                    {
+                        context.Code.Add(0x52); // push rdx
+                        break;
+                    }
+                    case InstructionCode.CilLdarg_2:
+                    {
+                        context.Code.AddRange(0x41, 0x50); // push r8
+                        break;
+                    }
+                    case InstructionCode.CilLdarg_3:
+                    {
+                        context.Code.AddRange(0x41, 0x51); // push r9
                         break;
                     }
                     default:
@@ -65,11 +97,11 @@ namespace Zenos.Stages
                 }
             }
 
-            // reset the stack pointer to nuke our locals and arguments from the stack
-            if (space > 0)
-            {
-                context.Code.AddRange(0x48, 0x83, 0xc4, space); // add    rsp, 0x20
-            }
+            //// reset the stack pointer to nuke our locals and arguments from the stack
+            //if (space > 0)
+            //{
+            //    context.Code.AddRange(0x48, 0x83, 0xc4, space); // add    rsp, 0x20
+            //}
 
             // epilogue
             context.Code.AddRange(new byte[]
@@ -88,6 +120,60 @@ namespace Zenos.Stages
                 var nop = paddingSize > 9 ? _paddingBytes[8] : _paddingBytes[paddingSize - 1];
                 context.Code.AddRange(nop);
             }
+
+            return context;
+        }
+
+        private void EmitPushArgument(IMethodContext context, IInstruction inst)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void EmitPushConstanct(IMethodContext context, IInstruction inst)
+        {
+            throw new NotImplementedException();
+
+            if (inst.Operand0 is float)
+            {
+                context.Code.Add(0x50); // push r32
+            }
+            else
+            {
+            }
+        }
+
+        private void EmitAdd(IMethodContext context, IInstruction inst)
+        {
+            //TODO: basically we need to look at what the stack would have as far as types as we process it
+            // once we know types and what not we can perform actions based on it
+
+            // context.Code.AddRange(0x8f, 0x45, offset); //pop -4(%rbp)
+//            switch (inst.Previous.StackType)
+//            {
+//                case StackType.Imm64:
+//                    // pop stack to eax
+//                    // add eax + eax
+//                    throw new NotImplementedException();
+
+//                case StackType.Imm32:
+//#warning  http://pasm.pis.to/
+//#warning                     something is wrong here result is always showing 4. maybe need to run a simulator or something
+
+                    context.Code.AddRange(new byte[]
+                    {
+                        0x58,             // pop rax
+                        0x41, 0x5A,       // pop r10
+                        0x4C, 0x01, 0xD0, // add rax, rcx
+                        0x50,             // push rax
+                    });
+
+            //        break;
+            //    case StackType.Pointer:
+            //        throw new NotImplementedException();
+
+            //    default:
+            //        throw new NotImplementedException();
+            //}
         }
 
         private static void EmitStore(IMethodContext context, IInstruction inst)
@@ -96,7 +182,29 @@ namespace Zenos.Stages
             var dest = reg.Destination;
             var offset = (byte) (-4*(dest.Id + 1));
 
-            context.Code.AddRange(0x8f, 0x45, offset); //pop -4(%rbp)
+            // TODO: there is more to it than this but for now we will assume that these registers are int/pointer types
+            switch (dest.Id)
+            {
+                case 0: 
+                    context.Code.Add(0x59); // pop rcx
+                    break;
+
+                case 1: 
+                    context.Code.Add(0x5A); // pop rdx
+                    break;
+
+                case 2: 
+                    context.Code.AddRange(0x41, 0x58); // pop r8
+                    break;
+
+                case 3: 
+                    context.Code.AddRange(0x41, 0x59);// pop r9
+                    break;
+
+                default:
+                    context.Code.AddRange(0x8f, 0x45, offset); //pop qword [rbp-4]
+                    break;
+            }
         }
 
         private static void EmitLoad(IMethodContext context, IInstruction inst)
@@ -117,13 +225,35 @@ namespace Zenos.Stages
 
                 context.Code.AddRange(0x50); // push   rax
             }
-            else if (inst.Operand0 is IInstruction)
+            else if (inst.Operand0 is IInstruction) // argument
             {
                 var reg = (IInstruction) inst.Operand0;
                 var dest = reg.Destination;
                 var offset = (byte) (-4*(dest.Id + 1));
 
-                context.Code.AddRange(0xff, 0x75, offset); //push -4(%rbp)
+                // TODO: there is more to it than this but for now we will assume that these registers are int/pointer types
+                switch (dest.Id)
+                {
+                    case 0:
+                        context.Code.Add(0x51); // push rcx
+                        break;
+
+                    case 1:
+                        context.Code.Add(0x52); // push rdx
+                        break;
+
+                    case 2:
+                        context.Code.AddRange(0x41, 0x50); // push r8
+                        break;
+
+                    case 3:
+                        context.Code.AddRange(0x41, 0x51);// push r9
+                        break;
+
+                    default:
+                        context.Code.AddRange(0xff, 0x75, offset); //push qword [rbp-4]
+                        break;
+                }
             }
             else
             {
@@ -133,8 +263,10 @@ namespace Zenos.Stages
 
         private int SpaceForVariables(IMethodContext context)
         {
+            //TODO: this should be calculated based on the stack type for each parameter and argument
+            
             //Space = (locals + args)*4 bumped to the nearest multiple of 8
-            var locals = context.Locals.Count;
+            var locals = 0; //context.Locals.Count;
             var args = context.Parameters.Count;
             var space = 4*(locals + args);
 
@@ -196,84 +328,119 @@ namespace Zenos.Stages
         //    context.Text.WriteLine("ret");
         //}
 
-        private void Compile(IMethodContext context, BasicBlock block)
-        {
-            var label = GetBlockLabel(context, block);
-            context.Text.WriteLine("{0}:     # {1}", label, block);
-            var instruction = block.code;
-            while (instruction != null)
-            {
-                Compile(context, instruction);
-                instruction = instruction.Next;
-            }
-            //Block epilogue?
-            context.Text.WriteLine("# end of {0}", label);
-            context.Text.WriteLine();
-        }
+        //private void Compile(IMethodContext context, BasicBlock block)
+        //{
+        //    var label = GetBlockLabel(context, block);
+        //    context.Text.WriteLine("{0}:     # {1}", label, block);
+        //    var instruction = block.Instruction;
+        //    while (instruction != null)
+        //    {
+        //        Compile(context, instruction);
+        //        instruction = instruction.Next;
+        //    }
+        //    //Block epilogue?
+        //    context.Text.WriteLine("# end of {0}", label);
+        //    context.Text.WriteLine();
+        //}
 
-        private static string GetBlockLabel(IMethodContext context, BasicBlock block)
-        {
-            return $"{context.Method.Name}_bb{block.block_num}";
-        }
+        //private static string GetBlockLabel(IMethodContext context, BasicBlock block)
+        //{
+        //    return $"{context.Method.Name}_bb{block.BlockId}";
+        //}
 
-        private void Compile(IMethodContext context, IInstruction instruction)
-        {
-            Trace.WriteLine(instruction);
+        //private void Compile(IMethodContext context, IInstruction instruction)
+        //{
+        //    Trace.WriteLine(instruction);
 
-            switch (instruction.Code)
-            {
-                //case InstructionCode.OP_ICONST:
-                //    context.Text.WriteLine("movl ${0}, %{1}     # {2}", instruction.Operand0, instruction.Destination, instruction);
-                //    break;
+        //    switch (instruction.Code)
+        //    {
+        //        //case InstructionCode.OP_ICONST:
+        //        //    context.Text.WriteLine("movl ${0}, %{1}     # {2}", instruction.Operand0, instruction.Destination, instruction);
+        //        //    break;
 
-                //case InstructionCode.OP_MOVE:
+        //        //case InstructionCode.OP_MOVE:
 
-                //    break;
-                //case Code.Stloc:
-                //    context.Text.WriteLine("movl %eax, {0}      # {1} ", EmitLocation(context, instruction), instruction);
-                //    break;
-                //case Code.Nop:
-                //    break;
-                //case Code.Ldloc:
-                //    var varType = ((VariableReference)(instruction.Operand)).VariableType;
-                //    var inst = varType.FullName == "System.Single" ? "flds {0}       # {1} " : "movl {0}, %eax       # {1} ";
+        //        //    break;
+        //        //case Code.Stloc:
+        //        //    context.Text.WriteLine("movl %eax, {0}      # {1} ", EmitLocation(context, instruction), instruction);
+        //        //    break;
+        //        //case Code.Nop:
+        //        //    break;
+        //        //case Code.Ldloc:
+        //        //    var varType = ((VariableReference)(instruction.Operand)).VariableType;
+        //        //    var inst = varType.FullName == "System.Single" ? "flds {0}       # {1} " : "movl {0}, %eax       # {1} ";
 
-                //    context.Text.WriteLine(inst, EmitLocation(context, instruction), instruction);
-                //    break;
-                //case Code.Ldarg:
-                //    context.Text.WriteLine("movl {0}, %eax      # {1} ", EmitLocation(context, instruction), instruction);
-                //    break;
-                //case Code.Ret:
-                //    //ret is handled in the method body
-                //    Helper.IsNull(instruction.Next);
-                //    break;
-                //case Code.Ldc_R4:
-                //    var inIEEE754 = BitConverter.ToInt32(BitConverter.GetBytes((float)instruction.Operand), 0);
-                //    context.Text.WriteLine("movl $0x{0}, %eax    # {1}", inIEEE754.ToString("x"), instruction);
-                //    break;
-                default:
-                    Helper.NotSupported($"InstructionCode not supported: {instruction.Code}");
-                    break;
-            }
-        }
+        //        //    context.Text.WriteLine(inst, EmitLocation(context, instruction), instruction);
+        //        //    break;
+        //        //case Code.Ldarg:
+        //        //    context.Text.WriteLine("movl {0}, %eax      # {1} ", EmitLocation(context, instruction), instruction);
+        //        //    break;
+        //        //case Code.Ret:
+        //        //    //ret is handled in the method body
+        //        //    Helper.IsNull(instruction.Next);
+        //        //    break;
+        //        //case Code.Ldc_R4:
+        //        //    var inIEEE754 = BitConverter.ToInt32(BitConverter.GetBytes((float)instruction.Operand), 0);
+        //        //    context.Text.WriteLine("movl $0x{0}, %eax    # {1}", inIEEE754.ToString("x"), instruction);
+        //        //    break;
+        //        default:
+        //            Helper.NotSupported($"InstructionCode not supported: {instruction.Code}");
+        //            break;
+        //    }
+        //}
 
-        private string EmitLocation(ICompilationContext context, Instruction instruction)
-        {
-            var operand = instruction.Operand as VariableReference;
-            if (operand != null)
-            {
-                var index = (operand.Index + 1) * -4;
-                return $"{index}(%ebp)";
-            }
+        //private string EmitLocation(ICompilationContext context, Instruction instruction)
+        //{
+        //    var operand = instruction.Operand as VariableReference;
+        //    if (operand != null)
+        //    {
+        //        var index = (operand.Index + 1) * -4;
+        //        return $"{index}(%ebp)";
+        //    }
 
-            var parameter = instruction.Operand as ParameterReference;
-            if (parameter != null)
-            {
-                var index = 8 + (parameter.Index) * 4;
-                return $"{index}(%ebp)";
-            }
-            Helper.Break();
-            return instruction.Operand.ToString();
-        }
+        //    var parameter = instruction.Operand as ParameterReference;
+        //    if (parameter != null)
+        //    {
+        //        var index = 8 + (parameter.Index) * 4;
+        //        return $"{index}(%ebp)";
+        //    }
+        //    Helper.Break();
+        //    return instruction.Operand.ToString();
+        //}
+    }
+
+    /// <summary>
+    /// Mode Registry Memory (aka ModRM)
+    /// </summary>
+    enum ModeRegistryMemory : byte
+    {
+        RM0 = 0x01,
+        RM1 = 0x02,
+        RM2 = 0x04,
+        RegOpCode0 = 0x08,
+        RegOpCode1 = 0x10,
+        RegOpCode2 = 0x20,
+        Mod0 = 0x40,
+        Mod1 = 0x80,
+    }
+
+    /// <summary>
+    /// Scale Index Base (SIB)
+    /// 
+    /// * scale[7:6]: 2[6:7]scale = scale factor
+    /// * index[.X, 5:3] – reg containing the index portion
+    /// * base[.B, 2:0] – reg containing the base portion
+    /// * eff_addr = scale* index + base + offset
+    /// </summary>
+    enum ScaleIndexBase : byte
+    {
+        Base0 = 0x01,
+        Base1 = 0x02,
+        Base2 = 0x04,
+        Index0 = 0x08,
+        Index1 = 0x10,
+        Index2 = 0x20,
+        Scale0 = 0x40,
+        Scale1 = 0x80,
     }
 }

@@ -3,10 +3,12 @@ using System.ComponentModel;
 using System.Linq;
 using Mono.Cecil.Cil;
 using System.Collections.Generic;
+using System.Runtime.Remoting.Messaging;
+using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    public class CilToZil : CodeCompilerStage
+    public class CilSimplifier : Compiler<IMethodContext>
     {
         delegate void Simplifier(IMethodContext context, IInstruction ins);
 
@@ -25,17 +27,17 @@ namespace Zenos.Framework
             AddSimplifier((context, ins) => SimplifyFromSByte(ins, dest), sByteIns);
         }
 
-        static CilToZil()
+        static CilSimplifier()
         {
-            AddSimplifier(
-                (context, ins) => Simplify(ins, InstructionCode.ZilLoad, context.Parameters[ins.Code - InstructionCode.CilLdarg_0]),
-                InstructionCode.CilLdarg_0, 
-                InstructionCode.CilLdarg_1, 
-                InstructionCode.CilLdarg_2,
-                InstructionCode.CilLdarg_3);
+            //AddSimplifier(
+            //    (context, ins) => Simplify(ins, InstructionCode.Load, context.Parameters[ins.Code - InstructionCode.CilLdarg_0]),
+            //    InstructionCode.CilLdarg_0, 
+            //    InstructionCode.CilLdarg_1, 
+            //    InstructionCode.CilLdarg_2,
+            //    InstructionCode.CilLdarg_3);
 
             AddSimplifier(
-                (context, ins) => Simplify(ins, InstructionCode.ZilLoad, context.Locals[ins.Code - InstructionCode.CilLdloc_0]),
+                (context, ins) => Simplify(ins, InstructionCode.Load, context.Locals[ins.Code - InstructionCode.CilLdloc_0]),
                 InstructionCode.CilLdloc_0,
                 InstructionCode.CilLdloc_1, 
                 InstructionCode.CilLdloc_2,
@@ -43,35 +45,48 @@ namespace Zenos.Framework
 
             //loads the address of a variable onto the stack
             AddSimplifier(
-               (context, ins) => Simplify(ins, InstructionCode.ZilLoad, context.Parameters[(sbyte)ins.Operand0]),
+               (context, ins) => Simplify(ins, InstructionCode.Load, context.Parameters[(sbyte)ins.Operand0]),
                InstructionCode.CilLdarg_S,
                InstructionCode.CilLdarga_S);
 
 
             AddSimplifier(
-                (context, ins) => Simplify(ins, InstructionCode.ZilLoad, context.Locals[(sbyte)ins.Operand0]),
+                (context, ins) => Simplify(ins, InstructionCode.Load, context.Locals[(sbyte)ins.Operand0]),
                 InstructionCode.CilLdloc_S,
                 InstructionCode.CilLdloca_S);
 
 
             AddSimplifier(
-                (context, ins) => Simplify(ins, InstructionCode.ZilStore, context.Locals[ins.Code - InstructionCode.CilStloc_0]),
+                (context, ins) => Simplify(ins, InstructionCode.Store, context.Locals[ins.Code - InstructionCode.CilStloc_0]),
                 InstructionCode.CilStloc_0,
                 InstructionCode.CilStloc_1,
                 InstructionCode.CilStloc_2,
                 InstructionCode.CilStloc_3);
 
             AddSimplifier(
-                (context, ins) => Simplify(ins, InstructionCode.ZilStore, context.Parameters[(sbyte)ins.Operand0]),
+                (context, ins) =>
+                {
+                    if (ins.Operand0 is sbyte)
+                    {
+                        Simplify(ins, InstructionCode.Store, context.Parameters[(sbyte) ins.Operand0]);
+                        return;
+                    }
+
+                    var paramDef = ins.Operand0 as ParameterDefinition;
+                    if (paramDef != null)
+                    {
+                        Simplify(ins, InstructionCode.Store, context.Parameters[paramDef.Index]);
+                    }
+                },
                 InstructionCode.CilStarg_S);
 
             AddSimplifier(
-                (context, ins) => Simplify(ins, InstructionCode.ZilStore, context.Locals[(sbyte)ins.Operand0]),
+                (context, ins) => Simplify(ins, InstructionCode.Store, context.Locals[(sbyte)ins.Operand0]),
                 InstructionCode.CilStloc_S);
 
 
             AddSimplifier(
-                (context, ins) => Simplify(ins, InstructionCode.ZilLoad, ins.Code - InstructionCode.CilLdc_I4_0),
+                (context, ins) => Simplify(ins, InstructionCode.Load, ins.Code - InstructionCode.CilLdc_I4_0),
                 InstructionCode.CilLdc_I4_M1,
                 InstructionCode.CilLdc_I4_0,
                 InstructionCode.CilLdc_I4_1,
@@ -84,7 +99,7 @@ namespace Zenos.Framework
                 InstructionCode.CilLdc_I4_8);
 
             AddSimplifier(
-               (context, ins) => Simplify(ins, InstructionCode.ZilLoad, (int)(sbyte)ins.Operand0),
+               (context, ins) => Simplify(ins, InstructionCode.Load, (int)(sbyte)ins.Operand0),
                InstructionCode.CilLdc_I4_S);
 
             AddSByteSimplifier(InstructionCode.CilBrtrue_S, InstructionCode.CilBrtrue);
@@ -104,21 +119,25 @@ namespace Zenos.Framework
             AddSByteSimplifier(InstructionCode.CilBlt_Un_S, InstructionCode.CilBlt_Un);
 
             AddSimplifier(
-               (context, ins) => Simplify(ins, InstructionCode.ZilLoad, (int)(sbyte)ins.Operand0),
+               (context, ins) => Simplify(ins, InstructionCode.Load, (int)(sbyte)ins.Operand0),
                InstructionCode.CilLdc_I4_S);
 
             AddSimplifier(
-               (context, ins) => Simplify(ins, InstructionCode.ZilLoad, (int)ins.Operand0),
+               (context, ins) => ins.Code = InstructionCode.Load,
                InstructionCode.CilLdc_I4);
 
             AddSimplifier(
-               (context, ins) => Simplify(ins, InstructionCode.ZilLoad, (long)ins.Operand0),
+               (context, ins) => ins.Code = InstructionCode.Load,
                InstructionCode.CilLdc_I8);
+
+            AddSimplifier(
+                (context, ins) => ins.Code = InstructionCode.PushConstant, 
+                InstructionCode.CilLdc_R4,
+                InstructionCode.CilLdc_R8);
         }
 
-        public virtual bool Compile(IMethodContext context, InstructionChain chain)
+        public virtual bool Compile(IMethodContext context, IInstruction ins)
         {
-            var ins = chain.Instruction;
 
             Simplifier simplifier;
             if (Simplifiers.TryGetValue(ins.Code, out simplifier))
@@ -128,12 +147,13 @@ namespace Zenos.Framework
                 // default operation
             }
 
+            //TODO: we cant do this unless we fix up jumps
             //remove jumping branches that go to the next instruction
-            if (ins.Code == InstructionCode.CilBr && ins.Operand0 == ins.Next)
-            {
-                chain.Remove();
-                return false;
-            }
+            //if (ins.Code == InstructionCode.CilBr && ins.Operand0 == ins.Next)
+            //{
+            //    chain.Remove();
+            //    return false;
+            //}
 
             return true;
         }
@@ -151,33 +171,31 @@ namespace Zenos.Framework
                 i.Operand0 = ((sbyte)i.Operand0);
         }
 
-        public override void Compile(IMethodContext context)
+        public override IMethodContext Compile(IMethodContext context)
         {
-            var ic = InstructionChain.FromInstructions(context.Instruction);
-
-            while (!ic.EndOfInstructions)
+            foreach (var inst in context.Instruction)
             {
-                if (Compile(context, ic))
-                    ic.Increment();
+                Compile(context, inst);
             }
-
-            ic.Reset();
             
-            for (; !ic.EndOfInstructions; ic++)
-            {
-                var ins = ic.Instruction;
+            //TODO: we cant do this unless we fix up jumps
+            //for (; !ic.EndOfInstructions; ic++)
+            //{
+            //    var ins = ic.Instruction;
 
-                if (ins.Code != InstructionCode.ZilStore)
-                    continue;
+            //    if (ins.Code != InstructionCode.ZilStore)
+            //        continue;
 
-                var next = ins.Next;
-                if (next == null || next.Code != InstructionCode.ZilLoad || ins.Operand0 != next.Operand0)
-                    continue;
+            //    var next = ins.Next;
+            //    if (next == null || next.Code != InstructionCode.ZilLoad || ins.Operand0 != next.Operand0)
+            //        continue;
 
-                //store and immediate load can be replaced with NOOP
-                ic.Remove(); // store
-                ic.Remove(); // load
-            }
+            //    //store and immediate load can be replaced with NOOP
+            //    ic.Remove(); // store
+            //    ic.Remove(); // load
+            //}
+
+            return context;
         }
     }
 }

@@ -5,10 +5,8 @@ using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    public interface IAssemblyContext : IDisposable, IEnumerable<ITypeContext>
+    public interface IAssemblyContext : IEnumerable<ITypeContext>
     {
-        bool IsDisposed { get; }
-
         void Add(string key, ITypeContext type);
 
         ITypeContext GetTypeContext(string key);
