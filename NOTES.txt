@@ -4,3 +4,10 @@ TODO:
 * https://en.m.wikibooks.org/wiki/Compiler_Construction/Stack-based_representation
 
 https://assembly.ynh.io/
+
+
+Examples of assembly
+
+https://www.csee.umbc.edu/portal/help/nasm/sample_64.shtml
+http://cs.lmu.edu/~ray/notes/x86assembly/
+https://en.wikibooks.org/wiki/X86_Assembly/NASM_Syntax

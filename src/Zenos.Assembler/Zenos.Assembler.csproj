@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <AssemblyName>Zenos.Assembler</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>Zenos.Assembler</PackageId>
+    <RuntimeFrameworkVersion>1.0.4</RuntimeFrameworkVersion>
+    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.1.1-beta" />
+    <PackageReference Include="FParsec" Version="1.0.3" />
+    <PackageReference Include="FSharp.Core" Version="4.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Zenos.Core\Zenos.Core.fsproj" />
+    <ProjectReference Include="..\Zenos\Zenos.csproj" />
+  </ItemGroup>
+
+</Project>

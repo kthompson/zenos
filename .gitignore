@@ -7,3 +7,5 @@ packages/
 *.ncrunchsolution
 *.ncrunchproject
 *.cache
+*.sdf
+.vs/*
