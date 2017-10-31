@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using Zenos.Linker.ELF;
 
 namespace Zenos.Linker.Common
 {

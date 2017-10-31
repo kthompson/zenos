@@ -16,9 +16,9 @@ namespace Zenos.Assembler
     {
         static void Main(string[] args)
         {
-            var str = File.ReadAllText(@"E:\code\AppDev\zenos\tests\Zenos.Assembler.Tests\resources\hello.asm");
+            var str = File.ReadAllText(@"C:\code\zenos\tests\Zenos.Assembler.Tests\resources\basic.asm");
 
-            var result = FParsec.CharParsers.run(plisting, str);
+            var result = FParsec.CharParsers.run(pListing, str);
             if (result.IsSuccess)
             {
                 Console.WriteLine(result.ToString());

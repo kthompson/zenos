@@ -12,26 +12,16 @@ module Assembly =
 
     type Label = Label of Label:string
 
-    type Data =
-    | DataString of string
-    | DataFloat of float
-    | DataInt of int64
-
     type SectionEntry =
-    | Instruction of Instruction:Instruction
-    | Data8 of Data list
-    | Data16 of Data list
-    | Data32 of Data list
-    | Data64 of Data list
+    | Label of Label
+    | SectionEntry of Label option * Instruction
 
-    type ListingEntry =
+    type Directive =
     | Global of Name:string
     | Extern of Name:string
-    | Section of Name:string
-    | Label of Label
-    | SectionEntry of Label option * SectionEntry
+    | Section of Name:string * SectionEntry list
 
-    type Listing = Listing of ListingEntry list
+    type Listing = Listing of Directive list
 
     let (<!>) (p: Parser<_,_>) label : Parser<_,_> =
         fun stream ->
@@ -86,57 +76,35 @@ module Assembly =
         between (pchar quote) (pchar quote)
                 (stringsSepBy normalCharSnippet escapedCharSnippet)
 
-    let comment<'u> =
-        let firstChar = satisfy (fun c -> c = ';') <?> "comment ;"
-        let restChar = satisfy (fun c -> c <> '\n') <?> "comment tail"
+    let comment: Parser<unit, unit> =
+        let firstChar = satisfy (fun c -> c = ';')
+        let restChar = satisfy (fun c -> c <> '\n')
 
         firstChar >>. many restChar
         |>> ignore
         <?> "comment"
         <!> "comment"
 
-    let pextern<'u> =
+    let restOfLine: Parser<unit, unit> = 
+        ws .>> opt comment
+
+    let pextern: Parser<Directive, unit> =
         let externName = identifier "extern name"
 
-        pstring "extern" >>. ws1 >>. externName
+        pstring "extern" >>. ws1 >>. externName .>> restOfLine
         |>> Extern
         <?> "Extern"
         <!> "Extern"
 
-    let pglobal<'u> =
+    let pglobal: Parser<Directive, unit> =
         let globalName = identifier "global name"
 
-        pstring "global" >>. ws1 >>. globalName
+        pstring "global" >>. ws1 >>. globalName .>> restOfLine
         |>> Global
         <?> "Global"
         <!> "Global"
 
-    let psection<'u> =
-        let sectionName = 
-            let first = pchar '.' 
-            let alpha = satisfy (fun c -> Char.IsLetterOrDigit(c) || c = '_' || c = '@') <?> "section name"
-
-            first .>>. manyChars alpha
-            |>> fun (a, b) -> a.ToString() + b
-            <?> "section name"
-
-        let sectionHeader = 
-            pstring "section" <|> pstring "SECTION" 
-
-        sectionHeader >>. ws1 >>. sectionName
-        |>> Section
-        <?> "Section"
-        <!> "Section"
-    
-    let plabel<'u> =
-        let label = identifier "label"
-
-        label .>> pchar ':'
-        |>> Label.Label
-        <?> "Label"
-        <!> "Label"
-
-    let preg8<'u> = 
+    let preg8: Parser<Register8, unit> = 
         choice [
             pstring "ah" >>% AH
             pstring "bh" >>% BH
@@ -161,7 +129,7 @@ module Assembly =
         ]
         <?> "8 Bit Register"
 
-    let preg16<'u> = 
+    let preg16: Parser<Register16, unit> = 
         choice [
             pstring "ax" >>% AX
             pstring "bx" >>% BX
@@ -182,7 +150,7 @@ module Assembly =
         ]
         <?> "16 Bit Register"
 
-    let preg32<'u> = 
+    let preg32: Parser<Register32,unit> = 
         choice [
             pstring "eax" >>% EAX
             pstring "ebx" >>% EBX
@@ -205,7 +173,7 @@ module Assembly =
         ]
         <?> "32 Bit Register"
 
-    let preg64<'u> = 
+    let preg64: Parser<Register64,unit> = 
         choice [
             pstring "rax" >>% RAX
             pstring "rbx" >>% RBX
@@ -247,10 +215,10 @@ module Assembly =
             pint16 |>> Operand.Int16
             pint32 |>> Operand.Int32
             pint64 |>> Operand.Int64
-            identifier "operand" |>> Operand.Label
+            identifier "operand" |>> LabelReference
         ]
 
-    let pdatainst: Parser<SectionEntry, unit> = 
+    let pdatainst: Parser<Instruction, unit> = 
         let ds =
             stringLiteral '\'' <|> stringLiteral '"'
             |>> DataString
@@ -276,10 +244,10 @@ module Assembly =
             <!> "dtype"
 
         pipe2 dtype (ws1 >>. dataList)
-            (fun a b -> a b)
+            (fun a b -> (a b) |> Instruction.noOperands)
         <!> "pdatainst"
 
-    let pinst : Parser<SectionEntry, unit> =
+    let pInstruction : Parser<Instruction, unit> =
         let op = poperand
         let zeroOps ins code =
             pstring ins
@@ -304,68 +272,100 @@ module Assembly =
             twoOp "xor" Xor
             oneOp "pop" Pop
             oneOp "push" Push
+            pdatainst
         ]
-        |>> SectionEntry.Instruction
         <?> "Instruction"
         <!> "Instruction"
+    
+    let pLabel: Parser<Label, unit> =
+        let label = identifier "label"
 
-    let psectionEntry : Parser<ListingEntry, unit> =
-        let pinst = pinst <|> pdatainst
-        let labelledInst = 
-            plabel .>> ws .>>. opt pinst
-            |>> function
-                | label, Some(inst) -> SectionEntry (Some(label), inst)
-                | label, None -> ListingEntry.Label label
-            <?> "LabelledInst"
-            <!> "LabelledInst"
-
-        let unlabelledInst =
-            pinst
-            |>> fun inst -> SectionEntry (None, inst)
-            <?> "UnlabelledInst"
-            <!> "UnlabelledInst"
-
+        label .>> pchar ':'
+        |>> Label.Label
+        <?> "Label"
+        <!> "Label"
         
-        (attempt labelledInst) <|> unlabelledInst
+    let emptyLine: Parser<unit, unit> =
+        choice [
+            comment
+            ws1 .>> opt comment
+            nextCharSatisfies (fun c -> c = '\n')
+        ]
+
+    let pSectionEntry : Parser<SectionEntry option, unit> =
+        let listing =
+            let labelledInst = 
+                pLabel .>> ws .>>. opt pInstruction
+                |>> function
+                    | label, Some(inst) -> SectionEntry (Some(label), inst)
+                    | label, None -> SectionEntry.Label label
+                <?> "LabelledInst"
+                <!> "LabelledInst"
+
+            let unlabelledInst =
+                pInstruction
+                |>> fun inst -> SectionEntry (None, inst)
+                <?> "UnlabelledInst"
+                <!> "UnlabelledInst"
+        
+            choice [
+                (attempt labelledInst) |>> Some
+                unlabelledInst |>> Some
+                preturn None
+            ]
+
+        ws >>. listing .>> restOfLine
         <?> "SectionEntry"
         <!> "SectionEntry"
 
-    let plistingEntry : Parser<ListingEntry option, unit> =
+    let pSectionEntries: Parser<SectionEntry list, unit> =
+        (sepBy pSectionEntry skipNewline)
+        |>> fun items -> List.choose id items
+
+    let pSection: Parser<Directive option, unit> =
+        let sectionName = 
+            let first = pchar '.' 
+            let alpha = satisfy (fun c -> Char.IsLetterOrDigit(c) || c = '_' || c = '@') <?> "section name"
+
+            first .>>. manyChars alpha
+            |>> fun (a, b) -> a.ToString() + b
+            <?> "section name"
+
+        let sectionHeader = 
+            pstring "section" <|> pstring "SECTION"
+
+        let sectionLine = 
+            (sectionHeader >>. ws1 >>. sectionName .>> restOfLine)
+            <|> preturn ".text"
+            <!> "sectionLine"
+
+        sectionLine .>>. pSectionEntries
+        |>> fun (name, items) ->
+                if items.IsEmpty then None
+                else Section (name, items) |> Some
+        <?> "Section"
+        <!> "Section"
+
+    let pDirective : Parser<Directive option, unit> =
         let listing =
             choice [
-                pglobal
-                pextern
-                psection
-                psectionEntry
+                emptyLine >>% None
+                pglobal |>> Some
+                pextern |>> Some
+                pSection
             ]
 
-        let listingLine =
-            listing .>> ws .>> opt comment
-            |>> Some
-            <?> "ListingEntry"
-
-        let emptyLine =
-            opt comment
-            >>% None 
-            <?> "emptyLine"
-            <!> "emptyLine"
-
-        ws >>. choice [
-            listingLine
-            emptyLine
-        ]
+        
+        ws >>. listing
         <?> "ListingEntry"
         <!> "ListingEntry"
     
-    let plisting : Parser<Listing, unit> =
-        let nl = skipNewline <?> "skipNewLine" <!> "skipNewLine"
-        let eof = eof <?> "eof" <!> "eof"
-        (sepBy plistingEntry nl) .>> eof
-        |>> List.collect(function
-            | Some item -> [item]
-            | _ -> []
-            )
-        |>> Listing
+    let pListing : Parser<Listing, unit> =
+        (sepBy pDirective skipNewline) .>> eof
+        |>> fun items ->
+                items
+                |> List.choose id
+                |> Listing
         <?> "Listing"
         <!> "Listing"
     

@@ -32,7 +32,6 @@ type Register8  =
 | R8B  | R9B  | R10B | R11B
 | R12B | R13B | R14B | R15B
 
-
 type Register = 
 | Register64 of Register64
 | Register32 of Register32
@@ -56,11 +55,19 @@ type X86_64 =
 | Syscall
 | Xor
 
+type Data =
+| DataString of string
+| DataFloat of float
+| DataInt of int64
 
 type InstructionCode = 
 | Zenos of OpCode:ZenosOpCode
 | Cil of OpCode:Code
 | X86_64 of OpCode:X86_64
+| Data8 of Data list
+| Data16 of Data list
+| Data32 of Data list
+| Data64 of Data list
 
 type FlowControl =
 | Branch = 0
@@ -72,6 +79,7 @@ type FlowControl =
 | Phi = 6
 | Return = 7
 | Throw = 8
+
 
 type Instruction = {
     OpCode: InstructionCode
@@ -91,7 +99,7 @@ and Operand =
 | Int16 of int16
 | Int32 of int32
 | Int64 of int64
-| Label of string
+| LabelReference of string
 
 | Register of Register
 | Instruction of Instruction

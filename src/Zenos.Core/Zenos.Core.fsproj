@@ -54,8 +54,10 @@
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
     <Compile Include="Result.fs" />
+    <Compile Include="IO.fs" />
     <Compile Include="FrameworkTypes.fs" />
     <Compile Include="Assembly.fs" />
+    <Compile Include="Linker.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">

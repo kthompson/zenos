@@ -15,27 +15,26 @@ type AssemblyTests(output:ITestOutputHelper) =
     let file name = 
         File.ReadAllText(Path.Combine("resources", name))
 
+    let zeroOpIns' code =
+        let inst = Instruction.noOperands code
+
+        SectionEntry (None, inst)
+
     let zeroOpIns code =
         let code = X86_64 code
-        let inst = 
-            Instruction.noOperands code
-            |> Instruction
+        let inst = Instruction.noOperands code
 
         SectionEntry (None, inst)
 
     let oneOpIns code op1 =
         let code = X86_64 code
-        let inst = 
-            Instruction.oneOperand code op1
-            |> Instruction
+        let inst = Instruction.oneOperand code op1
 
         SectionEntry (None, inst)
 
     let twoOpIns code op1 op2 =
         let code = X86_64 code
-        let inst = 
-            Instruction.twoOperand code op1 op2
-            |> Instruction
+        let inst = Instruction.twoOperand code op1 op2
 
         SectionEntry (None, inst)
 
@@ -43,6 +42,7 @@ type AssemblyTests(output:ITestOutputHelper) =
     let pushIns = oneOpIns Push
     let moveIns = twoOpIns Move
     let xorIns = twoOpIns Xor
+    let section name items = Section (name, items)
 
     do
         let tw = {
@@ -93,8 +93,8 @@ type AssemblyTests(output:ITestOutputHelper) =
         
 
     [<Fact>]
-    let ``plisting should parse empty input`` () =
-        let actual = test plisting ""
+    let ``pListing should parse empty input`` () =
+        let actual = test pListing ""
 
         let expected = 
             []
@@ -103,10 +103,10 @@ type AssemblyTests(output:ITestOutputHelper) =
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse comments-only.asm`` () =
+    let ``pListing should parse comments-only.asm`` () =
         let ``comments-only.asm`` = file "comments-only.asm"
 
-        let actual = test plisting ``comments-only.asm``
+        let actual = test pListing ``comments-only.asm``
 
         let expected = 
             []
@@ -115,37 +115,38 @@ type AssemblyTests(output:ITestOutputHelper) =
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse hello.asm`` () =
+    let ``pListing should parse hello.asm`` () =
         let ``hello.asm`` = file "hello.asm"
 
-        let actual = test plisting ``hello.asm``
+        let actual = test pListing ``hello.asm``
 
         let expected = 
             [ 
                 Global "_start"
-                Section ".text"
-                "_start" |> Label.Label  |> ListingEntry.Label
+                section ".text" <| [
+                    "_start" |> Label.Label  |> SectionEntry.Label
                 
-                moveIns (RAX |> Register64 |> Register) (Int16 1s)
-                moveIns (RDI |> Register64 |> Register) (Int16 1s)
-                moveIns (RSI |> Register64 |> Register) (Operand.Label "message")
-                moveIns (RDX |> Register64 |> Register) (Int16 13s)
-                zeroOpIns Syscall
+                    moveIns (RAX |> Register64 |> Register) (Int16 1s)
+                    moveIns (RDI |> Register64 |> Register) (Int16 1s)
+                    moveIns (RSI |> Register64 |> Register) (Operand.LabelReference "message")
+                    moveIns (RDX |> Register64 |> Register) (Int16 13s)
+                    zeroOpIns Syscall
 
-                moveIns (EAX |> Register32 |> Register) (Int16 60s)
-                xorIns (RDI |> Register64 |> Register) (RDI |> Register64 |> Register)                
-                zeroOpIns Syscall
-                "message" |> Label.Label  |> ListingEntry.Label
-                // db      "Hello, World", 10      ; note the newline at the end
-                SectionEntry (None, Data8 [ DataString "Hello, World"; DataInt 10L ])
+                    moveIns (EAX |> Register32 |> Register) (Int16 60s)
+                    xorIns (RDI |> Register64 |> Register) (RDI |> Register64 |> Register)                
+                    zeroOpIns Syscall
+                    "message" |> Label.Label  |> SectionEntry.Label
+                    // db      "Hello, World", 10      ; note the newline at the end
+                    Data8 [ DataString "Hello, World"; DataInt 10L ] |> zeroOpIns' 
+                ]
             ]
             |> Listing
             
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse globals`` () =
-        let actual = test plisting "global _start"
+    let ``pListing should parse globals`` () =
+        let actual = test pListing "global _start"
 
         let expected = 
             [ 
@@ -156,8 +157,8 @@ type AssemblyTests(output:ITestOutputHelper) =
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse global with whitespace`` () =
-        let actual = test plisting "  global _start"
+    let ``pListing should parse global with whitespace`` () =
+        let actual = test pListing "  global _start"
 
         let expected = 
             [ 
@@ -168,8 +169,8 @@ type AssemblyTests(output:ITestOutputHelper) =
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse global with whitespace and comment`` () =
-        let actual = test plisting "  global _start; bleh"
+    let ``pListing should parse global with whitespace and comment`` () =
+        let actual = test pListing "  global _start; bleh"
 
         let expected = 
             [ 
@@ -181,8 +182,8 @@ type AssemblyTests(output:ITestOutputHelper) =
 
 
     [<Fact>]
-    let ``plisting should parse global with whitespace and comment2`` () =
-        let actual = test plisting "  global _start ; bleh"
+    let ``pListing should parse global with whitespace and comment2`` () =
+        let actual = test pListing "  global _start ; bleh"
 
         let expected = 
             [ 
@@ -194,8 +195,8 @@ type AssemblyTests(output:ITestOutputHelper) =
 
 
     [<Fact>]
-    let ``plisting should parse global with comment2`` () =
-        let actual = test plisting "global _start ; bleh"
+    let ``pListing should parse global with comment2`` () =
+        let actual = test pListing "global _start ; bleh"
 
         let expected = 
             [ 
@@ -207,8 +208,8 @@ type AssemblyTests(output:ITestOutputHelper) =
 
 
     [<Fact>]
-    let ``plisting should parse extern`` () =
-        let actual = test plisting """extern _start"""
+    let ``pListing should parse extern`` () =
+        let actual = test pListing """extern _start"""
 
         let expected = 
             [ 
@@ -219,8 +220,8 @@ type AssemblyTests(output:ITestOutputHelper) =
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse extern with newLine`` () =
-        let actual = test plisting """extern _start
+    let ``pListing should parse extern with newLine`` () =
+        let actual = test pListing """extern _start
 """
 
         let expected = 
@@ -232,10 +233,10 @@ type AssemblyTests(output:ITestOutputHelper) =
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse extern twice`` () =
+    let ``pListing should parse extern twice`` () =
         let str = """extern first
 extern second"""
-        let actual = test plisting str
+        let actual = test pListing str
 
         let expected = 
             [ 
@@ -247,8 +248,8 @@ extern second"""
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse global and extern`` () =
-        let actual = test plisting """global _start
+    let ``pListing should parse global and extern`` () =
+        let actual = test pListing """global _start
 extern _start"""
 
         let expected = 
@@ -261,12 +262,14 @@ extern _start"""
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse a label`` () =
-        let actual = test plisting "_start:"
+    let ``pListing should parse a label`` () =
+        let actual = test pListing "_start:"
 
         let expected = 
             [ 
-                "_start" |> Label.Label  |> ListingEntry.Label 
+                section ".text" <| [
+                    ("_start" |> Label.Label  |> SectionEntry.Label)
+                ]
             ]
             |> Listing
 
@@ -274,37 +277,33 @@ extern _start"""
 
 
     [<Fact>]
-    let ``plisting should parse a label and comment`` () =
-        let actual = test plisting """_start:
+    let ``pListing should parse a label and comment`` () =
+        let actual = test pListing """_start:
 ; hello"""
 
         let expected = 
             [ 
-                "_start" |> Label.Label  |> ListingEntry.Label 
+                section ".text" <| [
+                    "_start" |> Label.Label  |> SectionEntry.Label 
+                ]
             ]
             |> Listing
 
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse an empty newline`` () =
+    let ``pListing should parse an empty newline`` () =
 
-        let p = ws >>. opt comment .>> skipNewline |>> ignore
-
-        let actual = test p """
+        let actual = test pListing """
 """
 
-
-        let expected = 
-            //[ ]
-            //|> Listing
-            ()
+        let expected = Listing [ ]
         
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse a whitespace and comments`` () =
-        let actual = test plisting """; ehllow
+    let ``pListing should parse a whitespace and comments`` () =
+        let actual = test pListing """; ehllow
      
  ; hellow"""
 
@@ -315,12 +314,14 @@ extern _start"""
         Assert.Equal(expected, actual)
 
     [<Fact>]
-    let ``plisting should parse a push instruction`` () =
-        let actual = test plisting "push rax"
+    let ``pListing should parse a push instruction`` () =
+        let actual = test pListing "push rax"
 
-        let expected = 
+        let expected =
             [
-                RAX |> Register64 |> Register |> pushIns
+                section ".text" <| [
+                    RAX |> Register64 |> Register |> pushIns
+                ]
             ]
             |> Listing
 
@@ -329,18 +330,19 @@ extern _start"""
 
 
     [<Fact>]
-    let ``plisting should parse basic.asm`` () =
+    let ``pListing should parse basic.asm`` () =
         let ``basic.asm`` = file "basic.asm"
 
-        let actual = test plisting ``basic.asm``
+        let actual = test pListing ``basic.asm``
 
         let expected = 
             [ 
                 Global "_start"
-                Section ".text"
-                "_start" |> Label.Label  |> ListingEntry.Label 
-                RAX |> Register64 |> Register |> pushIns 
-                moveIns (RDI |> Register64 |> Register) (Int16 1s)
+                section ".text" <| [
+                     "_start" |> Label.Label |> SectionEntry.Label;
+                    RAX |> Register64 |> Register |> pushIns;
+                    moveIns (RDI |> Register64 |> Register) (Int16 1s) ;
+                ]
             ]
             |> Listing
 
