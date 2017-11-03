@@ -1,27 +1,15 @@
 ﻿namespace Zenos.Framework
 
 open System
-open System.Reflection.Emit
 
-module Assembly =
+module AssemblyParsing =
     open Zenos.Core
+    open Zenos.Framework
+    open Zenos.Framework.Instruction
     open FParsec
     open System.IO
 
     // 64bit samples of nasm syntax https://www.csee.umbc.edu/portal/help/nasm/sample_64.shtml
-
-    type Label = Label of Label:string
-
-    type SectionEntry =
-    | Label of Label
-    | SectionEntry of Label option * Instruction
-
-    type Directive =
-    | Global of Name:string
-    | Extern of Name:string
-    | Section of Name:string * SectionEntry list
-
-    type Listing = Listing of Directive list
 
     let (<!>) (p: Parser<_,_>) label : Parser<_,_> =
         fun stream ->
@@ -212,9 +200,9 @@ module Assembly =
     let poperand: Parser<Operand, unit> =
         choice [
             preg |>> Register
-            pint16 |>> Operand.Int16
-            pint32 |>> Operand.Int32
-            pint64 |>> Operand.Int64
+            pint16 |>> Operand.ImmediateInt16
+            pint32 |>> Operand.ImmediateInt32
+            pint64 |>> Operand.ImmediateInt64
             identifier "operand" |>> LabelReference
         ]
 
@@ -244,34 +232,29 @@ module Assembly =
             <!> "dtype"
 
         pipe2 dtype (ws1 >>. dataList)
-            (fun a b -> (a b) |> Instruction.noOperands)
+            (fun a b -> (a b))
         <!> "pdatainst"
 
     let pInstruction : Parser<Instruction, unit> =
         let op = poperand
         let zeroOps ins code =
-            pstring ins
-            >>% (code |> X86_64 |> Instruction.noOperands)
+            pstring ins >>% code
 
         let oneOp ins code =
             pstring ins .>> ws1 >>. op
-            |>> fun operand -> 
-                let code = X86_64 code
-                Instruction.oneOperand code operand
+            |>> code
 
         let twoOp ins code =
             pstring ins .>> ws1 >>. op .>> ws .>> pchar ',' .>> ws .>>. op
-            |>> fun (op1, op2) ->
-                let code = X86_64 code
-                Instruction.twoOperand code op1 op2
+            |>> fun (a, b) -> code a b
 
         choice [
-            zeroOps "syscall" Syscall
-            twoOp "add" Add
-            twoOp "mov" Move
-            twoOp "xor" Xor
-            oneOp "pop" Pop
-            oneOp "push" Push
+            zeroOps "syscall" Instruction.syscall
+            twoOp "add" Instruction.add
+            twoOp "mov" Instruction.move
+            twoOp "xor" Instruction.xor
+            oneOp "pop" Instruction.pop
+            oneOp "push" Instruction.push
             pdatainst
         ]
         <?> "Instruction"

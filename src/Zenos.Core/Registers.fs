@@ -3,7 +3,7 @@
 open Mono.Cecil
 open Mono.Cecil.Cil
 
-type CilInstruction = Mono.Cecil.Cil.Instruction
+type MonoInstruction = Mono.Cecil.Cil.Instruction
 
 type Register64 =
 | RAX | RBX | RCX | RDX 
@@ -38,74 +38,6 @@ type Register =
 | Register16 of Register16
 | Register8 of Register8
 
-type ZenosOpCode = 
-| Load
-| Store
-| Local
-| Argument
-| PushConstant
-| PushArgument
-| Pop
-
-type X86_64 =
-| Add
-| Move
-| Pop
-| Push
-| Syscall
-| Xor
-
-type Data =
-| DataString of string
-| DataFloat of float
-| DataInt of int64
-
-type InstructionCode = 
-| Zenos of OpCode:ZenosOpCode
-| Cil of OpCode:Code
-| X86_64 of OpCode:X86_64
-| Data8 of Data list
-| Data16 of Data list
-| Data32 of Data list
-| Data64 of Data list
-
-type FlowControl =
-| Branch = 0
-| Break = 1
-| Call = 2
-| Cond_Branch = 3
-| Meta = 4
-| Next = 5
-| Phi = 6
-| Return = 7
-| Throw = 8
-
-
-type Instruction = {
-    OpCode: InstructionCode
-    Offset: int option
-
-    Operand0: Operand option
-    Operand1: Operand option
-    Operand2: Operand option
-
-    Destination: Operand option
-
-    SourceInstruction: CilInstruction option
-}
-
-and Operand =
-| SByte of sbyte
-| Int16 of int16
-| Int32 of int32
-| Int64 of int64
-| LabelReference of string
-
-| Register of Register
-| Instruction of Instruction
-
-| TypeReference of TypeReference
-| Parameter of ParameterDefinition
 
 
 module Register64 =
@@ -167,37 +99,3 @@ module Register =
 
         let (<|>) = orElse
         r64 <|> r32
-
-module Instruction =
-    let noOperands opCode =
-        {
-            OpCode = opCode
-            Offset = None
-            Operand0 = None
-            Operand1 = None
-            Operand2 = None
-            Destination = None
-            SourceInstruction = None
-        }
-
-    let oneOperand opCode operand =
-        {
-            OpCode = opCode
-            Offset = None
-            Operand0 = Some operand
-            Operand1 = None
-            Operand2 = None
-            Destination = None
-            SourceInstruction = None
-        }
-
-    let twoOperand opCode op1 op2 =
-        {
-            OpCode = opCode
-            Offset = None
-            Operand0 = Some op1
-            Operand1 = Some op2
-            Operand2 = None
-            Destination = None
-            SourceInstruction = None
-        }

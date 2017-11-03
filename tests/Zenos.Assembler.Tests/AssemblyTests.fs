@@ -8,40 +8,21 @@ open System.IO
 
 open FParsec
 open Zenos.Framework
-open Zenos.Framework.Assembly
+open Zenos.Framework.AssemblyParsing
 
 type AssemblyTests(output:ITestOutputHelper) =
 
     let file name = 
         File.ReadAllText(Path.Combine("resources", name))
 
-    let zeroOpIns' code =
-        let inst = Instruction.noOperands code
+    let toSectionEntry inst = SectionEntry (None, inst)
 
-        SectionEntry (None, inst)
+    let popIns = Instruction.pop >> toSectionEntry
+    let syscallIns = Instruction.syscall |> toSectionEntry
+    let pushIns = Instruction.push >> toSectionEntry
+    let moveIns a b = Instruction.move a b |> toSectionEntry
+    let xorIns a b = Instruction.xor a b |> toSectionEntry
 
-    let zeroOpIns code =
-        let code = X86_64 code
-        let inst = Instruction.noOperands code
-
-        SectionEntry (None, inst)
-
-    let oneOpIns code op1 =
-        let code = X86_64 code
-        let inst = Instruction.oneOperand code op1
-
-        SectionEntry (None, inst)
-
-    let twoOpIns code op1 op2 =
-        let code = X86_64 code
-        let inst = Instruction.twoOperand code op1 op2
-
-        SectionEntry (None, inst)
-
-    let popIns = oneOpIns Pop
-    let pushIns = oneOpIns Push
-    let moveIns = twoOpIns Move
-    let xorIns = twoOpIns Xor
     let section name items = Section (name, items)
 
     do
@@ -126,18 +107,18 @@ type AssemblyTests(output:ITestOutputHelper) =
                 section ".text" <| [
                     "_start" |> Label.Label  |> SectionEntry.Label
                 
-                    moveIns (RAX |> Register64 |> Register) (Int16 1s)
-                    moveIns (RDI |> Register64 |> Register) (Int16 1s)
+                    moveIns (RAX |> Register64 |> Register) (ImmediateInt16 1s)
+                    moveIns (RDI |> Register64 |> Register) (ImmediateInt16 1s)
                     moveIns (RSI |> Register64 |> Register) (Operand.LabelReference "message")
-                    moveIns (RDX |> Register64 |> Register) (Int16 13s)
-                    zeroOpIns Syscall
+                    moveIns (RDX |> Register64 |> Register) (ImmediateInt16 13s)
+                    syscallIns
 
-                    moveIns (EAX |> Register32 |> Register) (Int16 60s)
+                    moveIns (EAX |> Register32 |> Register) (ImmediateInt16 60s)
                     xorIns (RDI |> Register64 |> Register) (RDI |> Register64 |> Register)                
-                    zeroOpIns Syscall
+                    syscallIns
                     "message" |> Label.Label  |> SectionEntry.Label
                     // db      "Hello, World", 10      ; note the newline at the end
-                    Data8 [ DataString "Hello, World"; DataInt 10L ] |> zeroOpIns' 
+                    Data8 [ DataString "Hello, World"; DataInt 10L ] |> toSectionEntry 
                 ]
             ]
             |> Listing
@@ -341,7 +322,7 @@ extern _start"""
                 section ".text" <| [
                      "_start" |> Label.Label |> SectionEntry.Label;
                     RAX |> Register64 |> Register |> pushIns;
-                    moveIns (RDI |> Register64 |> Register) (Int16 1s) ;
+                    moveIns (RDI |> Register64 |> Register) (ImmediateInt16 1s) ;
                 ]
             ]
             |> Listing

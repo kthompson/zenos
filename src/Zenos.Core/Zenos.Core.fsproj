@@ -55,8 +55,10 @@
     <Content Include="packages.config" />
     <Compile Include="Result.fs" />
     <Compile Include="IO.fs" />
-    <Compile Include="FrameworkTypes.fs" />
-    <Compile Include="Assembly.fs" />
+    <Compile Include="Registers.fs" />
+    <Compile Include="Instructions.fs" />
+    <Compile Include="AssemblyParsing.fs" />
+    <Compile Include="AssemblyEmitter.fs" />
     <Compile Include="Linker.fs" />
   </ItemGroup>
   <ItemGroup>

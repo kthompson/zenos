@@ -23,9 +23,9 @@ namespace Zenos.Tests
         {
             var arch = new AMD64();
             _compiler = Compiler.CreateStagedWithAfter(CodePrinter.Value,
-                new CecilToZenos(),
-                new AllocateStorageForVariables(arch),
-                new CilSimplifier(),
+                //new CecilToZenos(),
+                //new AllocateStorageForVariables(arch),
+                //new CilSimplifier(),
                 new PopulateStackType()//,
                 //new EmitterStage()
             );

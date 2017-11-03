@@ -7,8 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
 using CSharpx;
-using static Zenos.Framework.Assembly;
-using static Zenos.Framework.Assembly;
+using static Zenos.Framework.AssemblyParsing;
 
 namespace Zenos.Assembler
 {
@@ -16,7 +15,7 @@ namespace Zenos.Assembler
     {
         static void Main(string[] args)
         {
-            var str = File.ReadAllText(@"C:\code\zenos\tests\Zenos.Assembler.Tests\resources\basic.asm");
+            var str = File.ReadAllText(@"E:\code\AppDev\zenos\tests\Zenos.Assembler.Tests\resources\basic.asm");
 
             var result = FParsec.CharParsers.run(pListing, str);
             if (result.IsSuccess)
