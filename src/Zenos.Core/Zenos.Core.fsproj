@@ -58,7 +58,7 @@
     <Compile Include="Registers.fs" />
     <Compile Include="Instructions.fs" />
     <Compile Include="AssemblyParsing.fs" />
-    <Compile Include="AssemblyEmitter.fs" />
+    <Compile Include="Emitter.fs" />
     <Compile Include="Linker.fs" />
   </ItemGroup>
   <ItemGroup>

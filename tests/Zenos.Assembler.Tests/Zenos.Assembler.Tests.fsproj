@@ -57,7 +57,9 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="InstructionMethods.fs" />
     <Compile Include="AssemblyTests.fs" />
+    <Compile Include="EmitterTests.fs" />
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
     <None Include="resources\hello.asm">

@@ -9,21 +9,12 @@ open System.IO
 open FParsec
 open Zenos.Framework
 open Zenos.Framework.AssemblyParsing
+open InstructionMethods
 
 type AssemblyTests(output:ITestOutputHelper) =
 
     let file name = 
         File.ReadAllText(Path.Combine("resources", name))
-
-    let toSectionEntry inst = SectionEntry (None, inst)
-
-    let popIns = Instruction.pop >> toSectionEntry
-    let syscallIns = Instruction.syscall |> toSectionEntry
-    let pushIns = Instruction.push >> toSectionEntry
-    let moveIns a b = Instruction.move a b |> toSectionEntry
-    let xorIns a b = Instruction.xor a b |> toSectionEntry
-
-    let section name items = Section (name, items)
 
     do
         let tw = {
