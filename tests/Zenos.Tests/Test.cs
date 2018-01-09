@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Control;
 using Mono.Cecil;
 using Zenos.Core;
 using Zenos.Framework;
@@ -22,22 +24,24 @@ namespace Zenos.Tests
         static Test()
         {
             var arch = new AMD64();
-            _compiler = Compiler.CreateStagedWithAfter(CodePrinter.Value,
+            _compiler = Compiler.CreateStaged(
+                FSharpList<Compiler<MethodContext>>.Cons(CompilerStages.printer, FSharpList<Compiler<MethodContext>>.Empty)
+                
                 //new CecilToZenos(),
                 //new AllocateStorageForVariables(arch),
                 //new CilSimplifier(),
-                new PopulateStackType()//,
+                //new PopulateStackType()//,
                 //new EmitterStage()
             );
         }
 
-        private static readonly ICompiler<IMethodContext> _compiler;
+        private static readonly Compiler<MethodContext> _compiler;
 
         #endregion
 
         #region Test Runners
 
-        public static Action<TDelegate> Runs<TDelegate, TResult>(Func<TDelegate, TResult> executor, Action<TResult, TResult> test, Action<IMethodContext> testMethodContext)
+        public static Action<TDelegate> Runs<TDelegate, TResult>(Func<TDelegate, TResult> executor, Action<TResult, TResult> test, Action<MethodContext> testMethodContext)
             where TDelegate : class
         {
             return method =>
@@ -47,15 +51,15 @@ namespace Zenos.Tests
                 {
                     var mc = CreateMethodContext(method);
 
-                    //compile 
-                    var context = _compiler.Compile(mc);
+                    //compile
+                    var context = Compiler.Run(_compiler, mc);
 
                     Assert.NotEmpty(context.Code);
-                    Assert.Equal(0, context.Code.Count % 16);
+                    Assert.Equal(0, context.Code.Length % 16);
                     File.WriteAllBytes("temp.bin", context.Code.ToArray());
                     testMethodContext?.Invoke(context);
 
-                    PrintInstructions(context.Instruction);
+                    PrintInstructions(context.Instructions);
 
                     var compiled = Function.FromBytes<TDelegate>(context.Code.ToArray());
 
@@ -73,22 +77,22 @@ namespace Zenos.Tests
             };
         }
         
-        public static IMethodContext CreateMethodContext<TDelegate>(TDelegate method) where TDelegate : class
+        public static MethodContext CreateMethodContext<TDelegate>(TDelegate method) where TDelegate : class
         {
             var resolver = CreateAssemblyResolver();
             var sourceMethod = GetMethodDefinitionFromLambda(method, resolver);
 
-            return new MethodContext(sourceMethod);
+            return MethodContextModule.FromMethodDefinition(sourceMethod);
         }
 
-        private static void PrintInstructions(Instruction inst)
+        private static void PrintInstructions(IEnumerable<Instruction> inst)
         {
             Trace.WriteLine("--------------------");
-            //while (inst != null)
-            //{
-            //    Trace.WriteLine(inst);
-            //    inst = inst.Next;
-            //}
+            foreach (var instruction in inst)
+            {
+                Trace.WriteLine(instruction);
+            }
+
         }
 
         #endregion

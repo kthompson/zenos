@@ -57,6 +57,8 @@
     <Compile Include="IO.fs" />
     <Compile Include="Registers.fs" />
     <Compile Include="Instructions.fs" />
+    <Compile Include="Compiler.fs" />
+    <Compile Include="CompilerStages.fs" />
     <Compile Include="AssemblyParsing.fs" />
     <Compile Include="Emitter.fs" />
     <Compile Include="Linker.fs" />
@@ -69,7 +71,7 @@
       <HintPath>..\..\packages\FParsec.1.0.3\lib\net40-client\FParsecCS.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core">
-      <HintPath>..\..\packages\FSharp.Core.4.2.2\lib\net45\FSharp.Core.dll</HintPath>
+      <HintPath>..\..\packages\FSharp.Core.4.2.3\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil">
       <HintPath>..\..\packages\Mono.Cecil.0.10.0-beta6\lib\net40\Mono.Cecil.dll</HintPath>

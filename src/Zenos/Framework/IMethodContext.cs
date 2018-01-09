@@ -5,25 +5,25 @@ using Mono.Cecil;
 
 namespace Zenos.Framework
 {
-    //MonoCompile
-    public interface IMethodContext
-    {
-        List<byte> Code { get; }
+    ////MonoCompile
+    //public interface IMethodContext
+    //{
+    //    List<byte> Code { get; }
 
-        IList<Instruction> Variables { get; set; }
+    //    IList<Instruction> Variables { get; set; }
 
-        Instruction ReturnType { get; set; }
+    //    Instruction ReturnType { get; set; }
 
-        IList<Instruction> Parameters { get; set; }
-        IList<Instruction> Locals { get; set; }
+    //    IList<Instruction> Parameters { get; set; }
+    //    IList<Instruction> Locals { get; set; }
 
-        Instruction Instruction { get; set; }
-        MethodDefinition Method { get; }
+    //    Instruction Instruction { get; set; }
+    //    MethodDefinition Method { get; }
 
-        //BasicBlocks BasicBlocks { get; }
+    //    //BasicBlocks BasicBlocks { get; }
 
-        Register AllocateDestReg(StackType type = StackType.Imm32);
-    }
+    //    Register AllocateDestReg(StackType type = StackType.Imm32);
+    //}
 
     public interface IVariableDefinition
     {

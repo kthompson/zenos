@@ -4,17 +4,7 @@
 open Mono.Cecil
 open Mono.Cecil.Cil
 
-
-type Operand =
-| ImmediateSByte of sbyte
-| ImmediateInt16 of int16
-| ImmediateInt32 of int32
-| ImmediateInt64 of int64
-
-| LabelReference of string
-
-| Register of Register
-//| Instruction of Instruction
+open Zenos.Core
 
 type ZenosOpCode = 
 | Load
@@ -24,6 +14,28 @@ type ZenosOpCode =
 | PushConstant
 | PushArgument
 | Pop
+
+type Operand =
+| ImmediateByte of byte
+| ImmediateSByte of sbyte
+| ImmediateInt16 of int16
+| ImmediateInt32 of int32
+| ImmediateInt64 of int64
+| ImmediateString of string
+
+| LabelReference of string
+| Register of Register
+
+| TypeReferenceOperand of TypeReference
+| MethodReferenceOperand of MethodReference
+| FieldReferenceOperand of FieldReference
+
+| InstructionOperand of Instruction
+| InstructionsOperand of Instruction list
+| VariableOperand of VariableDefinition
+| ParameterOperand of ParameterDefinition
+| CallSiteOperand of CallSite
+
 
 type X86_64 =
 | Add of src:Operand * dest:Operand
@@ -38,9 +50,22 @@ type Data =
 | DataFloat of float
 | DataInt of int64
 
+type CilOffset = int
+
+module CecilOperand =
+    let Create (value: obj) =
+        match value with
+        | :? TypeReference as typ -> typ |> TypeReferenceOperand |> Some
+        | :? MethodReference as typ -> typ |> MethodReferenceOperand |> Some
+        | :? FieldReference as typ -> typ |> FieldReferenceOperand |> Some
+        | :? string as typ -> typ |> ImmediateString |> Some
+        | :? sbyte as typ -> typ |> ImmediateSByte |> Some
+        | :? byte as typ -> typ |> ImmediateByte |> Some
+        | _ -> failwith "undefined type"
+
 type Instruction = 
 | Zenos of OpCode:ZenosOpCode
-| Cil of OpCode:Code
+| Cil of OpCode:Code * Choice<CilOffset, Operand>
 | X86_64 of OpCode:X86_64
 | Data8 of Data list
 | Data16 of Data list
@@ -59,7 +84,6 @@ type Directive =
 | Section of Name:string * SectionEntry list
 
 type Listing = Listing of Directive list
-
 
 module Instruction =
     let add src dest = Add (src, dest) |> X86_64

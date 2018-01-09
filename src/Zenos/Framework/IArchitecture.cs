@@ -10,6 +10,6 @@ namespace Zenos.Framework
     {
         string Name { get; }
 
-        void CreateVariables(IMethodContext context);
+        void CreateVariables(MethodContext context);
     }
 }

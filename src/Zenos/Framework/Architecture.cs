@@ -8,7 +8,7 @@ namespace Zenos.Stages
     {
         public abstract string Name { get; }
 
-        public virtual void CreateVariables(IMethodContext context)
+        public virtual void CreateVariables(MethodContext context)
         {
         }
     }

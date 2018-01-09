@@ -3,9 +3,21 @@
 open Zenos.Framework
 
 module Emitter = 
-    type Symbol = string
+    type SectionType = 
+    | ReadOnly
+    | Writeable
+    | Executable
+
+    type Section =
+    | Section of string * SectionType
 
     type Offset = int64
+
+    type Symbol =
+    | ExternSymbol of string * Offset
+    | BlobSymbol of Section * Offset
+
+    
     type Relocation =
     | Relative of Symbol * Offset
     | Absolute of Symbol * Offset
@@ -20,6 +32,12 @@ module Emitter =
 
     type State = State of SymbolTable * ObjectData list * LocationCounter
 
+    module ObjectData =
+        let requireInitialAlignment align data = 
+            {data with Alignment = System.Math.Max(align, data.Alignment)}
+
+        let addSymbol symbol data =
+            {data with Symbols = symbol :: data.Symbols}
     
     module Data =
         let rec zeroExtend count (data : Data) =
@@ -119,7 +137,7 @@ module Emitter =
             state
         | Extern name ->
             state
-        | Section (name, entries) ->
+        | Directive.Section (name, entries) ->
             entries
             |> List.fold assembleSectionEntry state
 
