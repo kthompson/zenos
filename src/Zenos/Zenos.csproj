@@ -27,4 +27,8 @@
       <HintPath>..\Zenos.Core\bin\Release\FSharp.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assembler\" />
+  </ItemGroup>
 </Project>

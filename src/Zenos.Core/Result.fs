@@ -21,6 +21,10 @@ module Result =
     | Some some -> Ok some
     | None -> Error err
 
+    let toOption = function
+    | Ok some -> Some some
+    | Error _ -> None
+
     let ofOptionUnit err = function
     | Some _ -> Ok ()
     | None -> Error err

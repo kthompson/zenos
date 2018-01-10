@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
+using Microsoft.FSharp.Core;
 using Mono.Cecil;
 using Zenos.Core;
 using Zenos.Framework;
@@ -26,7 +27,7 @@ namespace Zenos.Tests
             var arch = new AMD64();
             _compiler = Compiler.CreateStaged(
                 FSharpList<Compiler<MethodContext>>.Cons(CompilerStages.printer, FSharpList<Compiler<MethodContext>>.Empty)
-                
+
                 //new CecilToZenos(),
                 //new AllocateStorageForVariables(arch),
                 //new CilSimplifier(),
@@ -46,43 +47,39 @@ namespace Zenos.Tests
         {
             return method =>
             {
-                //update arguments
-                try
-                {
-                    var mc = CreateMethodContext(method);
+                var mc = CreateMethodContext(method);
 
-                    //compile
-                    var context = Compiler.Run(_compiler, mc);
+                //compile
+                var context = Compiler.Run(_compiler, mc);
 
-                    Assert.NotEmpty(context.Code);
-                    Assert.Equal(0, context.Code.Length % 16);
-                    File.WriteAllBytes("temp.bin", context.Code.ToArray());
-                    testMethodContext?.Invoke(context);
+                Assert.NotEmpty(context.Code);
+                Assert.Equal(0, context.Code.Length % 16);
+                File.WriteAllBytes("temp.bin", context.Code.ToArray());
+                testMethodContext?.Invoke(context);
 
-                    PrintInstructions(context.Instructions);
+                PrintInstructions(context.Instructions);
 
-                    var compiled = Function.FromBytes<TDelegate>(context.Code.ToArray());
+                var compiled = Function.FromBytes<TDelegate>(context.Code.ToArray());
 
-                    //run the compiled method and return output
-                    var result = executor(method);
-                    var nativeResult = executor(compiled.Instance);
+                //run the compiled method and return output
+                var result = executor(method);
+                var nativeResult = executor(compiled.Instance);
 
-                    test(result, nativeResult);
-                }
-                catch (Exception e)
-                {
-                    Helper.Suppress(e);
-                    throw;
-                }
+                test(result, nativeResult);
             };
         }
-        
+
         public static MethodContext CreateMethodContext<TDelegate>(TDelegate method) where TDelegate : class
         {
             var resolver = CreateAssemblyResolver();
             var sourceMethod = GetMethodDefinitionFromLambda(method, resolver);
 
-            return MethodContextModule.FromMethodDefinition(sourceMethod);
+            var result = MethodContextModule.FromMethodDefinition(sourceMethod);
+            Assert.True(result.IsOk);
+            //var message = string.Join(Environment.NewLine, result.ErrorValue);
+            //throw new ApplicationException(message);
+
+            return result.ResultValue;
         }
 
         private static void PrintInstructions(IEnumerable<Instruction> inst)

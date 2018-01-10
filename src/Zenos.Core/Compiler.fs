@@ -1,5 +1,6 @@
 ﻿namespace Zenos.Framework
 
+open Zenos.Core
 open Mono.Cecil
 
 type CecilInst = Cil.Instruction
@@ -13,21 +14,45 @@ type AssemblyContext = {Types: Map<TypeName, TypeContext>}
 type Compiler<'a> = Compiler of ('a -> 'a)
 
 module MethodContext =
-    let FromMethodDefinition (methodDefinition: MethodDefinition) = 
-        let mkInstr (inst: CecilInst) : ZenosInst =
-            match CecilOperand.Create inst.Operand with
-            | Some operand ->
-                ZenosInst.Cil (inst.OpCode.Code, Choice2Of2 operand)
-            | None ->
-                ZenosInst.Cil (inst.OpCode.Code, Choice1Of2 inst.Offset) 
-                
+    let FromMethodDefinition (methodDefinition: MethodDefinition) : Result<MethodContext, string list> = 
+        let mkInstr (inst: CecilInst) : CilOffset * (ZenosInst * obj) =
+            (inst.Offset, (ZenosInst.Cil (inst.OpCode.Code, inst.Offset, None), inst.Operand))
 
-        let instructions =
+        let offsets = 
+            methodDefinition.Body.Instructions
+            |> Seq.map(fun ins -> ins.Offset)
+            |> List.ofSeq
+
+        let instOpMap =
             methodDefinition.Body.Instructions
             |> Seq.map(mkInstr)
-            |> List.ofSeq
+            |> Map.ofSeq
+            
+        let instMap =
+            instOpMap
+            |> Map.map(fun _ (inst, _) -> inst)
         
-        {Code = List.empty; Instructions = instructions}
+        offsets
+        |> List.map(fun offset ->
+            offset
+            |> instOpMap.TryFind 
+            |> Result.ofOption [ (sprintf "Instruction not found as offset %d" offset) ]
+            |> Result.bind(function
+            | (ZenosInst.Cil (code, _, _), cecilOperand) ->
+                CecilOperand.Create cecilOperand instMap
+                |> Result.mapErrorToList
+                |> Result.map(fun x ->
+                    ZenosInst.Cil (code, offset, x)
+                )
+            | _ -> Error ["Unexpected instruction type"]
+            )
+        )
+        |> Result.sequence
+        |> Result.map(fun instructions ->
+            {Code = List.empty; Instructions = instructions}
+        )
+
+        
 
 module TypeContext =
     let Add name method tc =
