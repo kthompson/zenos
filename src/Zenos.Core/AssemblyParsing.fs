@@ -200,9 +200,9 @@ module AssemblyParsing =
     let poperand: Parser<Operand, unit> =
         choice [
             preg |>> Register
-            pint16 |>> Operand.ImmediateInt16
-            pint32 |>> Operand.ImmediateInt32
-            pint64 |>> Operand.ImmediateInt64
+            pint16 |>> (ImmediateInt16 >> Immediate)
+            pint32 |>> (ImmediateInt32 >> Immediate)
+            pint64 |>> (ImmediateInt64 >> Immediate)
             identifier "operand" |>> LabelReference
         ]
 

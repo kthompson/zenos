@@ -1,47 +1,55 @@
-﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+﻿<#@ template language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ output extension=".cs" #>
-
-
 using System;
-using Xunit;
+using System.Runtime.CompilerServices;
 using Zenos.Framework;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Zenos.Tests
 {
     public class TestBase
     {
-        <# Function("CharDelegate", "char"); #>
-        <# Function("BoolDelegate", "bool"); #>
-        <# Function("UInt32Delegate", "uint"); #>
-        <# Function("Int32Delegate", "int"); #>
-        <# Function("UInt64Delegate", "ulong"); #>
-        <# Function("Int64Delegate", "long"); #>
-        <# Function("SingleDelegate", "float"); #>
-        <# Function("DoubleDelegate", "double"); #>
+		protected readonly TestRunner TestRunner;
+		protected readonly ITestOutputHelper output;
 
-        protected Action<TDelegate> F<TDelegate, TResult>(Func<TDelegate, TResult> func, Action<IMethodContext> action = null) 
+		protected TestBase(ITestOutputHelper output)
+		{
+			this.output = output;
+			this.TestRunner = new TestRunner(output);
+		}
+
+<# Function("CharDelegate", "char"); #>
+<# Function("BoolDelegate", "bool"); #>
+<# Function("UInt32Delegate", "uint"); #>
+<# Function("Int32Delegate", "int"); #>
+<# Function("UInt64Delegate", "ulong"); #>
+<# Function("Int64Delegate", "long"); #>
+<# Function("SingleDelegate", "float"); #>
+<# Function("DoubleDelegate", "double"); #>
+        protected Action<TDelegate> F<TDelegate, TResult>(Func<TDelegate, TResult> func, Action<MethodContext> action = null)
             where TDelegate : class
-        {            
-            return Test.Runs(func, Assert.Equal, action);
+        {
+            return TestRunner.Runs(func, Assert.Equal, action);
         }
     }
 }
 
 
 <#+
-
     private void Function(string delegateName, string returnType)
     {
-#>            
-        protected void F<#= returnType #>(<#= delegateName #> func, Action<IMethodContext> action = null) 
+#>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static <#= returnType #> <#= delegateName #>Executer(<#= delegateName #> f) => f();
+        protected void F<#= returnType #>(<#= delegateName #> func, Action<MethodContext> action = null)
         {
-            F<<#= delegateName #>, <#= returnType #>>(f => f(), action)(func);
+            F<<#= delegateName #>, <#= returnType #>>(<#= delegateName #>Executer, action)(func);
         }
-<#+        
 
+<#+
     }
 #>

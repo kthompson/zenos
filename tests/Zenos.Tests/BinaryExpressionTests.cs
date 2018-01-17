@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Zenos.Tests
 {
@@ -31,7 +32,7 @@ namespace Zenos.Tests
         {
             var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
 
-            func((aa, bb) => aa + bb);
+            func((a1, b1) => a1 + b1);
         }
 
         [Theory]
@@ -78,7 +79,6 @@ namespace Zenos.Tests
             func((aa, bb) => aa / bb);
             func((aa, bb) => aa * bb);
         }
-
 
         [Theory]
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27)]
@@ -195,5 +195,10 @@ namespace Zenos.Tests
         }
 
         #endregion
+
+        public BinaryExpressionTests(ITestOutputHelper output)
+            : base(output)
+        {
+        }
     }
 }

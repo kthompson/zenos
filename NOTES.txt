@@ -11,3 +11,118 @@ Examples of assembly
 https://www.csee.umbc.edu/portal/help/nasm/sample_64.shtml
 http://cs.lmu.edu/~ray/notes/x86assembly/
 https://en.wikibooks.org/wiki/X86_Assembly/NASM_Syntax
+
+Tools:
+	Assembler: https://defuse.ca/online-x86-assembler.htm#disassembly
+	Disassembler from C: https://godbolt.org
+	Unicorn
+
+	Calling conventions
+	https://docs.microsoft.com/en-us/cpp/build/prolog-and-epilog
+	The registers RAX, RCX, RDX, R8, R9, R10, R11 are considered volatile (caller-saved).[17]
+
+	The registers RBX, RBP, RDI, RSI, RSP, R12, R13, R14, and R15 are considered nonvolatile (callee-saved).[17]
+
+	arg0 is rdx
+	arg1 is rcx
+	arg2 is r8
+	arg3 is r9
+
+
+we can use r10, and r11 as scratch registers
+
+For example, a function taking 5 integer arguments will take the first to fourth in registers, and the fifth will be pushed on the top of the shadow space. So when the called function is entered, the stack will be composed of (in ascending order) the return address, followed by the shadow space (32 bytes) followed by the fifth parameter.
+
+
+a function call is:
+
+	// let args = the number of arguments
+	// let extra = (args - 4) * 16
+	sub rsp, 40 + (args > 4 ? extra : 0)
+
+	// move args with index > 4 onto stack in reverse order
+	mov      DWORD PTR [rsp+72], $arg9
+    mov      DWORD PTR [rsp+64], $arg8
+    mov      DWORD PTR [rsp+56], $arg7
+    mov      DWORD PTR [rsp+48], $arg6
+    mov      DWORD PTR [rsp+40], $arg5
+    mov      DWORD PTR [rsp+32], $arg4
+	// move args wuith index 0 - 3 into regs
+	mov      r9, $arg3
+    mov      r8, $arg2
+    mov      rdx, $arg1
+    mov      rcx, $arg0
+	call method
+
+
+40+
+
+0 => 40
+1 => 40
+2 => 40
+3 => 40
+4 => 40
+
+5 => 56
+6 => 56
+7 => 72
+8 => 72
+9 => 88
+10 => 88
+
+first arg order is:
+	rcx			= 3E9h
+	rdx			= 3EAh
+	r8			= 3EBh
+	r9			= 3ECh
+	rbp+20h		= 3EDh
+	rbp+28h		= 3EEh
+	rbp+30h		= 3EFh
+	rbp+38h		= 3F0h
+
+
+Function Dissassembly: (aa, bb, cc, dd, ee, ff, gg, hh) => bb
+
+00007FF8A25470B4 83 EC 30             sub         esp,30h  
+00007FF8A25470B7 48 8B EC             mov         rbp,rsp  
+00007FF8A25470BA 33 C0                xor         eax,eax  
+00007FF8A25470BC 48 89 45 28          mov         qword ptr [rbp+28h],rax  
+00007FF8A25470C0 48 89 4D 50          mov         qword ptr [rbp+50h],rcx  
+00007FF8A25470C4 89 55 58             mov         dword ptr [rbp+58h],edx  
+00007FF8A25470C7 44 89 45 60          mov         dword ptr [rbp+60h],r8d  
+00007FF8A25470CB 44 89 4D 68          mov         dword ptr [rbp+68h],r9d  
+00007FF8A25470CF 83 3D F2 55 C3 FF 00 cmp         dword ptr [7FF8A217C6C8h],0  
+00007FF8A25470D6 74 05                je          00007FF8A25470DD  
+00007FF8A25470D8 E8 43 87 2A 5F       call        00007FF9017EF820  
+00007FF8A25470DD 8B 45 60             mov         eax,dword ptr [rbp+60h]  
+00007FF8A25470E0 48 8D 65 30          lea         rsp,[rbp+30h]  
+00007FF8A25470E4 5E                   pop         rsi  
+00007FF8A25470E5 5F                   pop         rdi  
+00007FF8A25470E6 5D                   pop         rbp  
+00007FF8A25470E7 C3                   ret  
+
+
+
+Function Dissassembly: (aa, bb, cc, dd, ee, ff, gg, hh) => gg
+
+0A5E8218 55                   push        ebp  
+0A5E8219 8B EC                mov         ebp,esp  
+0A5E821B 57                   push        edi  
+0A5E821C 56                   push        esi  
+0A5E821D 53                   push        ebx  
+0A5E821E 83 EC 34             sub         esp,34h  
+0A5E8221 33 C0                xor         eax,eax  
+0A5E8223 89 45 F0             mov         dword ptr [ebp-10h],eax  
+0A5E8226 89 45 E4             mov         dword ptr [ebp-1Ch],eax  
+0A5E8229 89 4D C4             mov         dword ptr [ebp-3Ch],ecx  
+0A5E822C 89 55 C0             mov         dword ptr [ebp-40h],edx  
+0A5E822F 83 3D C4 6D FD 08 00 cmp         dword ptr ds:[8FD6DC4h],0  
+0A5E8236 74 05                je          0A5E823D  
+0A5E8238 E8 53 A7 13 69       call        73722990  
+0A5E823D 8B 45 0C             mov         eax,dword ptr [ebp+0Ch]  
+0A5E8240 8D 65 F4             lea         esp,[ebp-0Ch]  
+0A5E8243 5B                   pop         ebx  
+0A5E8244 5E                   pop         esi  
+0A5E8245 5F                   pop         edi  
+0A5E8246 5D                   pop         ebp  
+0A5E8247 C2 1C 00             ret         1Ch  

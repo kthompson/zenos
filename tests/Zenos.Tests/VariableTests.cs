@@ -1,5 +1,6 @@
 ﻿using System;
 using Xunit;
+using Xunit.Abstractions;
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable ConvertToConstant.Local
@@ -141,6 +142,11 @@ namespace Zenos.Tests
                 var fieldT = 3.14;
                 return fieldF;
             });
+        }
+
+        public VariableTests(ITestOutputHelper output)
+            : base(output)
+        {
         }
     }
 }

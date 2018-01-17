@@ -9,6 +9,7 @@ using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
 using Mono.Cecil;
+using Xunit.Abstractions;
 using Zenos.Core;
 using Zenos.Framework;
 using Zenos.Stages;
@@ -18,54 +19,51 @@ using Assert = Xunit.Assert;
 
 namespace Zenos.Tests
 {
-    internal static class Test
+    public class TestRunner
     {
         #region Properties and Initialization
 
-        static Test()
+        public TestRunner(ITestOutputHelper output)
         {
             var arch = new AMD64();
-            _compiler = Compiler.CreateStaged(
-                FSharpList<Compiler<MethodContext>>.Cons(CompilerStages.printer, FSharpList<Compiler<MethodContext>>.Empty)
+            _compiler = CompilerBuilder.testCompiler(FSharpFuncUtil.Create<string>(output.WriteLine));
 
-                //new CecilToZenos(),
-                //new AllocateStorageForVariables(arch),
-                //new CilSimplifier(),
-                //new PopulateStackType()//,
-                //new EmitterStage()
-            );
+            //new CecilToZenos(),
+            //new AllocateStorageForVariables(arch),
+            //new CilSimplifier(),
+            //new PopulateStackType()//,
+            //new EmitterStage()
         }
 
-        private static readonly Compiler<MethodContext> _compiler;
+        private readonly Compiler<MethodContext, MethodContext> _compiler;
 
         #endregion
 
         #region Test Runners
 
-        public static Action<TDelegate> Runs<TDelegate, TResult>(Func<TDelegate, TResult> executor, Action<TResult, TResult> test, Action<MethodContext> testMethodContext)
+        public Action<TDelegate> Runs<TDelegate, TResult>(Func<TDelegate, TResult> executor, Action<TResult, TResult> test, Action<MethodContext> testMethodContext)
             where TDelegate : class
         {
             return method =>
             {
                 var mc = CreateMethodContext(method);
-
                 //compile
-                var context = Compiler.Run(_compiler, mc);
+                var context = Compiler.run(_compiler, mc);
 
                 Assert.NotEmpty(context.Code);
-                Assert.Equal(0, context.Code.Length % 16);
+                //Assert.Equal(0, context.Code.Length % 16);
                 File.WriteAllBytes("temp.bin", context.Code.ToArray());
-                testMethodContext?.Invoke(context);
+                //testMethodContext?.Invoke(context);
 
-                PrintInstructions(context.Instructions);
+                //PrintInstructions(context.Instructions);
 
                 var compiled = Function.FromBytes<TDelegate>(context.Code.ToArray());
 
                 //run the compiled method and return output
-                var result = executor(method);
+                var expected = executor(method);
                 var nativeResult = executor(compiled.Instance);
 
-                test(result, nativeResult);
+                test(expected, nativeResult);
             };
         }
 
@@ -80,16 +78,6 @@ namespace Zenos.Tests
             //throw new ApplicationException(message);
 
             return result.ResultValue;
-        }
-
-        private static void PrintInstructions(IEnumerable<Instruction> inst)
-        {
-            Trace.WriteLine("--------------------");
-            foreach (var instruction in inst)
-            {
-                Trace.WriteLine(instruction);
-            }
-
         }
 
         #endregion

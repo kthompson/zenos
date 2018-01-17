@@ -21,13 +21,13 @@ module EmitterTests =
                 section ".text" <| [
                     "_start" |> Label.Label  |> SectionEntry.Label
                 
-                    moveIns (RAX |> Register64 |> Register) (ImmediateInt16 1s)
-                    moveIns (RDI |> Register64 |> Register) (ImmediateInt16 1s)
+                    moveIns (RAX |> Register64 |> Register) (ImmediateInt16 1s |> Immediate )
+                    moveIns (RDI |> Register64 |> Register) (ImmediateInt16 1s |> Immediate )
                     moveIns (RSI |> Register64 |> Register) (Operand.LabelReference "message")
-                    moveIns (RDX |> Register64 |> Register) (ImmediateInt16 13s)
+                    moveIns (RDX |> Register64 |> Register) (ImmediateInt16 13s |> Immediate )
                     syscallIns
 
-                    moveIns (EAX |> Register32 |> Register) (ImmediateInt16 60s)
+                    moveIns (EAX |> Register32 |> Register) (ImmediateInt16 60s |> Immediate )
                     xorIns (RDI |> Register64 |> Register) (RDI |> Register64 |> Register)                
                     syscallIns
                     "message" |> Label.Label  |> SectionEntry.Label

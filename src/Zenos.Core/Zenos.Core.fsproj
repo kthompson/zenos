@@ -54,11 +54,13 @@
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
     <Compile Include="Result.fs" />
+    <Compile Include="FuncUtil.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="Registers.fs" />
     <Compile Include="Instructions.fs" />
     <Compile Include="Compiler.fs" />
     <Compile Include="CompilerStages.fs" />
+    <Compile Include="CompilerBuilder.fs" />
     <Compile Include="AssemblyParsing.fs" />
     <Compile Include="Emitter.fs" />
     <Compile Include="Linker.fs" />

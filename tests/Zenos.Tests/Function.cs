@@ -66,7 +66,7 @@ namespace Zenos.Tests
     {
         private readonly IntPtr _addr;
         private readonly uint _size;
-        
+
         bool _disposed;
 
         public Function(byte[] code)
@@ -76,11 +76,11 @@ namespace Zenos.Tests
 
             if (code.Length == 0)
                 throw new ArgumentException("Code cannot be empty", nameof(code));
-            
+
             _size = (uint)code.Length;
             _addr = Function.VirtualAlloc(_size, Function.AllocationType.Reserve | Function.AllocationType.Commit, Function.MemoryProtection.ExecuteReadwrite);
             GC.AddMemoryPressure(code.Length);
-            
+
             Marshal.Copy(code, 0, _addr, code.Length);
 
             this.Instance = Marshal.GetDelegateForFunctionPointer<T>(_addr);

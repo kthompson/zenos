@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Zenos.Tests
 {
@@ -33,7 +35,7 @@ namespace Zenos.Tests
 
         private static void AssertSequenceDetailed(IReadOnlyList<byte> expected, IReadOnlyList<byte> actual)
         {
-            if (actual.SequenceEqual(expected)) 
+            if (actual.SequenceEqual(expected))
                 return;
 
             var min = Math.Min(actual.Count, expected.Count);
@@ -46,10 +48,16 @@ namespace Zenos.Tests
             Assert.True(false, "Sequence not equal");
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public bool ReturnTrue()
+        {
+            return true;
+        }
+
         [Fact]
         public void Boolean()
         {
-            Fbool(() => true);
+            Fbool(ReturnTrue);
             Fbool(() => false);
         }
 
@@ -91,6 +99,11 @@ namespace Zenos.Tests
             Fdouble(() => 9.75d);
             Fdouble(() => 0.141234d);
             Fdouble(() => 1233.11d);
+        }
+
+        public ImmediateTests(ITestOutputHelper output)
+            : base(output)
+        {
         }
     }
 }

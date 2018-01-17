@@ -10,17 +10,6 @@ namespace Zenos.Framework
 {
     //public class CilSimplifier : Compiler<IMethodContext>
     //{
-    //    delegate Instruction Simplifier(IMethodContext context, Instruction ins);
-
-    //    static readonly Dictionary<InstructionCode, Simplifier> Simplifiers = new Dictionary<InstructionCode, Simplifier>();
-
-    //    static void AddSimplifier(Simplifier simplifier, params InstructionCode[] codes)
-    //    {
-    //        foreach (var code in codes)
-    //        {
-    //            Simplifiers[code] = simplifier;
-    //        }
-    //    }
 
     //    static void AddSByteSimplifier(InstructionCode sByteIns, InstructionCode dest)
     //    {

@@ -1,4 +1,5 @@
 ﻿using Xunit;
+using Xunit.Abstractions;
 
 namespace Zenos.Tests
 {
@@ -14,10 +15,6 @@ namespace Zenos.Tests
 
     public class UnaryExpressionTests : TestBase
     {
-
-        public UnaryExpressionTests()
-        {
-        }
 
         [Fact(Skip = "Need to add CilCeq support")]
         public void UnaryLogicalNotExpression()
@@ -99,6 +96,11 @@ namespace Zenos.Tests
                 var field = 3.4f;
                 return -field;
             });
+        }
+
+        public UnaryExpressionTests(ITestOutputHelper output) 
+            : base(output)
+        {
         }
     }
 }

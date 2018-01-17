@@ -13,9 +13,11 @@
     <PackageReference Include="CommandLineParser" Version="2.1.1-beta" />
     <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Include="FSharp.Core" Version="4.2.3" />
+    <PackageReference Include="xunit" Version="2.3.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\tests\Zenos.Tests\Zenos.Tests.csproj" />
     <ProjectReference Include="..\Zenos.Core\Zenos.Core.fsproj" />
     <ProjectReference Include="..\Zenos\Zenos.csproj" />
   </ItemGroup>

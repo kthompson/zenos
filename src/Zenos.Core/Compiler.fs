@@ -6,17 +6,24 @@ open Mono.Cecil
 type CecilInst = Cil.Instruction
 type ZenosInst = Instruction
 
-type MethodContext = {Code: byte list; Instructions: ZenosInst list}
+type MethodContext = {Code: byte array; Instructions: ZenosInst list}
 type TypeName = TypeName of string
 type MethodName = MethodName of string
 type TypeContext = {Methods: Map<MethodName, MethodContext>}
 type AssemblyContext = {Types: Map<TypeName, TypeContext>}
-type Compiler<'a> = Compiler of ('a -> 'a)
+type Compiler<'a, 'b> = Compiler of ('a -> 'b)
+type Compiler<'a> = Compiler<'a, 'a>
 
 module MethodContext =
     let FromMethodDefinition (methodDefinition: MethodDefinition) : Result<MethodContext, string list> = 
         let mkInstr (inst: CecilInst) : CilOffset * (ZenosInst * obj) =
-            (inst.Offset, (ZenosInst.Cil (inst.OpCode.Code, inst.Offset, None), inst.Operand))
+            let code =
+                inst.OpCode.Code
+                |> LanguagePrimitives.EnumToValue
+                |> LanguagePrimitives.EnumOfValue
+
+            let newInst = ZenosInst.Cil {CilInstruction.Code = code; Offset = inst.Offset; Operand = None}
+            (inst.Offset, (newInst, inst.Operand))
 
         let offsets = 
             methodDefinition.Body.Instructions
@@ -38,21 +45,20 @@ module MethodContext =
             |> instOpMap.TryFind 
             |> Result.ofOption [ (sprintf "Instruction not found as offset %d" offset) ]
             |> Result.bind(function
-            | (ZenosInst.Cil (code, _, _), cecilOperand) ->
+            | (ZenosInst.Cil {Code = code}, cecilOperand) ->
                 CecilOperand.Create cecilOperand instMap
                 |> Result.mapErrorToList
                 |> Result.map(fun x ->
-                    ZenosInst.Cil (code, offset, x)
+                    ZenosInst.Cil {Code = code; Offset = offset; Operand = x}
                 )
             | _ -> Error ["Unexpected instruction type"]
             )
         )
         |> Result.sequence
         |> Result.map(fun instructions ->
-            {Code = List.empty; Instructions = instructions}
+            {Code = [| |]; Instructions = instructions}
         )
 
-        
 
 module TypeContext =
     let Add name method tc =
@@ -62,15 +68,25 @@ module AssemblyContext =
     let Add name typ tc =
         {tc with Types = tc.Types.Add(TypeName name, typ)}
 
+[<RequireQualifiedAccess>]
 module Compiler =
-    let Empty = Compiler id
-    let Run (Compiler compiler) context = compiler context
+    let empty = Compiler id
+    let run (Compiler compiler) context = compiler context
 
-    let Create f = Compiler f
+    let create f = Compiler f
 
-    let CreateStaged (list: 'a Compiler list) : 'a Compiler =
+    let createStaged (list: 'a Compiler list) : 'a Compiler =
         list
         |> List.map(fun (Compiler f) -> f)
         |> List.fold(>>) id
         |> Compiler
 
+    let createFromInstructionCompiler (inst : Compiler<Instruction, Instruction list>) : Compiler<MethodContext> =
+        let compiler method =
+            let newInstructions = 
+                method.Instructions
+                |> List.collect(run inst)
+
+            {method with Instructions = newInstructions}
+
+        Compiler compiler
