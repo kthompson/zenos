@@ -3,20 +3,10 @@ using Xunit.Abstractions;
 
 namespace Zenos.Tests
 {
-    public delegate bool BoolDelegate();
-
-    public delegate uint UInt32Delegate();
-    public delegate int Int32Delegate();
-    public delegate long Int64Delegate();
-    public delegate ulong UInt64Delegate();
-    public delegate float SingleDelegate();
-    public delegate double DoubleDelegate();
-    public delegate char CharDelegate();
-
     public class UnaryExpressionTests : TestBase
     {
 
-        [Fact(Skip = "Need to add CilCeq support")]
+        [Fact]
         public void UnaryLogicalNotExpression()
         {
             // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -36,7 +26,7 @@ namespace Zenos.Tests
             // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
 
-        [Fact(Skip = "Need to add CilNot support")]
+        [Fact]
         public void UnaryBitwiseNotExpression()
         {
             Fuint(() =>
@@ -52,7 +42,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Fact(Skip = "Need to add CilNeg support")]
+        [Fact]
         public void UnaryNegateExpression()
         {
             Fint(() =>
@@ -90,7 +80,12 @@ namespace Zenos.Tests
                 var field = 673;
                 return -field;
             });
+        }
 
+
+        [Fact(Skip = "add float support")]
+        public void UnaryNegateFloatExpression()
+        {
             Ffloat(() =>
             {
                 var field = 3.4f;
@@ -98,7 +93,7 @@ namespace Zenos.Tests
             });
         }
 
-        public UnaryExpressionTests(ITestOutputHelper output) 
+        public UnaryExpressionTests(ITestOutputHelper output)
             : base(output)
         {
         }

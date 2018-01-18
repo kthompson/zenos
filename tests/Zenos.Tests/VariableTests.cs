@@ -108,7 +108,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Fact]
+        [Fact(Skip = "Add float support")]
         public void Floats()
         {
             Ffloat(() =>
@@ -126,7 +126,7 @@ namespace Zenos.Tests
             });
         }
 
-        [Fact]
+        [Fact(Skip = "Add float support")]
         public void Doubles()
         {
             Fdouble(() =>

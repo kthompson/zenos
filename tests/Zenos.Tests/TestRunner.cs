@@ -46,13 +46,16 @@ namespace Zenos.Tests
         {
             return method =>
             {
+                var expected = executor(method);
+
+
                 var mc = CreateMethodContext(method);
                 //compile
                 var context = Compiler.run(_compiler, mc);
 
                 Assert.NotEmpty(context.Code);
                 //Assert.Equal(0, context.Code.Length % 16);
-                File.WriteAllBytes("temp.bin", context.Code.ToArray());
+                //File.WriteAllBytes("temp.bin", context.Code.ToArray());
                 //testMethodContext?.Invoke(context);
 
                 //PrintInstructions(context.Instructions);
@@ -60,7 +63,7 @@ namespace Zenos.Tests
                 var compiled = Function.FromBytes<TDelegate>(context.Code.ToArray());
 
                 //run the compiled method and return output
-                var expected = executor(method);
+
                 var nativeResult = executor(compiled.Instance);
 
                 test(expected, nativeResult);

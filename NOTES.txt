@@ -16,9 +16,8 @@ Tools:
 	Assembler: https://defuse.ca/online-x86-assembler.htm#disassembly
 	Disassembler from C: https://godbolt.org
 	Unicorn
-
-	Calling conventions
-	https://docs.microsoft.com/en-us/cpp/build/prolog-and-epilog
+	CIL: https://en.wikipedia.org/wiki/List_of_CIL_instructions
+	Calling conventions https://docs.microsoft.com/en-us/cpp/build/prolog-and-epilog
 	The registers RAX, RCX, RDX, R8, R9, R10, R11 are considered volatile (caller-saved).[17]
 
 	The registers RBX, RBP, RDI, RSI, RSP, R12, R13, R14, and R15 are considered nonvolatile (callee-saved).[17]

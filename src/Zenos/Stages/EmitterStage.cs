@@ -161,7 +161,7 @@ namespace Zenos.Stages
 //            // TODO: there is more to it than this but for now we will assume that these registers are int/pointer types
 //            switch (dest.Id)
 //            {
-//                case 0: 
+//                case 0:
 //                    context.Code.Add(0x59); // pop rcx
 //                    break;
 
