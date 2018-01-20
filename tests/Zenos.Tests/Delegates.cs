@@ -19,6 +19,7 @@ namespace Zenos.Tests
     public delegate char CharDelegate();
 
     public delegate int BinaryExpressionDelegate(int a, int b);
+    public delegate int TrinaryExpressionDelegate(int a, int b, int c);
     public delegate long BinaryInt64ExpressionDelegate(long a, long b);
 
     public delegate bool BinaryIntBoolExpressionDelegate(int a, int b);

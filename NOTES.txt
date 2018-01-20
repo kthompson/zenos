@@ -1,7 +1,9 @@
 TODO:
-* We need to construct BasicBlocks
-* Once we have basic blocks we should be able to convert to 3 address code
-* https://en.m.wikibooks.org/wiki/Compiler_Construction/Stack-based_representation
+* Loops
+* Conditionals
+* Calls
+* Structs
+* Classes
 
 https://assembly.ynh.io/
 

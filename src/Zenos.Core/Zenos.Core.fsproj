@@ -23,6 +23,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -57,6 +59,7 @@
     <Compile Include="FuncUtil.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="Registers.fs" />
+    <Compile Include="CilCode.fs" />
     <Compile Include="Instructions.fs" />
     <Compile Include="Compiler.fs" />
     <Compile Include="CompilerStages.fs" />

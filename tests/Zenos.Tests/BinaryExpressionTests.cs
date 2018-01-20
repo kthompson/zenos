@@ -9,7 +9,6 @@ namespace Zenos.Tests
 {
     public class BinaryExpressionTests : TestBase
     {
-
         [Theory]
         [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
         public void Addition(int a, int b)
@@ -198,7 +197,7 @@ namespace Zenos.Tests
 
     public class LoopTests : TestBase
     {
-        public LoopTests(ITestOutputHelper output) 
+        public LoopTests(ITestOutputHelper output)
             : base(output)
         {
         }
@@ -219,6 +218,115 @@ namespace Zenos.Tests
                     x++;
                 }
                 return x + bb;
+            });
+        }
+    }
+    public class ConditionalTests : TestBase
+    {
+        public ConditionalTests(ITestOutputHelper output)
+            : base(output)
+        {
+        }
+
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void IfExpression1(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) =>
+            {
+                if (aa == bb)
+                {
+                    return 1001;
+                }
+                return 1002;
+            });
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void IfExpression2(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) =>
+            {
+                if (aa == bb)
+                {
+                    return 1001;
+                }
+                else
+                {
+                    return 1002;
+                }
+            });
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void IfExpression3(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) =>
+            {
+                if (aa == bb)
+                {
+                    return 1001;
+                }
+                else if (aa > bb)
+                {
+                    return 1002;
+                }
+                else
+                {
+                    return 1003;
+                }
+            });
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void SwitchExpression(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) =>
+            {
+                switch (aa)
+                {
+                    case 0:
+                        return 1001;
+                    case 123654:
+                        return 1002;
+                    case 50:
+                        return 1003;
+                    default:
+                        return 1004;
+                }
+            });
+        }
+
+        [Theory]
+        [PermuteData(int.MaxValue, int.MinValue, 0, 123654, 1236234674, 999999999, 50, 27, -111)]
+        public void SwitchExpressionWithFallTrhough(int a, int b)
+        {
+            var func = F<BinaryExpressionDelegate, int>(f => f(a, b));
+
+            func((aa, bb) =>
+            {
+                switch (aa)
+                {
+                    case 0:
+                    case 123654:
+                        return 1002;
+                    case 50:
+                        return 1003;
+                    default:
+                        return 1004;
+                }
             });
         }
     }

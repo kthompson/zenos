@@ -16,44 +16,9 @@ type Compiler<'a> = Compiler<'a, 'a>
 
 module MethodContext =
     let FromMethodDefinition (methodDefinition: MethodDefinition) : Result<MethodContext, string list> = 
-        let mkInstr (inst: CecilInst) : CilOffset * (ZenosInst * obj) =
-            let code =
-                inst.OpCode.Code
-                |> LanguagePrimitives.EnumToValue
-                |> LanguagePrimitives.EnumOfValue
-
-            let newInst = ZenosInst.Cil {CilInstruction.Code = code; Offset = inst.Offset; Operand = None}
-            (inst.Offset, (newInst, inst.Operand))
-
-        let offsets = 
-            methodDefinition.Body.Instructions
-            |> Seq.map(fun ins -> ins.Offset)
-            |> List.ofSeq
-
-        let instOpMap =
-            methodDefinition.Body.Instructions
-            |> Seq.map(mkInstr)
-            |> Map.ofSeq
-            
-        let instMap =
-            instOpMap
-            |> Map.map(fun _ (inst, _) -> inst)
-        
-        offsets
-        |> List.map(fun offset ->
-            offset
-            |> instOpMap.TryFind 
-            |> Result.ofOption [ (sprintf "Instruction not found as offset %d" offset) ]
-            |> Result.bind(function
-            | (ZenosInst.Cil {Code = code}, cecilOperand) ->
-                CecilOperand.Create cecilOperand instMap
-                |> Result.mapErrorToList
-                |> Result.map(fun x ->
-                    ZenosInst.Cil {Code = code; Offset = offset; Operand = x}
-                )
-            | _ -> Error ["Unexpected instruction type"]
-            )
-        )
+        methodDefinition.Body.Instructions
+        |> Seq.map(Instruction.fromCecil >> Result.mapErrorToList)
+        |> List.ofSeq
         |> Result.sequence
         |> Result.map(fun instructions ->
             {Code = [| |]; Instructions = instructions}
