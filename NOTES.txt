@@ -7,6 +7,15 @@ TODO:
 
 https://assembly.ynh.io/
 
+Description of StackFrame layout:
+https://eli.thegreenplace.net/2011/09/06/stack-frame-layout-on-x86-64
+
+CIL Instructions:
+https://en.wikipedia.org/wiki/List_of_CIL_instructions
+
+Calling Conventions:
+https://wiki.osdev.org/Calling_Conventions
+https://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_calling_conventions
 
 Examples of assembly
 
@@ -16,7 +25,7 @@ https://en.wikibooks.org/wiki/X86_Assembly/NASM_Syntax
 
 Tools:
 	Assembler: https://defuse.ca/online-x86-assembler.htm#disassembly
-	Disassembler from C: https://godbolt.org
+	C to x86 assembler: https://godbolt.org
 	Unicorn
 	CIL: https://en.wikipedia.org/wiki/List_of_CIL_instructions
 	Calling conventions https://docs.microsoft.com/en-us/cpp/build/prolog-and-epilog

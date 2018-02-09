@@ -206,13 +206,13 @@ type Data =
 | DataInt of int64
 
 type CilInstruction = {Code:CilCode; Offset:CilOffset}
-//and X86Instruction = {Offset:CilOffset; Instructions: (byte list * string) list; }
+type X86Instruction = {Bytes: byte list; Description: string }
 
 type Instruction = 
 | Zenos of OpCode:ZenosOpCode
 | Cil of CilInstruction
 | X86_64 of OpCode:X86Code
-| Emit of byte list * string // X86Instruction
+| Emit of CilOffset option * X86Instruction list
 | Data8 of Data list
 | Data16 of Data list
 | Data32 of Data list
@@ -558,3 +558,10 @@ module Instruction =
         } 
    
         
+module X86Instruction =
+    let pushRax = {Bytes = [ 0x50uy ]; Description = "push rax"}
+    let popRax = {Bytes = [ 0x58uy ]; Description = "pop rax"}
+    let popR10 = {Bytes = [ 0x41uy; 0x5auy ] ; Description = "pop r10" }
+    let pushI4 v = {Bytes = [0x6auy; byte(v)]; Description = sprintf "push %d" v}
+    let cmpRaxR10 = {Bytes = [ 0x4cuy; 0x39uy ; 0xd0uy  ]; Description = "cmp rax, r10" }
+    
